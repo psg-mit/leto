@@ -1,0 +1,32 @@
+# Leto #
+
+The implementation of the Leto algorithm is available in this repository.
+
+## Dependencies ##
+Leto depends on the following software.
+It is known to work with the versions in parenthesis.
+With the exception of z3, these are all the current versions in the Debian
+Jessie package repository.
+
+* bisonc++ (4.09.02)
+* GNU cpp (4.9.2-10)
+* clang (3.5.0-10)
+* flexc++ (2.01.00)
+* GNU Make (4.0)
+* python3 (3.4.2)
+* z3 (4.4.1)
+
+## Compiling Leto ##
+To build the system, run `make` from the `src` directory.
+If all goes well you will end up with a binary named `leto` in the `src`
+directory.
+
+If the build process complains about not being able to find `z3++.h` be sure
+you installed the z3 development headers.
+You may have to build z3 from source to get these (the Debian package omits
+these headers, for example).
+
+## Running Leto ##
+To run Leto, use the included preprocessor `pp.py`:
+
+    ./pp.py <model file> <program file> | ./leto

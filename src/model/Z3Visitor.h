@@ -1,0 +1,80 @@
+#pragma once
+
+#include <map>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
+
+#include <z3++.h>
+// From https://github.com/Z3Prover/z3/pull/218
+namespace z3 {
+  expr implies(expr const & a, expr const & b);
+}
+
+#include "../common.h"
+#include "ModelNodes.h"
+#include "ASTVisitor.h"
+
+namespace model {
+
+  typedef std::unordered_map<std::string, z3::expr*> var_map;
+  typedef std::unordered_map<std::string, unsigned> version_map;
+
+  class Z3Visitor : public ASTVisitor {
+    public:
+      const std::unordered_set<std::string>* updated;
+
+      Z3Visitor(z3::context* context_,
+                z3::solver* solver_,
+                type_t expr_type_=INT);
+      virtual z3::expr* visit(const Declare &node);
+      virtual z3::expr* visit(const Assign &node);
+      virtual z3::expr* visit(const Var &node);
+      virtual z3::expr* visit(const Bool &node);
+      virtual z3::expr* visit(const StatementList &node);
+      virtual z3::expr* visit(const Int &node);
+      virtual z3::expr* visit(const Float &node);
+      virtual z3::expr* visit(const BinOp &node);
+      virtual z3::expr* visit(const BoolBinOp &node);
+      virtual z3::expr* visit(const Operator &node);
+      virtual z3::expr* visit(const VarList &node);
+
+      void prep_op(operator_t op, z3::expr* arg1_, z3::expr* arg2_);
+      bool prepped();
+      void unprep();
+      z3::expr* replace_op(type_t type, z3::expr* res);
+      z3::expr* get_current_var(const std::string& name);
+      z3::expr* get_previous_var(const std::string& name);
+
+
+      void check();
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+      virtual z3::expr* visit(const Block &node) { assert(false); }
+#pragma clang diagnostic pop
+
+    protected:
+      std::unordered_set<std::string>* current_mods;
+
+    private:
+      z3::context* context;
+      z3::solver* solver;
+      var_map vars;
+      version_map var_version;
+      std::map<operator_t, std::vector<const Operator*>> ops;
+      std::map<operator_t, std::unordered_set<std::string>*> op_mods;
+
+      operator_t op;
+      z3::expr* arg1;
+      z3::expr* arg2;
+      type_t expr_type;
+
+
+      void BuildOp(operator_t op,
+                   Var* op_arg1,
+                   Var* op_arg2,
+                   Var* result,
+                   Bool* when);
+  };
+}
