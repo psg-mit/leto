@@ -6,18 +6,18 @@
 #define TBOUND(i) (0 <= i<o> && i<o> < N<o>)
 
 #define OUTER ((model.upset == false) -> EQ(r)) && \
-              ((model.upset == true && old_upset<r> == true) -> EQ(r))
+              ((model.upset == true && old_upset == true) -> EQ(r))
 #define OUTER2 ((model.upset == false) -> SPEQR(r)) && \
-               ((model.upset == true && old_upset<r> == true) -> SPEQR(r))
+               ((model.upset == true && old_upset == true) -> SPEQR(r))
 
-#define OLD_UPSET ((init_upset<r> == false) -> (EQ(x))) && init_upset<r> == false
-#define UPSET ((old_upset<r> == false && model.upset == true) -> ((EQ(r) && EQ(Ax)) || (EQ(r2) && EQ(Ax2)))) && \
+#define OLD_UPSET ((init_upset == false) -> (EQ(x))) && init_upset == false
+#define UPSET ((old_upset == false && model.upset == true) -> ((EQ(r) && EQ(Ax)) || (EQ(r2) && EQ(Ax2)))) && \
               ((model.upset == false) -> (EQ(r) && EQ(r2) && EQ(Ax) && EQ(Ax2))) && \
-              ((model.upset == true && old_upset<r> == true) -> (EQ(r) && EQ(r2) && EQ(Ax) && EQ(Ax2))) && \
+              ((model.upset == true && old_upset == true) -> (EQ(r) && EQ(r2) && EQ(Ax) && EQ(Ax2))) && \
               OLD_UPSET
-#define UPSET2 ((old_upset<r> == false && model.upset == true) -> ((SPEQR(r) && SPEQAX(Ax)) || (SPEQR(r2) && SPEQAX(Ax2)))) && \
+#define UPSET2 ((old_upset == false && model.upset == true) -> ((SPEQR(r) && SPEQAX(Ax)) || (SPEQR(r2) && SPEQAX(Ax2)))) && \
                ((model.upset == false) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2))) && \
-               ((model.upset == true && old_upset<r> == true) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2))) && \
+               ((model.upset == true && old_upset == true) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2))) && \
                OLD_UPSET
 #define INV EQ(N) && EQ(A) && EQ(b) && UPSET2 && OUTER2
 
@@ -46,8 +46,8 @@ specvar matrix<real> spec_r(N<o>);
 int i;
 int j;
 
-bool old_upset;
-bool init_upset;
+specvar bool old_upset;
+specvar bool init_upset;
 
 init_upset = model.upset;
 
@@ -64,7 +64,7 @@ while (r != r2) (OUTER2 && IMPL2) {
     Ax2[i] = real(0, 1);
     for (j = N -. 1; 0 <= j; --.j) (EQ(A) && UPSET2) {
       // TODO: Pull assumption into loop inv
-      assume (old_upset -> model.upset);
+      relational_assume ((old_upset == true) -> (model.upset == true));
 
       tmp = A[i][j] * x[j];
       tmp2 = A[i][j] * x[j];
@@ -75,7 +75,7 @@ while (r != r2) (OUTER2 && IMPL2) {
       spec_Ax[i] = spec_Ax[i] +. tmp
     };
     // TODO: Pull assumption into loop inv
-    assume (old_upset -> model.upset);
+    relational_assume ((old_upset == true)  -> (model.upset == true));
 
     r[i] = b[i] -. Ax[i];
     r2[i] = b[i] -. Ax2[i];
@@ -84,4 +84,4 @@ while (r != r2) (OUTER2 && IMPL2) {
 };
 
 //assume (old_upset == model.upset);
-relational_assert ((init_upset<r> == false) -> SPEQR(r))
+relational_assert ((init_upset == false) -> SPEQR(r))

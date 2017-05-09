@@ -19,10 +19,10 @@
             0 < N<r>
 
 #define DMR ((model.upset == false) -> (SPEQR(r) && SPEQR(r2) && SPEQQ(q) && SPEQQ(q2))) && \
-            ((old_upset<r> == false) -> (EQ(x) && EQ(p))) && \
+            ((old_upset == false) -> (EQ(x) && EQ(p))) && \
             ((r<r> == r2<r>) -> SPEQR(r)) && \
             ((q<r> == q2<r>) -> SPEQQ(q)) && \
-            EQ(A) && old_upset<r> == false
+            EQ(A) && old_upset == false
 
 #define OUTER BOUND(i) && EQ(N) && EQ(A) && (model.upset == false -> (EQ(p)))
 
@@ -84,13 +84,13 @@ real num;
 real denom;
 int man_mod;
 real lhs;
-bool old_upset;
 matrix<real> zeros(N<o>);
 
 // Spec vars
 specvar matrix<real> spec_r(N<o>);
 specvar matrix<real> spec_q(N<o>);
 specvar real spec_tmp;
+specvar bool old_upset;
 
 // TODO: This only holds for seu (eta = 1)
 // Verify F: c^(-F) < k(A)
@@ -139,8 +139,8 @@ while (it < M) (EQS) {
       }
     };
 
-    relational_assert (old_upset<r> == false -> SPEQR(r));
-    relational_assert (old_upset<r> == false -> SPEQQ(q));
+    relational_assert (old_upset == false -> SPEQR(r));
+    relational_assert (old_upset == false -> SPEQQ(q));
 
     // Line 5: r = b - r
     for (i = N -. 1; 0 <= i; --.i) (3 == 3) { r[i] = b[i] -. r[i] };
@@ -190,7 +190,7 @@ while (it < M) (EQS) {
 
         // For verification that error is sufficiently small
         // TODO: This needs to be adjusted for non SEU models
-        relational_assert((old_upset<r> == false) -> ((DQ * DQ) < SQR_MIN_MAX_AIJ))
+        relational_assert((old_upset == false) -> ((DQ * DQ) < SQR_MIN_MAX_AIJ))
       }
     };
 
