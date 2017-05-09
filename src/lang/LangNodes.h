@@ -403,14 +403,6 @@ namespace lang {
       BoolExp* assertion;
   };
 
-  class Assume : public Statement {
-    public:
-      Assume(BoolExp* assumption_) : assumption(assumption_) {}
-      virtual z3pair accept(ASTVisitor &visitor) override;
-
-      BoolExp* assumption;
-  };
-
   class RelationalAssume : public Statement {
     public:
       RelationalAssume(RelationalBoolExp* assumption_) :

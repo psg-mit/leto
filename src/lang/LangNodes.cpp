@@ -126,10 +126,6 @@ namespace lang {
     return visitor.visit(*this);
   }
 
-  z3pair Assume::accept(ASTVisitor &visitor)  {
-    return visitor.visit(*this);
-  }
-
   z3pair RelationalAssume::accept(ASTVisitor &visitor)  {
     return visitor.visit(*this);
   }

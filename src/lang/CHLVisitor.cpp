@@ -1270,22 +1270,6 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
-  z3pair CHLVisitor::visit(Assume &node) {
-    z3pair assumption = node.assumption->accept(*this);
-    assert(assumption.original);
-    assert(assumption.relaxed);
-
-    if (!ignore_original) {
-      add_constraint(*assumption.original);
-    }
-
-    if (!ignore_relaxed) {
-      add_constraint(*assumption.relaxed);
-    }
-
-    return {nullptr, nullptr};
-  }
-
   z3pair CHLVisitor::visit(Fail &node) {
     z3pair clause = node.clause->accept(*this);
     assert(clause.original);

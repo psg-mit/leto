@@ -36,7 +36,6 @@ namespace lang {
       virtual z3pair visit(RelationalNormal &node) = 0;
       virtual z3pair visit(Skip &node) = 0;
       virtual z3pair visit(Assert &node) = 0;
-      virtual z3pair visit(Assume &node) = 0;
       virtual z3pair visit(RelationalAssume &node) = 0;
       virtual z3pair visit(RelationalAssert &node) = 0;
       virtual z3pair visit(Fail &node) = 0;

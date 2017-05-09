@@ -410,12 +410,6 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
-  z3pair PrintVisitor::visit(Assume &node) {
-    printf("Assume:\n");
-    node.assumption->accept(*this);
-    return {nullptr, nullptr};
-  }
-
   z3pair PrintVisitor::visit(RelationalAssume &node) {
     printf("RelationalAssume:\n");
     node.assumption->accept(*this);

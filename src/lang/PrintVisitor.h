@@ -38,7 +38,6 @@ namespace lang {
       virtual z3pair visit(RelationalNormal &node) override;
       virtual z3pair visit(Skip &node) override;
       virtual z3pair visit(Assert &node) override;
-      virtual z3pair visit(Assume &node) override;
       virtual z3pair visit(RelationalAssume &node) override;
       virtual z3pair visit(RelationalAssert &node) override;
       virtual z3pair visit(Fail &node) override;

@@ -415,7 +415,7 @@ statement:
     lang_ast = $$;
   }
 | ASSUME '(' boolexp ')' {
-    $$ = new lang::Assume($3);
+    $$ = new lang::Assert($3);
     lang_ast = $$;
   }
 | REL_ASSUME '(' relboolexp ')' {
