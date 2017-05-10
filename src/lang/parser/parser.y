@@ -496,10 +496,28 @@ statement:
     $$ = $2;
     lang_ast = $$;
   }
+| declare '=' expression {
+    $$ = new lang::StatementList($1, new lang::Assign($1->var, $3));
+    lang_ast = $$;
+  }
+| SPECVAR declare '=' expression {
+    $2->specvar = true;
+    $$ = new lang::StatementList($2, new lang::Assign($2->var, $4));
+    lang_ast = $$;
+  }
 | declaremat
 | SPECVAR declaremat {
     $2->specvar = true;
     $$ = $2;
+    lang_ast = $$;
+  }
+| declaremat '=' '{' exprlist '}' {
+    $$ = new lang::StatementList($1, new lang::ArrayAssign($1->var, $4));
+    lang_ast = $$;
+  }
+| SPECVAR declaremat '=' '{' exprlist '}' {
+    $2->specvar = true;
+    $$ = new lang::StatementList($2, new lang::ArrayAssign($2->var, $5));
     lang_ast = $$;
   }
 | LMATRIX INT '>' var '(' size ')' {

@@ -47,9 +47,8 @@ int i;
 int j;
 
 specvar bool old_upset;
-specvar bool init_upset;
 
-init_upset = model.upset;
+specvar bool init_upset = model.upset;
 
 relational_assume(OUTER2);
 // TODO: r == r2 -> (old_upset == model.upset)?  Then I could take this upset

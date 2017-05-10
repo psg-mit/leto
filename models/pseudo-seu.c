@@ -1,5 +1,4 @@
-bool upset;
-upset = false;
+bool upset = false;
 
 // Reliable
 operator -(x1, x2) when (true) modifies (nil) ensures (result == x1 - x2);

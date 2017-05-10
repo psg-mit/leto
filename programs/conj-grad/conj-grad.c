@@ -75,15 +75,12 @@ real beta;
 matrix<real> next_p(N<o>);
 
 // Misc helpers
-int it;
 int i;
 int j;
-real tmp;
 real tmp2;
 real num;
 real denom;
 int man_mod;
-real lhs;
 matrix<real> zeros(N<o>);
 
 // Spec vars
@@ -94,12 +91,12 @@ specvar bool old_upset;
 
 // TODO: This only holds for seu (eta = 1)
 // Verify F: c^(-F) < k(A)
-tmp = real(0, 1) -. MIN_F;
-lhs = POW(MIN_C, tmp);
+real tmp = real(0, 1) -. MIN_F;
+real lhs = POW(MIN_C, tmp);
 assert(tmp < MIN_KA);
 
 
-it = 0;
+int it = 0;
 
 relational_assume(EQS);
 while (it < M) (EQS) {

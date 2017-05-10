@@ -101,6 +101,11 @@ statement:
     $$ = new model::Declare(type_t::BOOL, $2);
     model_ast = $$;
   }
+| BOOL var '=' expression {
+    $$ = new model::StatementList(new model::Declare(type_t::BOOL, $2),
+                                  new model::Assign($2, $4));
+    model_ast = $$;
+  }
 | statement ';' statement {
     $$ = new model::StatementList($1, $3);
     model_ast = $$;
