@@ -15,7 +15,6 @@ operator                            return model::ModelParser::OPERATOR;
 when                                return model::ModelParser::WHEN;
 ensures                             return model::ModelParser::ENSURES;
 modifies                            return model::ModelParser::MODIFIES;
-nil                                 return model::ModelParser::NIL;
 fread                               return model::ModelParser::FREAD;
 fwrite                              return model::ModelParser::FWRITE;
 \<=                                 return model::ModelParser::LTEQ;

@@ -13,7 +13,6 @@
        WHEN
        ENSURES
        DECIMAL
-       NIL
        MODIFIES
        FREAD
        FWRITE
@@ -156,6 +155,48 @@ statement:
     $$ = new model::Operator(operator_t::FWRITE, $3, $5, $9, $13, $17);
     model_ast = $$;
   }
+| OPERATOR '+' '(' var ',' var ')'
+  WHEN '(' boolexp ')'
+  MODIFIES '(' ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(PLUS, $4, $6, $10, nullptr, $17);
+    model_ast = $$;
+  }
+| OPERATOR '-' '(' var ',' var ')'
+  WHEN '(' boolexp ')'
+  MODIFIES '(' ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(MINUS, $4, $6, $10, nullptr, $17);
+    model_ast = $$;
+  }
+| OPERATOR '*' '(' var ',' var ')'
+  WHEN '(' boolexp ')'
+  MODIFIES '(' ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(TIMES, $4, $6, $10, nullptr, $17);
+    model_ast = $$;
+  }
+| OPERATOR '/' '(' var ',' var ')'
+  WHEN '(' boolexp ')'
+  MODIFIES '(' ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(DIV, $4, $6, $10, nullptr, $17);
+    model_ast = $$;
+  }
+| FREAD '(' var ')'
+  WHEN '(' boolexp ')'
+  MODIFIES '(' ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(operator_t::FREAD, $3, nullptr, $7, nullptr, $14);
+    model_ast = $$;
+  }
+| FWRITE '(' var ',' var ')'
+  WHEN '(' boolexp ')'
+  MODIFIES '(' ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(operator_t::FWRITE, $3, $5, $9, nullptr, $16);
+    model_ast = $$;
+  }
 | '{' statement '}' {
     $$ = new model::Block($2);
     model_ast = $$;
@@ -176,10 +217,6 @@ varlist:
   }
 | var {
     $$ = new model::VarList($1, nullptr);
-    model_ast = $$;
-  }
-| NIL {
-    $$ = nullptr;
     model_ast = $$;
   }
 ;
