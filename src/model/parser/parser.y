@@ -174,6 +174,10 @@ varlist:
     $$ = new model::VarList($1, $3);
     model_ast = $$;
   }
+| var {
+    $$ = new model::VarList($1, nullptr);
+    model_ast = $$;
+  }
 | NIL {
     $$ = nullptr;
     model_ast = $$;
