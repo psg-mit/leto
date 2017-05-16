@@ -27,8 +27,10 @@
              VAR:     model::Var*;
              STMT:    model::Statement*;
              BOOLEXP: model::BoolExp*;
-             VARLIST: model::VarList*
+             VARLIST: model::VarList*;
+             OP:      operator_t;
 
+%type <OP>      op
 %type <EXP>     expression
 %type <VAR>     var
 %type <STMT>    statement
@@ -38,6 +40,13 @@
 %%
 
 program: expression | statement;
+
+op:
+  '+' { $$ = PLUS; }
+| '-' { $$ = MINUS; }
+| '*' { $$ = TIMES; }
+| '/' { $$ = DIV; }
+;
 
 expression:
   NUMBER {
@@ -113,32 +122,11 @@ statement:
     $$ = new model::Assign($1, $3);
     model_ast = $$;
   }
-| OPERATOR '+' '(' var ',' var ')'
+| OPERATOR op '(' var ',' var ')'
   WHEN '(' boolexp ')'
   MODIFIES '(' varlist ')'
   ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(PLUS, $4, $6, $10, $14, $18);
-    model_ast = $$;
-  }
-| OPERATOR '-' '(' var ',' var ')'
-  WHEN '(' boolexp ')'
-  MODIFIES '(' varlist ')'
-  ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(MINUS, $4, $6, $10, $14, $18);
-    model_ast = $$;
-  }
-| OPERATOR '*' '(' var ',' var ')'
-  WHEN '(' boolexp ')'
-  MODIFIES '(' varlist ')'
-  ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(TIMES, $4, $6, $10, $14, $18);
-    model_ast = $$;
-  }
-| OPERATOR '/' '(' var ',' var ')'
-  WHEN '(' boolexp ')'
-  MODIFIES '(' varlist ')'
-  ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(DIV, $4, $6, $10, $14, $18);
+    $$ = new model::Operator($2, $4, $6, $10, $14, $18);
     model_ast = $$;
   }
 | FREAD '(' var ')'
@@ -155,32 +143,11 @@ statement:
     $$ = new model::Operator(operator_t::FWRITE, $3, $5, $9, $13, $17);
     model_ast = $$;
   }
-| OPERATOR '+' '(' var ',' var ')'
+| OPERATOR op '(' var ',' var ')'
   WHEN '(' boolexp ')'
   MODIFIES '(' ')'
   ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(PLUS, $4, $6, $10, nullptr, $17);
-    model_ast = $$;
-  }
-| OPERATOR '-' '(' var ',' var ')'
-  WHEN '(' boolexp ')'
-  MODIFIES '(' ')'
-  ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(MINUS, $4, $6, $10, nullptr, $17);
-    model_ast = $$;
-  }
-| OPERATOR '*' '(' var ',' var ')'
-  WHEN '(' boolexp ')'
-  MODIFIES '(' ')'
-  ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(TIMES, $4, $6, $10, nullptr, $17);
-    model_ast = $$;
-  }
-| OPERATOR '/' '(' var ',' var ')'
-  WHEN '(' boolexp ')'
-  MODIFIES '(' ')'
-  ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(DIV, $4, $6, $10, nullptr, $17);
+    $$ = new model::Operator($2, $4, $6, $10, nullptr, $17);
     model_ast = $$;
   }
 | FREAD '(' var ')'
@@ -195,6 +162,57 @@ statement:
   MODIFIES '(' ')'
   ENSURES '(' boolexp ')' {
     $$ = new model::Operator(operator_t::FWRITE, $3, $5, $9, nullptr, $16);
+    model_ast = $$;
+  }
+| OPERATOR op '(' var ',' var ')'
+  MODIFIES '(' varlist ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator($2, $4, $6, &TRUE_NODE, $10, $14);
+    model_ast = $$;
+  }
+| FREAD '(' var ')'
+  MODIFIES '(' varlist ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(operator_t::FREAD,
+                             $3,
+                             nullptr,
+                             &TRUE_NODE,
+                             $7,
+                             $11);
+    model_ast = $$;
+  }
+| FWRITE '(' var ',' var ')'
+  MODIFIES '(' varlist ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(operator_t::FWRITE, $3, $5, &TRUE_NODE, $9, $13);
+    model_ast = $$;
+  }
+| OPERATOR op '(' var ',' var ')'
+  MODIFIES '(' ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator($2, $4, $6, &TRUE_NODE, nullptr, $13);
+    model_ast = $$;
+  }
+| FREAD '(' var ')'
+  MODIFIES '(' ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(operator_t::FREAD,
+                             $3,
+                             nullptr,
+                             &TRUE_NODE,
+                             nullptr,
+                             $10);
+    model_ast = $$;
+  }
+| FWRITE '(' var ',' var ')'
+  MODIFIES '(' ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Operator(operator_t::FWRITE,
+                             $3,
+                             $5,
+                             &TRUE_NODE,
+                             nullptr,
+                             $12);
     model_ast = $$;
   }
 | '{' statement '}' {

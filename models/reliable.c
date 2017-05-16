@@ -1,7 +1,7 @@
 bool upset = false;
 
-operator -(x1, x2) when (true) modifies () ensures (result == x1 - x2);
-operator *(x1, x2) when (true) modifies () ensures (result == x1 * x2);
-operator /(x1, x2) when (true) modifies () ensures (result == x1 / x2);
-operator +(x1, x2) when (true) modifies () ensures (result == x1 + x2);
-fread(x1) when (true) modifies () ensures (result == x1)
+operator -(x1, x2) modifies () ensures (result == x1 - x2);
+operator *(x1, x2) modifies () ensures (result == x1 * x2);
+operator /(x1, x2) modifies () ensures (result == x1 / x2);
+operator +(x1, x2) modifies () ensures (result == x1 + x2);
+fread(x1) modifies () ensures (result == x1)
