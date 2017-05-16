@@ -2078,12 +2078,13 @@ namespace lang {
     //       Or at least detect if <r> is used and fail
     add_var(type_t::INT, otmp, rtmp);
     types[node.var->name] = type_t::INT;
-    z3::expr* var = get_current_var(otmp);
+    specvars.insert(node.var->name);
+    z3::expr* var = get_current_var(rtmp);
     assert(var);
 
     // Map var name to tmp var
-    var_version[oname] = 0;
-    vars[oname + "-0"] = var;
+    var_version[rname] = 0;
+    vars[rname + "-0"] = var;
 
     // Eval expression
     z3pair exp = node.exp->accept(*this);
@@ -2095,11 +2096,14 @@ namespace lang {
     assert(ret);
 
     // Remove the forall var
-    size_t res = var_version.erase(oname);
+    size_t res = var_version.erase(rname);
     assert(res);
-    res = vars.erase(oname + "-0");
+    res = vars.erase(rname + "-0");
     assert(res);
     res = types.erase(node.var->name);
+    assert(res);
+    res = specvars.erase(node.var->name);
+    assert(res);
 
     return {ret, nullptr};
   }

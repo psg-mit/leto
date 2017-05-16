@@ -5,7 +5,7 @@
 
 #define EQ(e) (e<o> == e<r>)
 
-#define NZD (forall(fi)((E / EPSILON) < A<r>[fi<o>][fi<o>] || A<r>[fi<o>][fi<o>] < (real(0, 1) - (E / EPSILON))))
+#define NZD (forall(fi)((E / EPSILON) < A<r>[fi][fi] || A<r>[fi][fi] < (real(0, 1) - (E / EPSILON))))
 
 #define BOUND(i) ((0 - 2) < i<r> && i<r> < N<r> && EQ(i))
 #define TBOUND(i) (0  <= i<r> && i<r> < N<r> && EQ(i))
@@ -15,8 +15,8 @@
             ((last_upset == false && model.upset == true) -> ((sigma<r> < sigma<o> + E) && sigma<o> - E < sigma<r>)) && \
             ((last_upset == true && model.upset == true) -> EQ(sigma))
 
-#define UPS ((model.upset == false) -> (forall(fi)((((i<r>) < fi<o> && fi<o> < N<r>)) -> next_x<o>[fi<o>] == next_x<r>[fi<o>]))) && \
-            ((model.upset == true) -> ((forall(fj)((((i<r>) < fj<o> && fj<o> < N<r>) && (fj<o> != upset_index)) -> next_x<o>[fj<o>] == next_x<r>[fj<o>]))) && \
+#define UPS ((model.upset == false) -> (forall(fi)((((i<r>) < fi && fi < N<r>)) -> next_x<o>[fi] == next_x<r>[fi]))) && \
+            ((model.upset == true) -> ((forall(fj)((((i<r>) < fj && fj < N<r>) && (fj != upset_index)) -> next_x<o>[fj] == next_x<r>[fj]))) && \
              (real(0, 1) - EPSILON) < XDIST &&  XDIST < EPSILON)
 
 #define OUTER ((model.upset == false) -> (EQ(x) && EQ(next_x))) &&\
