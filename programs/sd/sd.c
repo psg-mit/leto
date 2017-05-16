@@ -58,9 +58,9 @@ while (r != r2) (OUTER2 && IMPL2) {
   relational_assume (INV);
   for (i = N -. 1; 0 <= i; --.i) (INV) {
     // recompute Ax[i]
-    Ax[i] = real(0, 1);
-    spec_Ax[i] = real(0,1);
-    Ax2[i] = real(0, 1);
+    Ax[i] = 0;
+    spec_Ax[i] = 0;
+    Ax2[i] = 0;
     for (j = N -. 1; 0 <= j; --.j) (EQ(A) && UPSET2) {
       // TODO: Pull assumption into loop inv
       relational_assume ((old_upset == true) -> (model.upset == true));

@@ -1,11 +1,11 @@
-#define E real(2, 1)
+#define E real(1, 1)
 #define EPSILON real(10000, 1)
 
 #define XDIST (next_x<o>[upset_index] - next_x<r>[upset_index])
 
 #define EQ(e) (e<o> == e<r>)
 
-#define NZD (forall(fi)((E / EPSILON) < A<r>[fi][fi] || A<r>[fi][fi] < (real(0, 1) - (E / EPSILON))))
+#define NZD (forall(fi)((E / EPSILON) < A<r>[fi][fi] || A<r>[fi][fi] < (0 - (E / EPSILON))))
 
 #define BOUND(i) ((0 - 2) < i<r> && i<r> < N<r> && EQ(i))
 #define TBOUND(i) (0  <= i<r> && i<r> < N<r> && EQ(i))
@@ -17,7 +17,7 @@
 
 #define UPS ((model.upset == false) -> (forall(fi)((((i<r>) < fi && fi < N<r>)) -> next_x<o>[fi] == next_x<r>[fi]))) && \
             ((model.upset == true) -> ((forall(fj)((((i<r>) < fj && fj < N<r>) && (fj != upset_index)) -> next_x<o>[fj] == next_x<r>[fj]))) && \
-             (real(0, 1) - EPSILON) < XDIST &&  XDIST < EPSILON)
+             (0 - EPSILON) < XDIST &&  XDIST < EPSILON)
 
 #define OUTER ((model.upset == false) -> (EQ(x) && EQ(next_x))) &&\
               (last_upset == true -> model.upset == true) &&\
@@ -52,9 +52,9 @@ relational_assume (OUTER);
 while (0 <= iters) (OUTER) {
   for (i = N -. 1; 0 <= i; --.i) (MIDDLE) {
     last_upset = model.upset;
-    sigma = real(0, 1);
+    sigma = 0;
     for (j = N -. 1; 0 <= j; --.j) (INNER) {
-      delta = real(0, 1);
+      delta = 0;
       if (i != j) {
         delta = A[i][j] * x[j];
         sigma = sigma + delta

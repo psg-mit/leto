@@ -724,7 +724,12 @@ namespace lang {
     z3pair lhs = node.lhs->accept(*this);
     type_t lhs_type = expr_type;
     z3pair rhs = node.rhs->accept(*this);
-    assert(expr_type == lhs_type);
+    assert (lhs_type == REAL || lhs_type == INT);
+    assert (expr_type == REAL || expr_type == INT);
+    // TODO: can't mix ints and reals in division (Z3 sometimes casts things to
+    // ints and messes it all up)
+    assert ((node.op != DIV && node.op != ODIV) || expr_type == lhs_type);
+    expr_type = lhs_type == REAL || expr_type == REAL ? REAL : INT;
 
     model_visitor->prep_op(node.op, lhs.relaxed, rhs.relaxed);
 
@@ -735,8 +740,8 @@ namespace lang {
     assert(rhs.relaxed);
 
     // Build relational pairs
-    z3::expr *ores = binop(context, node.op, lhs_type, lhs.original, rhs.original);
-    z3::expr *rres = binop(context, node.op, lhs_type, lhs.relaxed, rhs.relaxed);
+    z3::expr *ores = binop(context, node.op, expr_type, lhs.original, rhs.original);
+    z3::expr *rres = binop(context, node.op, expr_type, lhs.relaxed, rhs.relaxed);
 
     assert(ores);
     assert(rres);
@@ -791,7 +796,6 @@ namespace lang {
     type_t lhs_type = expr_type;
     last_array = {nullptr, nullptr};
     z3pair rhs = node.rhs->accept(*this);
-    assert(lhs_type == expr_type);
     vec_pair rhs_array = last_array;
 
     switch (node.op) {
@@ -1116,6 +1120,7 @@ namespace lang {
           assert(false);
       }
 
+      expr_type = BOOL;
       return {ret, nullptr};
     }
 
@@ -1127,7 +1132,6 @@ namespace lang {
     z3::func_decl* lhs_array = last_array.original;
     last_array = {nullptr, nullptr};
     z3pair rhs = node.rhs->accept(*this);
-    type_t rhs_type = expr_type;
     z3::func_decl* rhs_array = last_array.original;
     last_array = {nullptr, nullptr};
 
@@ -1158,11 +1162,9 @@ namespace lang {
       // Build relational pairs
       switch (node.op) {
         case EQUALS:
-          assert(lhs_type == rhs_type);
           res = new z3::expr(*lhs.original == *rhs.original);
           break;
         case LT:
-          assert(lhs_type == rhs_type);
           switch (lhs_type) {
             case INT:
             case REAL:
@@ -1182,7 +1184,6 @@ namespace lang {
           }
           break;
         case LTEQ:
-          assert(lhs_type == rhs_type);
           switch (lhs_type) {
             case INT:
             case REAL:
@@ -1195,7 +1196,6 @@ namespace lang {
           }
           break;
         case NEQ:
-          assert(lhs_type == rhs_type);
           res = new z3::expr(*lhs.original != *rhs.original);
           break;
         case AND:
@@ -1213,6 +1213,7 @@ namespace lang {
     }
 
     assert(res);
+    expr_type = BOOL;
     return {res, nullptr};
   }
 
@@ -1360,7 +1361,11 @@ namespace lang {
     z3pair lhs = node.lhs->accept(*this);
     type_t lhs_type = expr_type;
     z3pair rhs = node.rhs->accept(*this);
-    assert(expr_type == lhs_type);
+    assert (lhs_type == REAL || lhs_type == INT);
+    assert (expr_type == REAL || expr_type == INT);
+    // TODO: Can't mix ints and reals in division
+    assert ((node.op != DIV  && node.op != ODIV) || expr_type == lhs_type);
+    expr_type = lhs_type == REAL || expr_type == REAL ? REAL : INT;
 
     // Only original part should exist
     assert(lhs.original);

@@ -1,8 +1,8 @@
-#define SQR_MIN_MAX_AIJ real(2, 1)
+#define SQR_MIN_MAX_AIJ 2
 
 #define MIN_C real(74, 100)
-#define MIN_KA real(5, 1)
-#define MIN_F real(4, 1)
+#define MIN_KA 5
+#define MIN_F 4
 
 #define EQ(x) (x<o> == x<r>)
 #define SPEQR(x) (x<r> == spec_r)
@@ -91,7 +91,7 @@ specvar bool old_upset;
 
 // TODO: This only holds for seu (eta = 1)
 // Verify F: c^(-F) < k(A)
-real tmp = real(0, 1) -. MIN_F;
+real tmp = 0 -. MIN_F;
 real lhs = POW(MIN_C, tmp);
 assert(tmp < MIN_KA);
 
@@ -143,8 +143,8 @@ while (it < M) (EQS) {
     for (i = N -. 1; 0 <= i; --.i) (3 == 3) { r[i] = b[i] -. r[i] };
 
     // Line 6: alpha = (r^T * p) / (p^T * q)
-    num = real(0, 1);
-    denom = real(0, 1);
+    num = 0;
+    denom = 0;
     for (i = N -. 1; 0 <= i; --.i) (4 == 4) {
       tmp = r[i] *. p[i];
       num = num +. tmp;
@@ -157,11 +157,11 @@ while (it < M) (EQS) {
     COMPUTE_X_R;
 
     // Line 9: beta = (-next_r^T * q) / (p^t * q)
-    num = real(0, 1);
-    denom = real(0, 1);
+    num = 0;
+    denom = 0;
     for (i = N -. 1; 0 <= i; --.i) (6 == 6) {
       // Compute num
-      tmp = real(0, 1) -. next_r[i];
+      tmp = 0 -. next_r[i];
       tmp = tmp *. q[i];
       num = num +. tmp;
 
@@ -177,7 +177,7 @@ while (it < M) (EQS) {
   } else {
     // Line 12: q = A * p;
     for (i = N -. 1; 0 <= i; --.i) (OUTER) {
-      q[i] = real(0, 1);
+      q[i] = 0;
       for (j = N -. 1; 0 <= j; --.j) (INNER) {
         old_upset = model.upset;
 
@@ -192,8 +192,8 @@ while (it < M) (EQS) {
     };
 
     // Line 13: alpha = ||r||^2 / (p^T * q)
-    num = real(0, 1);
-    denom = real(0, 1);
+    num = 0;
+    denom = 0;
     for (i = N -. 1; 0 <= i; --.i) (10 == 10) {
       tmp = r[i] *. r[i];
       num = num +. tmp;
@@ -206,8 +206,8 @@ while (it < M) (EQS) {
     COMPUTE_X_R;
 
     // Line 16: beta = ||next_r||^2 / ||r||^2
-    num = real(0, 1);
-    denom = real(0, 1);
+    num = 0;
+    denom = 0;
     for (i = N -. 1; 0 <= i; --.i) (12 == 12) {
       // Compute num
       num = next_r[i] *. next_r[i];
