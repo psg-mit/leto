@@ -155,6 +155,9 @@ namespace model {
       case AND:
         res = new z3::expr(*lhs && *rhs);
         break;
+      case OR:
+        res = new z3::expr(*lhs || *rhs);
+        break;
       case LT:
         res = new z3::expr(*lhs < *rhs);
         break;

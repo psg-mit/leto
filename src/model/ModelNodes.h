@@ -6,7 +6,7 @@
 #include "../common.h"
 
 namespace model {
-  enum bool_t {AND, EQUALS, LT, XOR, LTEQ};
+  enum bool_t {AND, OR, EQUALS, LT, XOR, LTEQ};
 
   class ASTVisitor;
 

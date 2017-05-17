@@ -11,6 +11,7 @@ false                               return model::ModelParser::FALSE;
 bool                                return model::ModelParser::BOOL;
 ==                                  return model::ModelParser::EQUALS;
 &&                                  return model::ModelParser::AND;
+\|\|                                return model::ModelParser::OR;
 operator                            return model::ModelParser::OPERATOR;
 when                                return model::ModelParser::WHEN;
 ensures                             return model::ModelParser::ENSURES;

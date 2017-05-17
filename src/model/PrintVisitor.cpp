@@ -123,6 +123,9 @@ namespace model {
       case AND:
         printf("&&\n");
         break;
+      case OR:
+        printf("||\n");
+        break;
     }
 
     node.lhs->accept(*this);

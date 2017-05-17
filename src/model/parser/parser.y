@@ -18,7 +18,7 @@
        FWRITE
 
 %left ';'
-%left AND
+%left AND OR
 %left EQUALS '<' LTEQ
 %left '+' '-'
 %left '*' '/'
@@ -93,6 +93,10 @@ boolexp:
     $$ = new model::BoolBinOp(model::bool_t::AND, $1, $3);
     model_ast = $$;
   }
+| boolexp OR boolexp {
+    $$ = new model::BoolBinOp(model::bool_t::OR , $1, $3);
+    model_ast = $$;
+  }
 | expression '<' expression {
     $$ = new model::BoolBinOp(model::bool_t::LT, $1, $3);
     model_ast = $$;
@@ -137,11 +141,20 @@ statement:
                                   new model::Assign($2, $4));
     model_ast = $$;
   }
+| BOOL var '=' boolexp {
+    $$ = new model::StatementList(new model::Declare(type_t::BOOL, $2),
+                                  new model::Assign($2, $4));
+    model_ast = $$;
+  }
 | statement ';' statement {
     $$ = new model::StatementList($1, $3);
     model_ast = $$;
   }
 | var '=' expression {
+    $$ = new model::Assign($1, $3);
+    model_ast = $$;
+  }
+| var '=' boolexp {
     $$ = new model::Assign($1, $3);
     model_ast = $$;
   }
