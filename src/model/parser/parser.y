@@ -70,15 +70,11 @@ expression:
     model_ast = $$;
   }
 | var
-| boolexp
 | DECIMAL {
     $$ = new model::Float(stof(d_scanner.matched()));
     model_ast = $$;
   }
-;
-
-boolexp:
-  TRUE {
+| TRUE {
     $$ = new model::Bool(true);
     model_ast = $$;
   }
@@ -86,11 +82,14 @@ boolexp:
     $$ = new model::Bool(false);
     model_ast = $$;
   }
-| expression EQUALS expression {
+;
+
+boolexp:
+  expression EQUALS expression {
     $$ = new model::BoolBinOp(model::bool_t::EQUALS, $1, $3);
     model_ast = $$;
   }
-| expression AND expression {
+| boolexp AND boolexp {
     $$ = new model::BoolBinOp(model::bool_t::AND, $1, $3);
     model_ast = $$;
   }
@@ -100,6 +99,30 @@ boolexp:
   }
 | expression LTEQ expression {
     $$ = new model::BoolBinOp(model::bool_t::LTEQ, $1, $3);
+    model_ast = $$;
+  }
+| expression '<' expression '<' expression {
+    model::BoolBinOp* lhs = new model::BoolBinOp(model::bool_t::LT, $1, $3);
+    model::BoolBinOp* rhs = new model::BoolBinOp(model::bool_t::LT, $3, $5);
+    $$ = new model::BoolBinOp(model::bool_t::AND, lhs, rhs);
+    model_ast = $$;
+  }
+| expression LTEQ expression '<' expression {
+    model::BoolBinOp* lhs = new model::BoolBinOp(model::bool_t::LTEQ, $1, $3);
+    model::BoolBinOp* rhs = new model::BoolBinOp(model::bool_t::LT, $3, $5);
+    $$ = new model::BoolBinOp(model::bool_t::AND, lhs, rhs);
+    model_ast = $$;
+  }
+| expression '<' expression LTEQ expression {
+    model::BoolBinOp* lhs = new model::BoolBinOp(model::bool_t::LT, $1, $3);
+    model::BoolBinOp* rhs = new model::BoolBinOp(model::bool_t::LTEQ, $3, $5);
+    $$ = new model::BoolBinOp(model::bool_t::AND, lhs, rhs);
+    model_ast = $$;
+  }
+| expression LTEQ expression LTEQ expression {
+    model::BoolBinOp* lhs = new model::BoolBinOp(model::bool_t::LTEQ, $1, $3);
+    model::BoolBinOp* rhs = new model::BoolBinOp(model::bool_t::LTEQ, $3, $5);
+    $$ = new model::BoolBinOp(model::bool_t::AND, lhs, rhs);
     model_ast = $$;
   }
 ;

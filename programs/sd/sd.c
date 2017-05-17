@@ -2,8 +2,8 @@
 #define SPEQR(x) x<r> == spec_r
 #define SPEQAX(Ax) Ax<r> == spec_Ax
 
-#define BOUND(i) ((0 - 2) < i<o> && i<o> < N<o>)
-#define TBOUND(i) (0 <= i<o> && i<o> < N<o>)
+#define BOUND(i) ((0 - 2) < i<o> < N<o>)
+#define TBOUND(i) (0 <= i<o> < N<o>)
 
 #define OUTER ((model.upset == false) -> EQ(r)) && \
               ((model.upset == true && old_upset == true) -> EQ(r))

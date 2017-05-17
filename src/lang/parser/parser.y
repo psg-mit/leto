@@ -156,7 +156,6 @@ expression:
     $$ = new lang::ArrayAccess($1, {$3, $6});
     lang_ast = $$;
   }
-| boolexp
 ;
 
 exprlist:
@@ -179,7 +178,7 @@ var:
 ;
 
 boolexp:
-  expression '^' expression {
+  boolexp '^' boolexp {
     $$ = new lang::BoolExp(lang::XOR, $1, $3);
     lang_ast = $$;
   }
@@ -195,19 +194,43 @@ boolexp:
     $$ = new lang::BoolExp(lang::bool_t::LTEQ , $1, $3);
     lang_ast = $$;
   }
+| expression LT expression LT expression {
+    lang::BoolExp* lhs = new lang::BoolExp(lang::bool_t::LT, $1, $3);
+    lang::BoolExp* rhs = new lang::BoolExp(lang::bool_t::LT, $3, $5);
+    $$ = new lang::BoolExp(lang::bool_t::AND, lhs, rhs);
+    lang_ast = $$;
+  }
+| expression LTEQ expression LT expression {
+    lang::BoolExp* lhs = new lang::BoolExp(lang::bool_t::LTEQ, $1, $3);
+    lang::BoolExp* rhs = new lang::BoolExp(lang::bool_t::LT, $3, $5);
+    $$ = new lang::BoolExp(lang::bool_t::AND, lhs, rhs);
+    lang_ast = $$;
+  }
+| expression LT expression LTEQ expression {
+    lang::BoolExp* lhs = new lang::BoolExp(lang::bool_t::LT, $1, $3);
+    lang::BoolExp* rhs = new lang::BoolExp(lang::bool_t::LTEQ, $3, $5);
+    $$ = new lang::BoolExp(lang::bool_t::AND, lhs, rhs);
+    lang_ast = $$;
+  }
+| expression LTEQ expression LTEQ expression {
+    lang::BoolExp* lhs = new lang::BoolExp(lang::bool_t::LTEQ, $1, $3);
+    lang::BoolExp* rhs = new lang::BoolExp(lang::bool_t::LTEQ, $3, $5);
+    $$ = new lang::BoolExp(lang::bool_t::AND, lhs, rhs);
+    lang_ast = $$;
+  }
 | expression NEQ expression {
     $$ = new lang::BoolExp(lang::bool_t::NEQ, $1, $3);
     lang_ast = $$;
   }
-| expression AND expression {
+| boolexp AND boolexp {
     $$ = new lang::BoolExp(lang::bool_t::AND, $1, $3);
     lang_ast = $$;
   }
-| expression OR expression {
+| boolexp OR boolexp {
     $$ = new lang::BoolExp(lang::bool_t::OR, $1, $3);
     lang_ast = $$;
   }
-| expression IMPLIES expression {
+| boolexp IMPLIES boolexp {
     $$ = new lang::BoolExp(lang::bool_t::IMPLIES, $1, $3);
     lang_ast = $$;
   }
@@ -333,6 +356,30 @@ relboolexp:
     $$ = new lang::RelationalBoolExp(lang::bool_t::LTEQ, $1, $3);
     lang_ast = $$;
   }
+| relexpression LT relexpression LT relexpression {
+    lang::RelationalBoolExp* lhs = new lang::RelationalBoolExp(lang::bool_t::LT, $1, $3);
+    lang::RelationalBoolExp* rhs = new lang::RelationalBoolExp(lang::bool_t::LT, $3, $5);
+    $$ = new lang::RelationalBoolExp(lang::bool_t::AND, lhs, rhs);
+    lang_ast = $$;
+  }
+| relexpression LTEQ relexpression LT relexpression {
+    lang::RelationalBoolExp* lhs = new lang::RelationalBoolExp(lang::bool_t::LTEQ, $1, $3);
+    lang::RelationalBoolExp* rhs = new lang::RelationalBoolExp(lang::bool_t::LT, $3, $5);
+    $$ = new lang::RelationalBoolExp(lang::bool_t::AND, lhs, rhs);
+    lang_ast = $$;
+  }
+| relexpression LT relexpression LTEQ relexpression {
+    lang::RelationalBoolExp* lhs = new lang::RelationalBoolExp(lang::bool_t::LT, $1, $3);
+    lang::RelationalBoolExp* rhs = new lang::RelationalBoolExp(lang::bool_t::LTEQ, $3, $5);
+    $$ = new lang::RelationalBoolExp(lang::bool_t::AND, lhs, rhs);
+    lang_ast = $$;
+  }
+| relexpression LTEQ relexpression LTEQ relexpression {
+    lang::RelationalBoolExp* lhs = new lang::RelationalBoolExp(lang::bool_t::LTEQ, $1, $3);
+    lang::RelationalBoolExp* rhs = new lang::RelationalBoolExp(lang::bool_t::LTEQ, $3, $5);
+    $$ = new lang::RelationalBoolExp(lang::bool_t::AND, lhs, rhs);
+    lang_ast = $$;
+  }
 | '(' relboolexp ')' {
     $$ = $2;
     lang_ast = $$;
@@ -446,6 +493,10 @@ statement:
     $$ = new lang::Assign($1, $3);
     lang_ast = $$;
   }
+| expression '=' boolexp {
+    $$ = new lang::Assign($1, $3);
+    lang_ast = $$;
+  }
 | expression '=' '{' exprlist '}' {
     $$ = new lang::ArrayAssign($1, $4);
     lang_ast = $$;
@@ -501,6 +552,15 @@ statement:
     lang_ast = $$;
   }
 | SPECVAR declare '=' expression {
+    $2->specvar = true;
+    $$ = new lang::StatementList($2, new lang::Assign($2->var, $4));
+    lang_ast = $$;
+  }
+| declare '=' boolexp {
+    $$ = new lang::StatementList($1, new lang::Assign($1->var, $3));
+    lang_ast = $$;
+  }
+| SPECVAR declare '=' boolexp {
     $2->specvar = true;
     $$ = new lang::StatementList($2, new lang::Assign($2->var, $4));
     lang_ast = $$;
