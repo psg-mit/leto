@@ -7,7 +7,7 @@
 #define EQ(x) (x<o> == x<r>)
 #define SPEQR(x) (x<r> == spec_r)
 #define SPEQQ(x) (x<r> == spec_q)
-#define BOUND(i) (-2 < i<o> < N<o> && EQ(i))
+#define BOUND(i) (-1 <= i<o> < N<o> && EQ(i))
 #define TBOUND(i) (0 <= i<o> < N<o> && EQ(i))
 
 #define EQS EQ(A) && \
