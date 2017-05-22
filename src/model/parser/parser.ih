@@ -8,6 +8,7 @@
 
 const model::ModelNode *model_ast;
 static model::Bool TRUE_NODE(true);
+static model::Int ZERO(0);
 
 // $insert namespace-open
 namespace model

@@ -69,6 +69,10 @@ expression:
     $$ = new model::BinOp(DIV, $1, $3);
     model_ast = $$;
   }
+| '-' expression {
+    $$ = new model::BinOp(MINUS, &ZERO, $2);
+    model_ast = $$;
+  }
 | var
 | DECIMAL {
     $$ = new model::Float(stof(d_scanner.matched()));

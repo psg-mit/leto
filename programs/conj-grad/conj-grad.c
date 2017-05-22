@@ -7,7 +7,7 @@
 #define EQ(x) (x<o> == x<r>)
 #define SPEQR(x) (x<r> == spec_r)
 #define SPEQQ(x) (x<r> == spec_q)
-#define BOUND(i) ((0 - 2) < i<o> < N<o> && EQ(i))
+#define BOUND(i) (-2 < i<o> < N<o> && EQ(i))
 #define TBOUND(i) (0 <= i<o> < N<o> && EQ(i))
 
 #define EQS EQ(A) && \
@@ -91,7 +91,7 @@ specvar bool old_upset;
 
 // TODO: This only holds for seu (eta = 1)
 // Verify F: c^(-F) < k(A)
-real tmp = 0 -. MIN_F;
+real tmp = -MIN_F;
 real lhs = POW(MIN_C, tmp);
 assert(tmp < MIN_KA);
 
@@ -161,7 +161,7 @@ while (it < M) (EQS) {
     denom = 0;
     for (i = N -. 1; 0 <= i; --.i) (6 == 6) {
       // Compute num
-      tmp = 0 -. next_r[i];
+      tmp = -next_r[i];
       tmp = tmp *. q[i];
       num = num +. tmp;
 

@@ -8,6 +8,8 @@
 
 const lang::LangNode *lang_ast;
 lang::Int ONE(1);
+lang::Int ZERO(0);
+lang::RelationalInt REL_ZERO(0);
 
 // $insert namespace-open
 namespace lang

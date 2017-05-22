@@ -115,6 +115,10 @@ expression:
     $$ = new lang::BinOp(operator_t::ODIV, $1, $3);
     lang_ast = $$;
   }
+| '-' expression {
+    $$ = new lang::BinOp(operator_t::OMINUS, &ZERO, $2);
+    lang_ast = $$;
+  }
 | NUMBER {
     $$ = new lang::Int(stoi(d_scanner.matched()));
     lang_ast = $$;
@@ -247,6 +251,10 @@ relexpression:
   }
 | var {
     $$ = new lang::SpecVar($1);
+    lang_ast = $$;
+  }
+| '-' relexpression {
+    $$ = new lang::RelationalBinOp(MINUS, &REL_ZERO, $2);
     lang_ast = $$;
   }
 | MODEL var {
