@@ -497,6 +497,10 @@ statement:
     $$ = new lang::StatementList($1, $3);
     lang_ast = $$;
   }
+| statement ';' {
+    $$ = $1;
+    lang_ast = $$;
+  }
 | expression '=' expression {
     $$ = new lang::Assign($1, $3);
     lang_ast = $$;

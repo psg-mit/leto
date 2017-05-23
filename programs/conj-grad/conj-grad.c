@@ -35,13 +35,13 @@
     tmp = alpha *. p[i]; \
     next_x[i] = x[i] +. tmp; \
     tmp = alpha *. q[i]; \
-    next_r[i] = r[i] -. tmp \
+    next_r[i] = r[i] -. tmp; \
   }
 
 #define COMPUTE_P \
   for (i = N -. 1; 0 <= i; --.i) (7 == 7) { \
     tmp = beta *. p[i]; \
-    next_p[i] = next_r[i] +. tmp \
+    next_p[i] = next_r[i] +. tmp; \
   }
 
 // Params
@@ -131,7 +131,7 @@ while (it < M) (EQS) {
           spec_tmp = A[i][j] *. p[j];
           q[i] = q[i] + tmp;
           q2[i] = q2[i] + tmp2;
-          spec_q[i] = spec_q[i] +. spec_tmp
+          spec_q[i] = spec_q[i] +. spec_tmp;
         }
       }
     };
@@ -140,7 +140,7 @@ while (it < M) (EQS) {
     relational_assert (old_upset == false -> SPEQQ(q));
 
     // Line 5: r = b - r
-    for (i = N -. 1; 0 <= i; --.i) (3 == 3) { r[i] = b[i] -. r[i] };
+    for (i = N -. 1; 0 <= i; --.i) (3 == 3) { r[i] = b[i] -. r[i]; };
 
     // Line 6: alpha = (r^T * p) / (p^T * q)
     num = 0;
@@ -148,7 +148,7 @@ while (it < M) (EQS) {
     for (i = N -. 1; 0 <= i; --.i) (4 == 4) {
       tmp = r[i] *. p[i];
       num = num +. tmp;
-      denom = p[i] *. q[i]
+      denom = p[i] *. q[i];
     };
     alpha = num /. denom;
 
@@ -167,12 +167,12 @@ while (it < M) (EQS) {
 
       // Compute denom
       tmp = p[i] *. q[i];
-      denom = denom +. tmp
+      denom = denom +. tmp;
     };
     beta = num /. denom;
 
     // Line 10: next_p = next_r + beta * p
-    COMPUTE_P
+    COMPUTE_P;
 
   } else {
     // Line 12: q = A * p;
@@ -187,7 +187,7 @@ while (it < M) (EQS) {
 
         // For verification that error is sufficiently small
         // TODO: This needs to be adjusted for non SEU models
-        relational_assert((old_upset == false) -> ((DQ * DQ) < SQR_MIN_MAX_AIJ))
+        relational_assert((old_upset == false) -> ((DQ * DQ) < SQR_MIN_MAX_AIJ));
       }
     };
 
@@ -197,7 +197,7 @@ while (it < M) (EQS) {
     for (i = N -. 1; 0 <= i; --.i) (10 == 10) {
       tmp = r[i] *. r[i];
       num = num +. tmp;
-      denom = p[i] *. q[i]
+      denom = p[i] *. q[i];
     };
     alpha = num /. denom;
 
@@ -213,12 +213,12 @@ while (it < M) (EQS) {
       num = next_r[i] *. next_r[i];
 
       // Compute denom
-      denom = r[i] *. r[i]
+      denom = r[i] *. r[i];
     };
     beta = num /. denom;
 
     // Line 17: next_p = next_r + beta * p
-    COMPUTE_P
+    COMPUTE_P;
   };
   ++.it;
   COPY(next_p, p);
@@ -228,6 +228,6 @@ while (it < M) (EQS) {
   ++.man_mod;
 
   if (man_mod == M) {
-    man_mod = 0
+    man_mod = 0;
   }
 }

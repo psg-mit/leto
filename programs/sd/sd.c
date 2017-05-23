@@ -71,16 +71,16 @@ while (r != r2) (OUTER2 && IMPL2) {
 
       Ax[i] = Ax[i] + tmp;
       Ax2[i] = Ax2[i] + tmp2;
-      spec_Ax[i] = spec_Ax[i] +. tmp
+      spec_Ax[i] = spec_Ax[i] +. tmp;
     };
     // TODO: Pull assumption into loop inv
     relational_assume ((old_upset == true)  -> (model.upset == true));
 
     r[i] = b[i] -. Ax[i];
     r2[i] = b[i] -. Ax2[i];
-    spec_r[i] = b[i] -. spec_Ax[i]
+    spec_r[i] = b[i] -. spec_Ax[i];
   }
 };
 
 //assume (old_upset == model.upset);
-relational_assert ((init_upset == false) -> SPEQR(r))
+relational_assert ((init_upset == false) -> SPEQR(r));

@@ -154,6 +154,10 @@ statement:
     $$ = new model::StatementList($1, $3);
     model_ast = $$;
   }
+| statement ';' {
+    $$ = $1;
+    model_ast = $$;
+  }
 | var '=' expression {
     $$ = new model::Assign($1, $3);
     model_ast = $$;
