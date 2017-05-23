@@ -42,9 +42,8 @@
 
 
 %left ';'
-%left AND OR
+%left AND OR '^'
 %left EQUALS NEQ LT IMPLIES LTEQ
-%left '^'
 %left '+' '-' OMINUS OPLUS
 %left '*' '/' OTIMES ODIV
 
@@ -60,7 +59,7 @@
              DECLMAT: lang::DeclareMat*;
 
 %type <EXP>  expression
-%type <STMT> statement
+%type <STMT> statement cflow statementlist
 %type <VAR>  var
 %type <BOOL> boolexp
 %type <RELEXP> relexpression
@@ -74,7 +73,7 @@
 
 program:
   expression
-| statement
+| statementlist
 ;
 
 
@@ -450,22 +449,34 @@ declaremat:
   }
 ;
 
-statement:
+cflow:
   WHILE '(' boolexp ')'
         '(' relboolexp ')'
-        '{' statement '}' {
+        '{' statementlist '}' {
     $$ = new lang::While($3, $6, $9);
     lang_ast = $$;
   }
 | FOR '(' statement ';' boolexp ';' statement ')'
       '(' relboolexp ')'
-      '{' statement '}' {
+      '{' statementlist '}' {
     lang::Statement* body = new StatementList($13, $7);
     lang::While* desugar_while = new lang::While($5, $10, body);
     $$ = new lang::StatementList($3, desugar_while);
     lang_ast = $$;
   }
-| ASSERT '(' boolexp ')' {
+| IF '(' boolexp ')' '{' statementlist '}' ELSE '{' statementlist '}' {
+    $$ = new lang::If($3, $6, $10);
+    lang_ast = $$;
+  }
+| IF '(' boolexp ')' '{' statementlist '}' {
+    $$ = new lang::If($3, $6, new lang::Skip());
+    lang_ast = $$;
+  }
+;
+
+
+statement:
+  ASSERT '(' boolexp ')' {
     $$ = new lang::Assert($3);
     lang_ast = $$;
   }
@@ -483,22 +494,6 @@ statement:
   }
 | FAIL '(' boolexp ')' {
     $$ = new lang::Fail($3);
-    lang_ast = $$;
-  }
-| IF '(' boolexp ')' '{' statement '}' ELSE '{' statement '}' {
-    $$ = new lang::If($3, $6, $10);
-    lang_ast = $$;
-  }
-| IF '(' boolexp ')' '{' statement '}' {
-    $$ = new lang::If($3, $6, new lang::Skip());
-    lang_ast = $$;
-  }
-| statement ';' statement {
-    $$ = new lang::StatementList($1, $3);
-    lang_ast = $$;
-  }
-| statement ';' {
-    $$ = $1;
     lang_ast = $$;
   }
 | expression '=' expression {
@@ -618,6 +613,22 @@ statement:
   }
 | SKIP {
     $$ = new lang::Skip();
+    lang_ast = $$;
+  }
+;
+
+statementlist:
+  cflow
+| cflow statementlist {
+    $$ = new lang::StatementList($1, $2);
+    lang_ast = $$;
+  }
+| statement ';' statementlist {
+    $$ = new lang::StatementList($1, $3);
+    lang_ast = $$;
+  }
+| statement ';' {
+    $$ = $1;
     lang_ast = $$;
   }
 ;

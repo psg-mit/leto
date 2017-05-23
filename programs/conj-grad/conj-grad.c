@@ -134,13 +134,13 @@ while (it < M) (EQS) {
           spec_q[i] = spec_q[i] +. spec_tmp;
         }
       }
-    };
+    }
 
     relational_assert (old_upset == false -> SPEQR(r));
     relational_assert (old_upset == false -> SPEQQ(q));
 
     // Line 5: r = b - r
-    for (i = N -. 1; 0 <= i; --.i) (3 == 3) { r[i] = b[i] -. r[i]; };
+    for (i = N -. 1; 0 <= i; --.i) (3 == 3) { r[i] = b[i] -. r[i]; }
 
     // Line 6: alpha = (r^T * p) / (p^T * q)
     num = 0;
@@ -149,12 +149,12 @@ while (it < M) (EQS) {
       tmp = r[i] *. p[i];
       num = num +. tmp;
       denom = p[i] *. q[i];
-    };
+    }
     alpha = num /. denom;
 
     // Line 7: next_x = x + alpha * p
     // Line 8: next_r = r - alpha * q
-    COMPUTE_X_R;
+    COMPUTE_X_R
 
     // Line 9: beta = (-next_r^T * q) / (p^t * q)
     num = 0;
@@ -168,11 +168,11 @@ while (it < M) (EQS) {
       // Compute denom
       tmp = p[i] *. q[i];
       denom = denom +. tmp;
-    };
+    }
     beta = num /. denom;
 
     // Line 10: next_p = next_r + beta * p
-    COMPUTE_P;
+    COMPUTE_P
 
   } else {
     // Line 12: q = A * p;
@@ -189,7 +189,7 @@ while (it < M) (EQS) {
         // TODO: This needs to be adjusted for non SEU models
         relational_assert((old_upset == false) -> ((DQ * DQ) < SQR_MIN_MAX_AIJ));
       }
-    };
+    }
 
     // Line 13: alpha = ||r||^2 / (p^T * q)
     num = 0;
@@ -198,12 +198,12 @@ while (it < M) (EQS) {
       tmp = r[i] *. r[i];
       num = num +. tmp;
       denom = p[i] *. q[i];
-    };
+    }
     alpha = num /. denom;
 
     // Line 14: next_x = x + alpha * p
     // Line 15: next_r = r - alpha * q
-    COMPUTE_X_R;
+    COMPUTE_X_R
 
     // Line 16: beta = ||next_r||^2 / ||r||^2
     num = 0;
@@ -214,12 +214,12 @@ while (it < M) (EQS) {
 
       // Compute denom
       denom = r[i] *. r[i];
-    };
+    }
     beta = num /. denom;
 
     // Line 17: next_p = next_r + beta * p
-    COMPUTE_P;
-  };
+    COMPUTE_P
+  }
   ++.it;
   COPY(next_p, p);
   COPY(next_x, x);

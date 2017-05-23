@@ -59,14 +59,14 @@ while (0 <= iters) (OUTER) {
         delta = A[i][j] * x[j];
         sigma = sigma + delta;
       }
-    };
+    }
     num = b[i] -. sigma;
     next_x[i] = num /. A[i][i];
 
     if (last_upset == false && model.upset == true) {
       upset_index = i;
     }
-  };
+  }
   --.iters;
   COPY(next_x, x);
   relational_assert(outer_last_upset == false -> (UPS));
