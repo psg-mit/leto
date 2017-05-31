@@ -56,29 +56,29 @@ relational_assume(OUTER2);
 while (r != r2) (OUTER2 && IMPL2) {
   old_upset = model.upset;
   relational_assume (INV);
-  for (i = N -. 1; 0 <= i; --.i) (INV) {
+  for (i = N - 1; 0 <= i; --i) (INV) {
     // recompute Ax[i]
     Ax[i] = 0;
     spec_Ax[i] = 0;
     Ax2[i] = 0;
-    for (j = N -. 1; 0 <= j; --.j) (EQ(A) && UPSET2) {
+    for (j = N - 1; 0 <= j; --j) (EQ(A) && UPSET2) {
       // TODO: Pull assumption into loop inv
       relational_assume ((old_upset == true) -> (model.upset == true));
 
-      tmp = A[i][j] * x[j];
-      tmp2 = A[i][j] * x[j];
-      spec_tmp = A[i][j] *. x[j];
+      tmp = A[i][j] *. x[j];
+      tmp2 = A[i][j] *. x[j];
+      spec_tmp = A[i][j] * x[j];
 
-      Ax[i] = Ax[i] + tmp;
-      Ax2[i] = Ax2[i] + tmp2;
-      spec_Ax[i] = spec_Ax[i] +. tmp;
+      Ax[i] = Ax[i] +. tmp;
+      Ax2[i] = Ax2[i] +. tmp2;
+      spec_Ax[i] = spec_Ax[i] + tmp;
     }
     // TODO: Pull assumption into loop inv
     relational_assume ((old_upset == true)  -> (model.upset == true));
 
-    r[i] = b[i] -. Ax[i];
-    r2[i] = b[i] -. Ax2[i];
-    spec_r[i] = b[i] -. spec_Ax[i];
+    r[i] = b[i] - Ax[i];
+    r2[i] = b[i] - Ax2[i];
+    spec_r[i] = b[i] - spec_Ax[i];
   }
 }
 

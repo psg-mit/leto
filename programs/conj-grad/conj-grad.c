@@ -31,17 +31,17 @@
 #define DQ (q<r>[i<r>] - q<o>[i<r>])
 
 #define COMPUTE_X_R \
-  for (i = N -. 1; 0 <= i; --.i) (5 == 5) { \
-    tmp = alpha *. p[i]; \
-    next_x[i] = x[i] +. tmp; \
-    tmp = alpha *. q[i]; \
-    next_r[i] = r[i] -. tmp; \
+  for (i = N - 1; 0 <= i; --i) (5 == 5) { \
+    tmp = alpha * p[i]; \
+    next_x[i] = x[i] + tmp; \
+    tmp = alpha * q[i]; \
+    next_r[i] = r[i] - tmp; \
   }
 
 #define COMPUTE_P \
-  for (i = N -. 1; 0 <= i; --.i) (7 == 7) { \
-    tmp = beta *. p[i]; \
-    next_p[i] = next_r[i] +. tmp; \
+  for (i = N - 1; 0 <= i; --i) (7 == 7) { \
+    tmp = beta * p[i]; \
+    next_p[i] = next_r[i] + tmp; \
   }
 
 // Params
@@ -115,23 +115,23 @@ while (it < M) (EQS) {
       COPY(zeros, q2);
       COPY(zeros, spec_q);
 
-      for (i = N -. 1; 0 <= i; --.i) (DMR) {
-        for (j = N -. 1; 0 <= j; --.j) (DMR) {
+      for (i = N - 1; 0 <= i; --i) (DMR) {
+        for (j = N - 1; 0 <= j; --j) (DMR) {
           // Compute r
-          tmp = A[i][j] * x[j];
-          tmp2 = A[i][j] * x[j];
-          spec_tmp = A[i][j] *. x[j];
-          r[i] = r[i] + tmp;
-          r2[i] = r2[i] + tmp2;
-          spec_r[i] = spec_r[i] +. spec_tmp;
+          tmp = A[i][j] *. x[j];
+          tmp2 = A[i][j] *. x[j];
+          spec_tmp = A[i][j] * x[j];
+          r[i] = r[i] +. tmp;
+          r2[i] = r2[i] +. tmp2;
+          spec_r[i] = spec_r[i] + spec_tmp;
 
           // Compute q
-          tmp = A[i][j] * p[j];
-          tmp2 = A[i][j] * p[j];
-          spec_tmp = A[i][j] *. p[j];
-          q[i] = q[i] + tmp;
-          q2[i] = q2[i] + tmp2;
-          spec_q[i] = spec_q[i] +. spec_tmp;
+          tmp = A[i][j] *. p[j];
+          tmp2 = A[i][j] *. p[j];
+          spec_tmp = A[i][j] * p[j];
+          q[i] = q[i] +. tmp;
+          q2[i] = q2[i] +. tmp2;
+          spec_q[i] = spec_q[i] + spec_tmp;
         }
       }
     }
@@ -140,17 +140,17 @@ while (it < M) (EQS) {
     relational_assert (old_upset == false -> SPEQQ(q));
 
     // Line 5: r = b - r
-    for (i = N -. 1; 0 <= i; --.i) (3 == 3) { r[i] = b[i] -. r[i]; }
+    for (i = N - 1; 0 <= i; --i) (3 == 3) { r[i] = b[i] - r[i]; }
 
     // Line 6: alpha = (r^T * p) / (p^T * q)
     num = 0;
     denom = 0;
-    for (i = N -. 1; 0 <= i; --.i) (4 == 4) {
-      tmp = r[i] *. p[i];
-      num = num +. tmp;
-      denom = p[i] *. q[i];
+    for (i = N - 1; 0 <= i; --i) (4 == 4) {
+      tmp = r[i] * p[i];
+      num = num + tmp;
+      denom = p[i] * q[i];
     }
-    alpha = num /. denom;
+    alpha = num / denom;
 
     // Line 7: next_x = x + alpha * p
     // Line 8: next_r = r - alpha * q
@@ -159,31 +159,31 @@ while (it < M) (EQS) {
     // Line 9: beta = (-next_r^T * q) / (p^t * q)
     num = 0;
     denom = 0;
-    for (i = N -. 1; 0 <= i; --.i) (6 == 6) {
+    for (i = N - 1; 0 <= i; --i) (6 == 6) {
       // Compute num
       tmp = -next_r[i];
-      tmp = tmp *. q[i];
-      num = num +. tmp;
+      tmp = tmp * q[i];
+      num = num + tmp;
 
       // Compute denom
-      tmp = p[i] *. q[i];
-      denom = denom +. tmp;
+      tmp = p[i] * q[i];
+      denom = denom + tmp;
     }
-    beta = num /. denom;
+    beta = num / denom;
 
     // Line 10: next_p = next_r + beta * p
     COMPUTE_P
 
   } else {
     // Line 12: q = A * p;
-    for (i = N -. 1; 0 <= i; --.i) (OUTER) {
+    for (i = N - 1; 0 <= i; --i) (OUTER) {
       q[i] = 0;
-      for (j = N -. 1; 0 <= j; --.j) (INNER) {
+      for (j = N - 1; 0 <= j; --j) (INNER) {
         old_upset = model.upset;
 
         // Compute q
-        tmp = A[i][j] * p[j];
-        q[i] = q[i] + tmp;
+        tmp = A[i][j] *. p[j];
+        q[i] = q[i] +. tmp;
 
         // For verification that error is sufficiently small
         // TODO: This needs to be adjusted for non SEU models
@@ -194,12 +194,12 @@ while (it < M) (EQS) {
     // Line 13: alpha = ||r||^2 / (p^T * q)
     num = 0;
     denom = 0;
-    for (i = N -. 1; 0 <= i; --.i) (10 == 10) {
-      tmp = r[i] *. r[i];
-      num = num +. tmp;
-      denom = p[i] *. q[i];
+    for (i = N - 1; 0 <= i; --i) (10 == 10) {
+      tmp = r[i] * r[i];
+      num = num + tmp;
+      denom = p[i] * q[i];
     }
-    alpha = num /. denom;
+    alpha = num / denom;
 
     // Line 14: next_x = x + alpha * p
     // Line 15: next_r = r - alpha * q
@@ -208,24 +208,24 @@ while (it < M) (EQS) {
     // Line 16: beta = ||next_r||^2 / ||r||^2
     num = 0;
     denom = 0;
-    for (i = N -. 1; 0 <= i; --.i) (12 == 12) {
+    for (i = N - 1; 0 <= i; --i) (12 == 12) {
       // Compute num
-      num = next_r[i] *. next_r[i];
+      num = next_r[i] * next_r[i];
 
       // Compute denom
-      denom = r[i] *. r[i];
+      denom = r[i] * r[i];
     }
-    beta = num /. denom;
+    beta = num / denom;
 
     // Line 17: next_p = next_r + beta * p
     COMPUTE_P
   }
-  ++.it;
+  ++it;
   COPY(next_p, p);
   COPY(next_x, x);
   COPY(next_r, r);
 
-  ++.man_mod;
+  ++man_mod;
 
   if (man_mod == M) {
     man_mod = 0;

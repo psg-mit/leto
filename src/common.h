@@ -4,10 +4,10 @@
 
 #define NO_CHECK_CONTEXT
 
-enum operator_t {PLUS,
-                 MINUS,
-                 TIMES,
-                 DIV,
+enum operator_t {RPLUS,
+                 RMINUS,
+                 RTIMES,
+                 RDIV,
                  OMINUS,
                  OPLUS,
                  OTIMES,

@@ -44,8 +44,8 @@
 %left ';'
 %left AND OR '^'
 %left EQUALS NEQ LT IMPLIES LTEQ
-%left '+' '-' OMINUS OPLUS
-%left '*' '/' OTIMES ODIV
+%left '+' '-' RMINUS RPLUS
+%left '*' '/' RTIMES RDIV
 
 %polymorphic EXP: lang::Expression*;
              STMT: lang::Statement*;
@@ -79,39 +79,39 @@ program:
 
 expression:
   expression '+' expression {
-    $$ = new lang::BinOp(PLUS, $1, $3);
+    $$ = new lang::BinOp(operator_t::OPLUS, $1, $3);
     lang_ast = $$;
   }
 | expression '-' expression {
-    $$ = new lang::BinOp(MINUS, $1, $3);
+    $$ = new lang::BinOp(operator_t::OMINUS, $1, $3);
     lang_ast = $$;
   }
 | expression '*' expression {
-    $$ = new lang::BinOp(TIMES, $1, $3);
+    $$ = new lang::BinOp(operator_t::OTIMES, $1, $3);
     lang_ast = $$;
   }
 | expression '/' expression {
-    $$ = new lang::BinOp(DIV, $1, $3);
+    $$ = new lang::BinOp(operator_t::ODIV, $1, $3);
     lang_ast = $$;
   }
 | '(' expression ')' {
     $$ = $2;
     lang_ast = $$;
   }
-| expression OMINUS expression {
-    $$ = new lang::BinOp(operator_t::OMINUS, $1, $3);
+| expression RMINUS expression {
+    $$ = new lang::BinOp(operator_t::RMINUS, $1, $3);
     lang_ast = $$;
   }
-| expression OPLUS expression {
-    $$ = new lang::BinOp(operator_t::OPLUS, $1, $3);
+| expression RPLUS expression {
+    $$ = new lang::BinOp(operator_t::RPLUS, $1, $3);
     lang_ast = $$;
   }
-| expression OTIMES expression {
-    $$ = new lang::BinOp(operator_t::OTIMES, $1, $3);
+| expression RTIMES expression {
+    $$ = new lang::BinOp(operator_t::RTIMES, $1, $3);
     lang_ast = $$;
   }
-| expression ODIV expression {
-    $$ = new lang::BinOp(operator_t::ODIV, $1, $3);
+| expression RDIV expression {
+    $$ = new lang::BinOp(operator_t::RDIV, $1, $3);
     lang_ast = $$;
   }
 | '-' expression {
@@ -253,7 +253,7 @@ relexpression:
     lang_ast = $$;
   }
 | '-' relexpression {
-    $$ = new lang::RelationalBinOp(MINUS, &REL_ZERO, $2);
+    $$ = new lang::RelationalBinOp(operator_t::OMINUS, &REL_ZERO, $2);
     lang_ast = $$;
   }
 | MODEL var {
@@ -289,19 +289,19 @@ relexpression:
     lang_ast = $$;
   }
 | relexpression '+' relexpression {
-    $$ = new lang::RelationalBinOp(PLUS, $1, $3);
+    $$ = new lang::RelationalBinOp(OPLUS, $1, $3);
     lang_ast = $$;
   }
 | relexpression '-' relexpression {
-    $$ = new lang::RelationalBinOp(MINUS, $1, $3);
+    $$ = new lang::RelationalBinOp(OMINUS, $1, $3);
     lang_ast = $$;
   }
 | relexpression '*' relexpression {
-    $$ = new lang::RelationalBinOp(TIMES, $1, $3);
+    $$ = new lang::RelationalBinOp(OTIMES, $1, $3);
     lang_ast = $$;
   }
 | relexpression '/' relexpression {
-    $$ = new lang::RelationalBinOp(DIV, $1, $3);
+    $$ = new lang::RelationalBinOp(ODIV, $1, $3);
     lang_ast = $$;
   }
 | NUMBER {
@@ -509,7 +509,7 @@ statement:
     lang_ast = $$;
   }
 | expression INCR {
-    $$ = new lang::Assign($1, new lang::BinOp(operator_t::PLUS, $1, &ONE));
+    $$ = new lang::Assign($1, new lang::BinOp(operator_t::RPLUS, $1, &ONE));
     lang_ast = $$;
   }
 | expression OINCR {
@@ -517,7 +517,7 @@ statement:
     lang_ast = $$;
   }
 | expression DECR {
-    $$ = new lang::Assign($1, new lang::BinOp(operator_t::MINUS, $1, &ONE));
+    $$ = new lang::Assign($1, new lang::BinOp(operator_t::RMINUS, $1, &ONE));
     lang_ast = $$;
   }
 | expression ODECR {
@@ -525,7 +525,7 @@ statement:
     lang_ast = $$;
   }
 | INCR expression {
-    $$ = new lang::Assign($2, new lang::BinOp(operator_t::PLUS, $2, &ONE));
+    $$ = new lang::Assign($2, new lang::BinOp(operator_t::RPLUS, $2, &ONE));
     lang_ast = $$;
   }
 | OINCR expression {
@@ -533,7 +533,7 @@ statement:
     lang_ast = $$;
   }
 | DECR expression {
-    $$ = new lang::Assign($2, new lang::BinOp(operator_t::MINUS, $2, &ONE));
+    $$ = new lang::Assign($2, new lang::BinOp(operator_t::RMINUS, $2, &ONE));
     lang_ast = $$;
   }
 | ODECR expression {

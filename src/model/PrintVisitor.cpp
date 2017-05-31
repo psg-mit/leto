@@ -5,28 +5,28 @@
 namespace model {
   static void print_binop(operator_t op) {
     switch (op) {
-      case PLUS:
+      case OPLUS:
         printf("+\n");
         break;
-      case OPLUS:
+      case RPLUS:
         printf("+.\n");
         break;
-      case MINUS:
+      case OMINUS:
         printf("-\n");
         break;
-      case OMINUS:
+      case RMINUS:
         printf("-.\n");
         break;
-      case TIMES:
+      case OTIMES:
         printf("*\n");
         break;
-      case OTIMES:
+      case RTIMES:
         printf("*.\n");
         break;
-      case DIV:
+      case ODIV:
         printf("/\n");
         break;
-      case ODIV:
+      case RDIV:
         printf("/.\n");
         break;
       case FREAD:

@@ -50,24 +50,24 @@ matrix<real> x(N<r>);
 matrix<real> next_x(N<r>);
 relational_assume (OUTER);
 while (0 <= iters) (OUTER) {
-  for (i = N -. 1; 0 <= i; --.i) (MIDDLE) {
+  for (i = N - 1; 0 <= i; --i) (MIDDLE) {
     last_upset = model.upset;
     sigma = 0;
-    for (j = N -. 1; 0 <= j; --.j) (INNER) {
+    for (j = N - 1; 0 <= j; --j) (INNER) {
       delta = 0;
       if (i != j) {
-        delta = A[i][j] * x[j];
-        sigma = sigma + delta;
+        delta = A[i][j] *. x[j];
+        sigma = sigma +. delta;
       }
     }
-    num = b[i] -. sigma;
-    next_x[i] = num /. A[i][i];
+    num = b[i] - sigma;
+    next_x[i] = num / A[i][i];
 
     if (last_upset == false && model.upset == true) {
       upset_index = i;
     }
   }
-  --.iters;
+  --iters;
   COPY(next_x, x);
   relational_assert(outer_last_upset == false -> (UPS));
   outer_last_upset = model.upset;

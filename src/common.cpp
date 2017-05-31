@@ -8,7 +8,7 @@ z3::expr* binop(z3::context* context,
   Z3_ast rm = Z3_mk_fpa_rne(*context);
   z3::expr *res = nullptr;
   switch (op) {
-    case PLUS:
+    case RPLUS:
     case OPLUS:
       switch (type) {
         case INT:
@@ -26,7 +26,7 @@ z3::expr* binop(z3::context* context,
           break;
       }
       break;
-    case MINUS:
+    case RMINUS:
     case OMINUS:
       switch (type) {
         case INT:
@@ -44,7 +44,7 @@ z3::expr* binop(z3::context* context,
           break;
       }
       break;
-    case TIMES:
+    case RTIMES:
     case OTIMES:
       switch (type) {
         case INT:
@@ -62,7 +62,7 @@ z3::expr* binop(z3::context* context,
           break;
       }
       break;
-    case DIV:
+    case RDIV:
     case ODIV:
       switch(type) {
         case INT:
