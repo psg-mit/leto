@@ -237,6 +237,10 @@ boolexp:
     $$ = new lang::BoolExp(lang::bool_t::IMPLIES, $1, $3);
     lang_ast = $$;
   }
+| '(' boolexp ')' {
+  $$ = $2;
+  lang_ast = $2;
+}
 ;
 
 relexpression:
