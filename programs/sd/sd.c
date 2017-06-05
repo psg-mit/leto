@@ -26,7 +26,7 @@
 
 // TODO: Get working with pseudo-seu-range
 
-int N, i, j;
+int N;
 matrix<real> A(N<o>,N<o>), b(N<o>), x(N<o>), Ax(N<o>), r(N<o>), Ax2(N<o>), r2(N<o>);
 real tmp, tmp2;
 
@@ -44,12 +44,12 @@ relational_assume(OUTER2);
 while (r != r2) (OUTER2 && IMPL2) {
   old_upset = model.upset;
   relational_assume (INV);
-  for (i = N - 1; 0 <= i; --i) (INV) {
+  for (int i = N - 1; 0 <= i; --i) (INV) {
     // recompute Ax[i]
     Ax[i] = 0;
     spec_Ax[i] = 0;
     Ax2[i] = 0;
-    for (j = N - 1; 0 <= j; --j) (EQ(A) && UPSET2) {
+    for (int j = N - 1; 0 <= j; --j) (EQ(A) && UPSET2) {
       // TODO: Pull assumption into loop inv
       relational_assume ((old_upset == true) -> (model.upset == true));
 

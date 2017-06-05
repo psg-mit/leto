@@ -34,17 +34,17 @@
               EQ(A) && TBOUND(i) && BOUND(j) &&\
               (model.upset == false -> outer_last_upset == false)
 
-int N, i, j, iters;
+int N, iters;
 matrix<real> A(N<r>,N<r>), b(N<r>), x(N<r>), next_x(N<r>);
 real sigma, delta, num;
 specvar int upset_index;
 specvar bool last_upset, outer_last_upset;
 relational_assume (OUTER);
 while (0 <= iters) (OUTER) {
-  for (i = N - 1; 0 <= i; --i) (MIDDLE) {
+  for (int i = N - 1; 0 <= i; --i) (MIDDLE) {
     last_upset = model.upset;
     sigma = 0;
-    for (j = N - 1; 0 <= j; --j) (INNER) {
+    for (int j = N - 1; 0 <= j; --j) (INNER) {
       delta = 0;
       if (i != j) {
         delta = A[i][j] *. x[j];

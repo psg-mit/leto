@@ -179,15 +179,16 @@ namespace lang {
   void CHLVisitor::add_var(type_t type,
                            std::string oname,
                            std::string rname) {
-#ifndef NDEBUG
-    size_t start_size = vars.size();
-    size_t start_version_size = var_version.size();
-#endif
+    unsigned version = 0;
+    if (var_version.count(oname)) {
+      assert(var_version.at(oname) == var_version.at(rname));
+      version = var_version.at(oname) + 1;
+    }
 
-    var_version[oname] = 0;
-    var_version[rname] = 0;
-    oname += "-0";
-    rname += "-0";
+    var_version[oname] = version;
+    var_version[rname] = version;
+    oname += "-" + std::to_string(version);
+    rname += "-" + std::to_string(version);
     z3::expr *oexpr = nullptr;
     z3::expr *rexpr = nullptr;
     switch (type) {
@@ -214,9 +215,6 @@ namespace lang {
 
     vars[oname] = oexpr;
     vars[rname] = rexpr;
-
-    assert(vars.size() == start_size + 2);
-    assert(var_version.size() == start_version_size + 2);
   }
 
   z3::expr* CHLVisitor::vector_equals(z3::func_decl& x,

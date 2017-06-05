@@ -67,7 +67,7 @@ real beta;
 matrix<real> next_p(N<o>);
 
 // Misc helpers
-int i, j, man_mod;
+int man_mod;
 real tmp2, num, denom;
 matrix<real> zeros(N<o>);
 
@@ -102,8 +102,8 @@ while (it < M) (EQS) {
       COPY(zeros, q2);
       COPY(zeros, spec_q);
 
-      for (i = N - 1; 0 <= i; --i) (DMR) {
-        for (j = N - 1; 0 <= j; --j) (DMR) {
+      for (int i = N - 1; 0 <= i; --i) (DMR) {
+        for (int j = N - 1; 0 <= j; --j) (DMR) {
           // Compute r
           tmp = A[i][j] *. x[j];
           tmp2 = A[i][j] *. x[j];
@@ -127,12 +127,12 @@ while (it < M) (EQS) {
     relational_assert (old_upset == false -> SPEQQ(q));
 
     // Line 5: r = b - r
-    for (i = N - 1; 0 <= i; --i) (3 == 3) { r[i] = b[i] - r[i]; }
+    for (int i = N - 1; 0 <= i; --i) (3 == 3) { r[i] = b[i] - r[i]; }
 
     // Line 6: alpha = (r^T * p) / (p^T * q)
     num = 0;
     denom = 0;
-    for (i = N - 1; 0 <= i; --i) (4 == 4) {
+    for (int i = N - 1; 0 <= i; --i) (4 == 4) {
       tmp = r[i] * p[i];
       num = num + tmp;
       denom = p[i] * q[i];
@@ -146,7 +146,7 @@ while (it < M) (EQS) {
     // Line 9: beta = (-next_r^T * q) / (p^t * q)
     num = 0;
     denom = 0;
-    for (i = N - 1; 0 <= i; --i) (6 == 6) {
+    for (int i = N - 1; 0 <= i; --i) (6 == 6) {
       // Compute num
       tmp = -next_r[i];
       tmp = tmp * q[i];
@@ -163,9 +163,9 @@ while (it < M) (EQS) {
 
   } else {
     // Line 12: q = A * p;
-    for (i = N - 1; 0 <= i; --i) (OUTER) {
+    for (int i = N - 1; 0 <= i; --i) (OUTER) {
       q[i] = 0;
-      for (j = N - 1; 0 <= j; --j) (INNER) {
+      for (int j = N - 1; 0 <= j; --j) (INNER) {
         old_upset = model.upset;
 
         // Compute q
@@ -181,7 +181,7 @@ while (it < M) (EQS) {
     // Line 13: alpha = ||r||^2 / (p^T * q)
     num = 0;
     denom = 0;
-    for (i = N - 1; 0 <= i; --i) (10 == 10) {
+    for (int i = N - 1; 0 <= i; --i) (10 == 10) {
       tmp = r[i] * r[i];
       num = num + tmp;
       denom = p[i] * q[i];
@@ -195,7 +195,7 @@ while (it < M) (EQS) {
     // Line 16: beta = ||next_r||^2 / ||r||^2
     num = 0;
     denom = 0;
-    for (i = N - 1; 0 <= i; --i) (12 == 12) {
+    for (int i = N - 1; 0 <= i; --i) (12 == 12) {
       // Compute num
       num = next_r[i] * next_r[i];
 
