@@ -2,7 +2,6 @@
 
 #include "LangNodes.h"
 #include "ASTVisitor.h"
-
 namespace lang {
   class PrintVisitor : public ASTVisitor {
     public:
@@ -48,5 +47,6 @@ namespace lang {
       virtual z3pair visit(RelationalForall &node) override;
       virtual z3pair visit(FaultyRead &node) override;
       virtual z3pair visit(FaultyWrite &node) override;
+      virtual z3pair visit(VarList &node) override;
   };
 }

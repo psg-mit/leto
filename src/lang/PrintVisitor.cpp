@@ -166,7 +166,7 @@ namespace lang {
         break;
     }
     printf("specvar: %d\n", node.specvar);
-    node.var->accept(*this);
+    node.vars->accept(*this);
     return {nullptr, nullptr};
   }
 
@@ -188,14 +188,9 @@ namespace lang {
         break;
     }
 
-    printf("Dimensions:\n");
-    for (RelationalExp* exp : node.dimensions) {
-      exp->accept(*this);
-    }
-
     printf("specvar: %d\n", node.specvar);
 
-    node.var->accept(*this);
+    node.vars->accept(*this);
     return {nullptr, nullptr};
   }
 
@@ -468,6 +463,25 @@ namespace lang {
     node.dest->accept(*this);
     printf("  val:\n");
     node.val->accept(*this);
+    return {nullptr, nullptr};
+  }
+
+  z3pair PrintVisitor::visit(VarList &node) {
+    printf("VarList: ");
+    if (node.car) {
+      printf("\n");
+      node.car->accept(*this);
+
+      if (!node.dimensions.empty()) {
+        printf("Dimensions:\n");
+        for (RelationalExp* exp : node.dimensions) {
+          exp->accept(*this);
+        }
+      }
+      if (node.cdr) node.cdr->accept(*this);
+    }
+    else printf("nil\n");
+
     return {nullptr, nullptr};
   }
 }

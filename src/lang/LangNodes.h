@@ -108,6 +108,19 @@ namespace lang {
       std::string name;
   };
 
+  class VarList : public Expression {
+    public:
+      VarList(Var *car_, VarList *cdr_) : car(car_), cdr(cdr_) {}
+      VarList(Var *car_,
+              std::vector<RelationalExp*> dimensions_,
+              VarList *cdr_) : car(car_), dimensions(dimensions_), cdr(cdr_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      Var* car;
+      std::vector<RelationalExp*> dimensions;
+      VarList* cdr;
+  };
+
   class RelationalVar : public RelationalExp {
     public:
       RelationalVar(relation_t relation_, Var *var_, bool check_spec_=true) :
@@ -281,24 +294,23 @@ namespace lang {
 
   class Declare : public Statement {
     public:
-      Declare(type_t type_, Var *var_)
-        : type(type_), var(var_), specvar(false) { }
+      Declare(type_t type_, VarList *vars_)
+        : type(type_), vars(vars_), specvar(false) { }
       virtual z3pair accept(ASTVisitor &visitor)  override;
 
       type_t type;
-      Var* var;
+      VarList* vars;
       bool specvar;
   };
 
   class DeclareMat : public Statement {
     public:
-      DeclareMat(type_t type_, Var *var_, std::vector<RelationalExp*> dimensions_)
-        : type(type_), var(var_), dimensions(dimensions_), specvar(false) {}
+      DeclareMat(type_t type_, VarList *vars_)
+        : type(type_), vars(vars_), specvar(false) {}
       virtual z3pair accept(ASTVisitor &visitor)  override;
 
       type_t type;
-      Var* var;
-      std::vector<RelationalExp*> dimensions;
+      VarList* vars;
       bool specvar;
   };
 

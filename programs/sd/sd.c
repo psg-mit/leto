@@ -26,25 +26,13 @@
 
 // TODO: Get working with pseudo-seu-range
 
-int N;
-matrix<real> A(N<o>,N<o>);
-matrix<real> b(N<o>);
-matrix<real> x(N<o>);
-
-matrix<real> Ax(N<o>);
-matrix<real> r(N<o>);
-matrix<real> Ax2(N<o>);
-matrix<real> r2(N<o>);
-real tmp;
-real tmp2;
+int N, i, j;
+matrix<real> A(N<o>,N<o>), b(N<o>), x(N<o>), Ax(N<o>), r(N<o>), Ax2(N<o>), r2(N<o>);
+real tmp, tmp2;
 
 // Specvars
 specvar real spec_tmp;
-specvar matrix<real> spec_Ax(N<o>);
-specvar matrix<real> spec_r(N<o>);
-
-int i;
-int j;
+specvar matrix<real> spec_Ax(N<o>), spec_r(N<o>);
 
 specvar bool old_upset;
 

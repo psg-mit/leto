@@ -46,6 +46,7 @@ namespace lang {
       virtual z3pair visit(RelationalForall &node) = 0;
       virtual z3pair visit(FaultyRead &node) = 0;
       virtual z3pair visit(FaultyWrite &node) = 0;
+      virtual z3pair visit(VarList &node) = 0;
 
       virtual ~ASTVisitor() {}
   };

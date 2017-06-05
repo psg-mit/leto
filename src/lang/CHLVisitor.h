@@ -77,6 +77,7 @@ namespace lang {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
       virtual z3pair visit(Block &node) override {assert(false);}
+      virtual z3pair visit(VarList &node) override {assert(false);}
 #pragma clang diagnostic pop
 
       bool unsat_context;

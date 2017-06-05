@@ -165,4 +165,8 @@ namespace lang {
   z3pair FaultyWrite::accept(ASTVisitor &visitor) {
     return visitor.visit(*this);
   }
+
+  z3pair VarList::accept(ASTVisitor &visitor) {
+    return visitor.visit(*this);
+  }
 }

@@ -57,6 +57,7 @@
              EXPLST: lang::ExprList*;
              DECL: lang::Declare*;
              DECLMAT: lang::DeclareMat*;
+             VARLIST: lang::VarList*;
 
 %type <EXP>  expression
 %type <STMT> statement cflow statementlist
@@ -68,6 +69,7 @@
 %type <EXPLST> exprlist
 %type <DECL> declare
 %type <DECLMAT> declaremat
+%type <VARLIST> varlist matvarlist
 
 %%
 
@@ -408,47 +410,35 @@ size:
 ;
 
 declare:
-  INT var {
+  INT varlist {
     $$ = new lang::Declare(type_t::INT, $2);
     lang_ast = $$;
   }
-| FLOAT var {
+| FLOAT varlist {
     $$ = new lang::Declare(type_t::FLOAT, $2);
     lang_ast = $$;
   }
-| REAL var {
+| REAL varlist {
     $$ = new lang::Declare(type_t::REAL , $2);
     lang_ast = $$;
   }
-| BOOL var {
+| BOOL varlist {
     $$ = new lang::Declare(type_t::BOOL, $2);
     lang_ast = $$;
   }
 ;
 
 declaremat:
-  MATRIX INT '>' var '(' relexpression ')' {
-    $$ = new lang::DeclareMat(type_t::INT, $4, {$6});
+  MATRIX INT '>' matvarlist {
+    $$ = new lang::DeclareMat(type_t::INT, $4);
     lang_ast = $$;
   }
-| MATRIX FLOAT '>' var '(' relexpression ')' {
-    $$ = new lang::DeclareMat(type_t::FLOAT, $4, {$6});
+| MATRIX FLOAT '>' matvarlist {
+    $$ = new lang::DeclareMat(type_t::FLOAT, $4);
     lang_ast = $$;
   }
-| MATRIX FLOAT '>' var '(' relexpression ',' relexpression ')' {
-    $$ = new lang::DeclareMat(type_t::FLOAT, $4, {$6, $8});
-    lang_ast = $$;
-  }
-| MATRIX INT '>' var '(' relexpression ',' relexpression ')' {
-    $$ = new lang::DeclareMat(type_t::INT, $4, {$6, $8});
-    lang_ast = $$;
-  }
-| MATRIX REAL '>' var '(' relexpression ')' {
-    $$ = new lang::DeclareMat(type_t::REAL , $4, {$6});
-    lang_ast = $$;
-  }
-| MATRIX REAL '>' var '(' relexpression ',' relexpression ')' {
-    $$ = new lang::DeclareMat(type_t::REAL , $4, {$6, $8});
+| MATRIX REAL '>' matvarlist {
+    $$ = new lang::DeclareMat(type_t::REAL , $4);
     lang_ast = $$;
   }
 ;
@@ -559,21 +549,23 @@ statement:
     lang_ast = $$;
   }
 | declare '=' expression {
-    $$ = new lang::StatementList($1, new lang::Assign($1->var, $3));
+    assert(!$1->vars->cdr);
+    $$ = new lang::StatementList($1, new lang::Assign($1->vars->car, $3));
     lang_ast = $$;
   }
 | SPECVAR declare '=' expression {
+    assert(!$2->vars->cdr);
     $2->specvar = true;
-    $$ = new lang::StatementList($2, new lang::Assign($2->var, $4));
+    $$ = new lang::StatementList($2, new lang::Assign($2->vars->car, $4));
     lang_ast = $$;
   }
 | declare '=' boolexp {
-    $$ = new lang::StatementList($1, new lang::Assign($1->var, $3));
+    $$ = new lang::StatementList($1, new lang::Assign($1->vars->car, $3));
     lang_ast = $$;
   }
 | SPECVAR declare '=' boolexp {
     $2->specvar = true;
-    $$ = new lang::StatementList($2, new lang::Assign($2->var, $4));
+    $$ = new lang::StatementList($2, new lang::Assign($2->vars->car, $4));
     lang_ast = $$;
   }
 | declaremat
@@ -583,12 +575,14 @@ statement:
     lang_ast = $$;
   }
 | declaremat '=' '{' exprlist '}' {
-    $$ = new lang::StatementList($1, new lang::ArrayAssign($1->var, $4));
+    assert(!$1->vars->cdr);
+    $$ = new lang::StatementList($1, new lang::ArrayAssign($1->vars->car, $4));
     lang_ast = $$;
   }
 | SPECVAR declaremat '=' '{' exprlist '}' {
+    assert(!$2->vars->cdr);
     $2->specvar = true;
-    $$ = new lang::StatementList($2, new lang::ArrayAssign($2->var, $5));
+    $$ = new lang::StatementList($2, new lang::ArrayAssign($2->vars->car, $5));
     lang_ast = $$;
   }
 | LMATRIX INT '>' var '(' size ')' {
@@ -633,6 +627,36 @@ statementlist:
   }
 | statement ';' {
     $$ = $1;
+    lang_ast = $$;
+  }
+;
+
+varlist:
+  var ',' varlist {
+    $$ = new lang::VarList($1, $3);
+    lang_ast = $$;
+  }
+| var {
+    $$ = new lang::VarList($1, nullptr);
+    lang_ast = $$;
+  }
+;
+
+matvarlist:
+  var '(' relexpression ')' ',' matvarlist {
+    $$ = new lang::VarList($1, {$3}, $6);
+    lang_ast = $$;
+  }
+| var '(' relexpression ')' {
+    $$ = new lang::VarList($1, {$3}, nullptr);
+    lang_ast = $$;
+  }
+| var '(' relexpression ',' relexpression ')' ',' matvarlist {
+    $$ = new lang::VarList($1, {$3, $5}, $8);
+    lang_ast = $$;
+  }
+| var '(' relexpression ',' relexpression ')' {
+    $$ = new lang::VarList($1, {$3, $5}, nullptr);
     lang_ast = $$;
   }
 ;

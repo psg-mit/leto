@@ -365,43 +365,51 @@ namespace lang {
 
 
   z3pair CHLVisitor::visit(Declare &node) {
-    // Declare var<o> and var<r>
-    std::string oname = node.var->name + "<o>";
-    std::string rname = node.var->name + "<r>";
+    for (VarList* head = node.vars; head; head = head->cdr) {
+      Var* var = head->car;
 
-    add_var(node.type, oname, rname);
+      // Declare var<o> and var<r>
+      std::string oname = var->name + "<o>";
+      std::string rname = var->name + "<r>";
 
-    types[node.var->name] = node.type;
-    if (node.specvar) specvars.insert(node.var->name);
+      add_var(node.type, oname, rname);
+
+      types[var->name] = node.type;
+      if (node.specvar) specvars.insert(var->name);
+    }
 
     return {nullptr, nullptr};
   }
 
   z3pair CHLVisitor::visit(DeclareMat &node) {
-    // Declare var<o> and var<r>
-    std::string oname = node.var->name + "<o>";
-    std::string rname = node.var->name + "<r>";
-    var_version[oname] = 0;
-    var_version[rname] = 0;
-    oname += "-0";
-    rname += "-0";
+    for (VarList* head = node.vars; head; head = head->cdr) {
+      Var* var = head->car;
 
-    // Build dimension vector
-    std::vector<z3::expr*>* dimensions = new std::vector<z3::expr*>();
-    for (RelationalExp* expr : node.dimensions) {
-      assert(expr);
-      z3pair res = expr->accept(*this);
-      assert(res.original);
-      assert(!res.relaxed);
-      dimensions->push_back(res.original);
+      // Declare var<o> and var<r>
+      std::string oname = var->name + "<o>";
+      std::string rname = var->name + "<r>";
+      var_version[oname] = 0;
+      var_version[rname] = 0;
+      oname += "-0";
+      rname += "-0";
+
+      // Build dimension vector
+      std::vector<z3::expr*>* dimensions = new std::vector<z3::expr*>();
+      for (RelationalExp* expr : head->dimensions) {
+        assert(expr);
+        z3pair res = expr->accept(*this);
+        assert(res.original);
+        assert(!res.relaxed);
+        dimensions->push_back(res.original);
+      }
+
+      add_vector(node.type, oname, rname, *dimensions);
+
+      types[var->name] = node.type;
+      dim_map[var->name] = dimensions;
+
+      if (node.specvar) specvars.insert(var->name);
     }
-
-    add_vector(node.type, oname, rname, *dimensions);
-
-    types[node.var->name] = node.type;
-    dim_map[node.var->name] = dimensions;
-
-    if (node.specvar) specvars.insert(node.var->name);
 
     return {nullptr, nullptr};
   }
@@ -728,7 +736,7 @@ namespace lang {
     assert (expr_type == REAL || expr_type == INT);
     // TODO: can't mix ints and reals in division (Z3 sometimes casts things to
     // ints and messes it all up)
-    assert ((node.op != DIV && node.op != ODIV) || expr_type == lhs_type);
+    assert ((node.op != RDIV && node.op != ODIV) || expr_type == lhs_type);
     expr_type = lhs_type == REAL || expr_type == REAL ? REAL : INT;
 
     model_visitor->prep_op(node.op, lhs.relaxed, rhs.relaxed);
@@ -1364,7 +1372,7 @@ namespace lang {
     assert (lhs_type == REAL || lhs_type == INT);
     assert (expr_type == REAL || expr_type == INT);
     // TODO: Can't mix ints and reals in division
-    assert ((node.op != DIV  && node.op != ODIV) || expr_type == lhs_type);
+    assert ((node.op != RDIV  && node.op != ODIV) || expr_type == lhs_type);
     expr_type = lhs_type == REAL || expr_type == REAL ? REAL : INT;
 
     // Only original part should exist
