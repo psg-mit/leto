@@ -208,9 +208,9 @@ while (it < M) (EQS) {
     COMPUTE_P
   }
   ++it;
-  next_p = p;
-  next_x = x;
-  next_r = r;
+  p = next_p;
+  x = next_x;
+  r = next_r;
 
   ++man_mod;
 
