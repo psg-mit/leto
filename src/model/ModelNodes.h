@@ -65,6 +65,14 @@ namespace model {
       const std::string name;
   };
 
+  class Old : public Expression {
+    public:
+      Old(const Var* var_) : var(var_) {}
+      virtual z3::expr* accept(ASTVisitor &visitor) const override;
+
+      const Var* var;
+  };
+
   class Declare : public Statement {
     public:
       Declare(type_t type_, const Var *var_) : type(type_), var(var_) {}

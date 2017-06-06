@@ -9,6 +9,8 @@
 true                                return model::ModelParser::TRUE;
 false                               return model::ModelParser::FALSE;
 bool                                return model::ModelParser::BOOL;
+int                                 return model::ModelParser::INT;
+real                                return model::ModelParser::REAL;
 ==                                  return model::ModelParser::EQUALS;
 &&                                  return model::ModelParser::AND;
 \|\|                                return model::ModelParser::OR;
@@ -19,6 +21,7 @@ modifies                            return model::ModelParser::MODIFIES;
 fread                               return model::ModelParser::FREAD;
 fwrite                              return model::ModelParser::FWRITE;
 \<=                                 return model::ModelParser::LTEQ;
+old                                 return model::ModelParser::OLD;
 [[:alpha:]_][[:alpha:][:digit:]_]*  return model::ModelParser::ID;
 .                                   return matched()[0];
 

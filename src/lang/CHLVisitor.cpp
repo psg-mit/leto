@@ -1997,15 +1997,13 @@ namespace lang {
 
   z3pair CHLVisitor::visit(ModelDeref &node) {
     z3::expr* ret = model_visitor->get_current_var(node.var->name);
-    // TODO: More than just bools
-    expr_type = BOOL;
+    expr_type = model_visitor->get_var_type(node.var->name);
     return {ret, ret};
   }
 
   z3pair CHLVisitor::visit(RelationalModelDeref &node) {
     z3::expr* ret = model_visitor->get_current_var(node.var->name);
-    // TODO: More than just bools
-    expr_type = BOOL;
+    expr_type = model_visitor->get_var_type(node.var->name);
     return {ret, nullptr};
   }
 

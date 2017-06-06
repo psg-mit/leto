@@ -38,6 +38,7 @@ namespace model {
       virtual z3::expr* visit(const BoolBinOp &node);
       virtual z3::expr* visit(const Operator &node);
       virtual z3::expr* visit(const VarList &node);
+      virtual z3::expr* visit(const Old &node);
 
       void prep_op(operator_t op, z3::expr* arg1_, z3::expr* arg2_);
       bool prepped();
@@ -45,6 +46,7 @@ namespace model {
       z3::expr* replace_op(type_t type, z3::expr* res);
       z3::expr* get_current_var(const std::string& name);
       z3::expr* get_previous_var(const std::string& name);
+      type_t get_var_type(const std::string& name);
 
 
       void check();
@@ -61,6 +63,7 @@ namespace model {
       z3::context* context;
       z3::solver* solver;
       var_map vars;
+      std::unordered_map<std::string, type_t> types;
       version_map var_version;
       std::map<operator_t, std::vector<const Operator*>> ops;
       std::map<operator_t, std::unordered_set<std::string>*> op_mods;

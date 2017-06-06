@@ -27,8 +27,6 @@ namespace model {
     context = context_;
     solver = solver_;
     expr_type = expr_type_;
-    vars[ARG1_STR] = new z3::expr(context->bool_const(ARG1_STR));
-    vars[ARG2_STR] = new z3::expr(context->bool_const(ARG2_STR));
     arg1 = arg2 = nullptr;
 
     // Build reliable operators
@@ -54,6 +52,10 @@ namespace model {
     return vars.at(name + "-" + std::to_string(version - 1));
   }
 
+  type_t Z3Visitor::get_var_type(const std::string& name) {
+    return types.at(name);
+  }
+
   z3::expr* Z3Visitor::visit(const Declare &node) {
     // TODO: Take type into account
     assert(node.var->name != ARG1_STR);
@@ -67,10 +69,23 @@ namespace model {
 
     // Declare var
     const std::string &name = node.var->name + "-0";
-    // TODO: More than just boolems
-    z3::expr *var = new z3::expr(this->context->bool_const(name.c_str()));
+    z3::expr* var = nullptr;
+    switch (node.type) {
+      case BOOL:
+        var = new z3::expr(this->context->bool_const(name.c_str()));
+        break;
+      case INT:
+        var = new z3::expr(this->context->int_const(name.c_str()));
+        break;
+      case REAL:
+        var = new z3::expr(this->context->real_const(name.c_str()));
+        break;
+      case FLOAT:
+        assert(false);
+    }
     vars[name] = var;
     var_version[node.var->name] = 0;
+    types[node.var->name] = node.type;
 
     assert(vars.size() == start_size + 1);
     assert(var_version.size() == start_version_size + 1);
@@ -95,6 +110,10 @@ namespace model {
 
   z3::expr* Z3Visitor::visit(const Var &node) {
     return get_current_var(node.name);
+  }
+
+  z3::expr* Z3Visitor::visit(const Old& node) {
+    return get_previous_var(node.var->name);
   }
 
   z3::expr* Z3Visitor::visit(const Bool &node) {
@@ -244,7 +263,8 @@ namespace model {
                           context,
                           solver,
                           expr_type,
-                          updated);
+                          updated,
+                          types);
     const Operator* impl = impls.at(0);
     assert(impl);
     z3::expr* fn = impl->accept(subst);

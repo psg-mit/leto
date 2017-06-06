@@ -19,5 +19,6 @@ namespace model {
       virtual z3::expr* visit(const Operator &node) override;
       virtual z3::expr* visit(const Block &node) override;
       virtual z3::expr* visit(const VarList &node) override;
+      virtual z3::expr* visit(const Old &node) override;
   };
 }

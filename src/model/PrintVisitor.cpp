@@ -167,4 +167,10 @@ namespace model {
     else printf("nil\n");
     return nullptr;
   }
+
+  z3::expr* PrintVisitor::visit(const Old& node) {
+    printf("Old:\n");
+    node.var->accept(*this);
+    return nullptr;
+  }
 }

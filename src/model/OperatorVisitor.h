@@ -25,9 +25,11 @@ namespace model {
                       z3::context* context,
                       z3::solver* solver,
                       type_t expr_type_,
-                      const std::unordered_set<std::string> *updated_);
+                      const std::unordered_set<std::string> *updated_,
+                      const std::unordered_map<std::string, type_t>& types);
       virtual z3::expr* visit(const Var &node) override;
       virtual z3::expr* visit(const Operator &node) override;
+      virtual z3::expr* visit(const Old& node);
 
       // Inherited
       /*

@@ -9,7 +9,8 @@ namespace model {
                                    z3::context* context_,
                                    z3::solver* solver_,
                                    type_t expr_type_,
-                                   const std::unordered_set<std::string> *updated_)
+                                   const std::unordered_set<std::string> *updated_,
+                                   const std::unordered_map<std::string, type_t>& types)
       : Z3Visitor(context_, solver_, expr_type_),
         vars(vars_),
         var_version(var_version_) {
@@ -27,7 +28,20 @@ namespace model {
       // Intialize next version
       unsigned next_version = ++var_version->at(name);
       const std::string &new_name = name + "-" + std::to_string(next_version);
-      z3::expr *var = new z3::expr(context->bool_const(new_name.c_str()));
+      z3::expr *var = nullptr;
+      switch (types.at(name)) {
+        case BOOL:
+          var = new z3::expr(context->bool_const(new_name.c_str()));
+          break;
+        case INT:
+          var = new z3::expr(context->int_const(new_name.c_str()));
+          break;
+        case REAL:
+          var = new z3::expr(context->real_const(new_name.c_str()));
+          break;
+        case FLOAT:
+          assert(false);
+      }
       (*vars)[new_name] = var;
     }
 
@@ -45,6 +59,10 @@ namespace model {
     } else {
       return updated->count(name) ? get_prev_var(name) : get_current_var(name);
     }
+  }
+
+  z3::expr* OperatorVisitor::visit(const Old& node) {
+    return get_prev_var(node.var->name);
   }
 
   z3::expr* OperatorVisitor::visit(const Operator &node) {

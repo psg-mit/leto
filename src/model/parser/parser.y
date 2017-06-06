@@ -9,6 +9,8 @@
        TRUE
        FALSE
        BOOL
+       INT
+       REAL
        OPERATOR
        WHEN
        ENSURES
@@ -16,6 +18,7 @@
        MODIFIES
        FREAD
        FWRITE
+       OLD
 
 %left ';'
 %left AND OR
@@ -42,10 +45,10 @@
 program: expression | statement;
 
 op:
-  '+' { $$ = PLUS; }
-| '-' { $$ = MINUS; }
-| '*' { $$ = TIMES; }
-| '/' { $$ = DIV; }
+  '+' { $$ = RPLUS; }
+| '-' { $$ = RMINUS; }
+| '*' { $$ = RTIMES; }
+| '/' { $$ = RDIV; }
 ;
 
 expression:
@@ -54,23 +57,23 @@ expression:
     model_ast = $$;
   }
 | expression '+' expression {
-    $$ = new model::BinOp(PLUS, $1, $3);
+    $$ = new model::BinOp(OPLUS, $1, $3);
     model_ast = $$;
   }
 | expression '-' expression {
-    $$ = new model::BinOp(MINUS, $1, $3);
+    $$ = new model::BinOp(OMINUS, $1, $3);
     model_ast = $$;
   }
 | expression '*' expression {
-    $$ = new model::BinOp(TIMES, $1, $3);
+    $$ = new model::BinOp(OTIMES, $1, $3);
     model_ast = $$;
   }
 | expression '/' expression {
-    $$ = new model::BinOp(DIV, $1, $3);
+    $$ = new model::BinOp(ODIV, $1, $3);
     model_ast = $$;
   }
 | '-' expression {
-    $$ = new model::BinOp(MINUS, &ZERO, $2);
+    $$ = new model::BinOp(OMINUS, &ZERO, $2);
     model_ast = $$;
   }
 | var
@@ -84,6 +87,10 @@ expression:
   }
 | FALSE {
     $$ = new model::Bool(false);
+    model_ast = $$;
+  }
+| OLD '(' var ')' {
+    $$ = new model::Old($3);
     model_ast = $$;
   }
 ;
@@ -142,6 +149,24 @@ statement:
   }
 | BOOL var '=' expression {
     $$ = new model::StatementList(new model::Declare(type_t::BOOL, $2),
+                                  new model::Assign($2, $4));
+    model_ast = $$;
+  }
+| INT var {
+    $$ = new model::Declare(type_t::INT, $2);
+    model_ast = $$;
+  }
+| INT var '=' expression {
+    $$ = new model::StatementList(new model::Declare(type_t::INT, $2),
+                                  new model::Assign($2, $4));
+    model_ast = $$;
+  }
+| REAL var {
+    $$ = new model::Declare(type_t::REAL, $2);
+    model_ast = $$;
+  }
+| REAL var '=' expression {
+    $$ = new model::StatementList(new model::Declare(type_t::REAL, $2),
                                   new model::Assign($2, $4));
     model_ast = $$;
   }
