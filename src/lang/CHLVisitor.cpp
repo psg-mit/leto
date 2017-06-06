@@ -584,6 +584,17 @@ namespace lang {
   // hand expressions in conditionals are too.  Perhaps something more fine
   // grained is needed here
   z3pair CHLVisitor::visit(Assign &node) {
+    // Check for <array> = <array>
+    Var* vlhs = dynamic_cast<Var*>(node.lhs);
+    if (vlhs && (light_mats.count(vlhs->name) || dim_map.count(vlhs->name))) {
+      // Replace this assignment with a Copy node
+      Var* vrhs = dynamic_cast<Var*>(node.rhs);
+      assert(vrhs);
+
+      Copy array_copy(vrhs, vlhs);
+      return array_copy.accept(*this);
+    }
+
     model_visitor->unprep();
     // If prepped, replace op.  Else do what we do now
     // Get both pairs

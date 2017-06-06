@@ -59,7 +59,7 @@ while (0 <= iters) (OUTER) {
     }
   }
   --iters;
-  COPY(next_x, x);
+  next_x = x;
   relational_assert(outer_last_upset == false -> (UPS));
   outer_last_upset = model.upset;
 }

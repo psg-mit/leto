@@ -95,12 +95,12 @@ while (it < M) (EQS) {
     while (r != r2 || q != q2) (DMR) {
 
       // Zero out sum destinations
-      COPY(zeros, r);
-      COPY(zeros, r2);
-      COPY(zeros, spec_r);
-      COPY(zeros, q);
-      COPY(zeros, q2);
-      COPY(zeros, spec_q);
+      r = zeros;
+      r2 = zeros;
+      spec_r = zeros;
+      q = zeros;
+      q2 = zeros;
+      spec_q = zeros;
 
       for (int i = N - 1; 0 <= i; --i) (DMR) {
         for (int j = N - 1; 0 <= j; --j) (DMR) {
@@ -208,9 +208,9 @@ while (it < M) (EQS) {
     COMPUTE_P
   }
   ++it;
-  COPY(next_p, p);
-  COPY(next_x, x);
-  COPY(next_r, r);
+  next_p = p;
+  next_x = x;
+  next_r = r;
 
   ++man_mod;
 

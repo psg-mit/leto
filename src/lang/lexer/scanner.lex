@@ -38,7 +38,7 @@ assume                              return lang::LangParser::ASSUME;
 relational_assume                   return lang::LangParser::REL_ASSUME;
 relational_assert                   return lang::LangParser::REL_ASSERT;
 fail                                return lang::LangParser::FAIL;
-COPY                                return lang::LangParser::COPY;
+copy                                return lang::LangParser::COPY;
 POW                                 return lang::LangParser::POW;
 forall                              return lang::LangParser::FORALL;
 fread                               return lang::LangParser::FREAD;
