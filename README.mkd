@@ -2,7 +2,45 @@
 
 The implementation of the Leto algorithm is available in this repository.
 
-## Dependencies ##
+## Building With Vagrant ##
+Using Vagrant will allow you to build Leto within a VM that contains all of the
+(outdated) dependencies it needs.
+This is the easiest way to install Leto.
+
+### Dependencies ###
+For the Vagrant install you will need:
+
+* Vagrant
+* VirtualBox
+
+### Building ###
+To build with Vagrant run `vagrant up`.
+This will generate a VM based on Debian 8 with all of the required dependencies
+for building and running Leto.
+Note that this will take a while to complete.
+
+### Running Under Vagrant ###
+To run Leto under Vagrant, run `vagrant up` (if you haven't already from the
+build step) followed by `vagrant ssh`.
+The Leto source and benchmarks will be within the `/vagrant` folder.
+Note that this folder is shared with the host operating system, so local
+changes to Leto will affect the VM and vice versa.
+See the "Running Leto" section at the bottom of this file for how to run the
+system once you've sshed into the VM.
+
+After you are done, run `vagrant halt` or `vagrant suspend` to stop the VM (see
+the Vagrant documentation for the difference between these two).
+If you want to delete everything, run `vagrant destroy`.
+`vagrant up` will bring the VM back up again, rebuilding if necessary (i.e.,
+you used `vagrant destroy` instead of `halt` or `suspend`).
+
+## Building Leto From Scratch ##
+Building Leto from scratch is NOT recommended.
+Getting the proper versions of dependencies is key, as the system does not seem
+to work as there appear to be compatibility issues between new versions of
+bisonc++ and clang.
+
+### Dependencies ###
 Leto depends on the following software.
 It is known to work with the versions in parenthesis.
 With the exception of z3, these are all the current versions in the Debian
@@ -16,7 +54,7 @@ Jessie package repository.
 * python3 (3.4.2)
 * z3 (4.4.1)
 
-## Compiling Leto ##
+### Compiling Leto ###
 To build the system, run `make` from the `src` directory.
 If all goes well you will end up with a binary named `leto` in the `src`
 directory.
