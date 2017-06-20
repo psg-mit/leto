@@ -36,9 +36,8 @@ you used `vagrant destroy` instead of `halt` or `suspend`).
 
 ## Building Leto From Scratch ##
 Building Leto from scratch is NOT recommended.
-Getting the proper versions of dependencies is key, as the system does not seem
-to work as there appear to be compatibility issues between new versions of
-bisonc++ and clang.
+Getting the proper versions of dependencies is key as there appear to be
+compatibility issues between new versions of bisonc++ and clang.
 
 ### Dependencies ###
 Leto depends on the following software.
