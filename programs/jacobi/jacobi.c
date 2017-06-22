@@ -15,8 +15,7 @@
             ((last_upset == false && model.upset == true) -> (sigma<r> - E < sigma<o> < sigma<r> + E)) && \
             ((last_upset == true && model.upset == true) -> EQ(sigma))
 
-#define UPS ((model.upset == false) -> (forall(fi)((((i<r>) < fi && fi < N<r>)) -> next_x<o>[fi] == next_x<r>[fi]))) && \
-            ((model.upset == true) -> ((forall(fj)((((i<r>) < fj && fj < N<r>) && (fj != upset_index)) -> next_x<o>[fj] == next_x<r>[fj]))) && \
+#define UPS ((model.upset == true) -> ((forall(fj)((((i<r>) < fj && fj < N<r>) && (fj != upset_index)) -> next_x<o>[fj] == next_x<r>[fj]))) && \
              -EPSILON < XDIST < EPSILON)
 
 #define OUTER ((model.upset == false) -> (EQ(x) && EQ(next_x))) &&\
@@ -27,7 +26,7 @@
 #define MIDDLE (outer_last_upset == false -> (EQ(x) && (UPS))) &&\
                (last_upset == true-> model.upset == true) &&\
                NZD && EQ(N) && TBOUNDS(upset_index) && EQ(A) && BOUND(i) && EQ(b) &&\
-               (model.upset == false -> outer_last_upset == false)
+               (model.upset == false -> (outer_last_upset == false && EQ(next_x)))
 
 #define INNER (outer_last_upset == false -> (EQ(x) && (SIG))) &&\
               (last_upset == true -> model.upset == true) &&\
