@@ -176,9 +176,9 @@ namespace lang {
     return new z3::expr(z3::to_expr(*context, var));
   }
 
-  void CHLVisitor::add_var(type_t type,
-                           std::string oname,
-                           std::string rname) {
+  z3pair CHLVisitor::add_var(type_t type,
+                             std::string oname,
+                             std::string rname) {
     unsigned version = 0;
     if (var_version.count(oname)) {
       assert(var_version.at(oname) == var_version.at(rname));
@@ -215,6 +215,8 @@ namespace lang {
 
     vars[oname] = oexpr;
     vars[rname] = rexpr;
+
+    return {oexpr, rexpr};
   }
 
   z3::expr* CHLVisitor::vector_equals(z3::func_decl& x,
@@ -370,10 +372,13 @@ namespace lang {
       std::string oname = var->name + "<o>";
       std::string rname = var->name + "<r>";
 
-      add_var(node.type, oname, rname);
+      z3pair res = add_var(node.type, oname, rname);
 
       types[var->name] = node.type;
       if (node.specvar) specvars.insert(var->name);
+
+      // Assume variables are equal at declare time
+      add_constraint(*res.original == *res.relaxed);
     }
 
     return {nullptr, nullptr};
@@ -401,12 +406,20 @@ namespace lang {
         dimensions->push_back(res.original);
       }
 
-      add_vector(node.type, oname, rname, *dimensions);
+      vec_pair res = add_vector(node.type, oname, rname, *dimensions);
 
       types[var->name] = node.type;
       dim_map[var->name] = dimensions;
 
       if (node.specvar) specvars.insert(var->name);
+
+      // Assume vectors are equal at declare time
+      z3::expr* eq = vector_equals(*res.original,
+                                   *res.relaxed,
+                                   *dimensions,
+                                   dimensions->size() == 1 ? IGNORE_1D : IGNORE_2D);
+
+      add_constraint(*eq);
     }
 
     return {nullptr, nullptr};

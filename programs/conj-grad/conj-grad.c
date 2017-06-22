@@ -85,7 +85,7 @@ assert(tmp < MIN_KA);
 
 int it = 0;
 
-relational_assume(EQS);
+relational_assume(0 < N<r>);
 while (it < M) (EQS) {
   if (man_mod == F) {
     // Line 4: [r, q] = A * [x, p]

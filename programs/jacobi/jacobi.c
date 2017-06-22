@@ -36,9 +36,10 @@
 int N, iters;
 matrix<real> A(N<r>,N<r>), b(N<r>), x(N<r>), next_x(N<r>);
 real sigma, delta, num;
-specvar int upset_index;
-specvar bool last_upset, outer_last_upset;
-relational_assume (OUTER);
+specvar int upset_index = 0;
+specvar bool last_upset = false;
+specvar bool outer_last_upset = model.upset;
+relational_assume (NZD && 0 < N<r>);
 while (0 <= iters) (OUTER) {
   for (int i = N - 1; 0 <= i; --i) (MIDDLE) {
     last_upset = model.upset;

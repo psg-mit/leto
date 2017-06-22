@@ -115,7 +115,7 @@ namespace lang {
       z3::expr* forall_j;
       unsigned forall_ctr;
 
-      void add_var(type_t type, std::string oname, std::string rname);
+      z3pair add_var(type_t type, std::string oname, std::string rname);
       vec_pair add_vector(type_t type,
                           const std::string& oname,
                           const std::string& rname,
