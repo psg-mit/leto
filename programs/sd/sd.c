@@ -1,27 +1,26 @@
-#define EQ(x) x<o> == x<r>
 #define SPEQR(x) x<r> == spec_r
 #define SPEQAX(Ax) Ax<r> == spec_Ax
 
 #define BOUND(i) (-1 <= i<o> < N<o>)
 #define TBOUND(i) (0 <= i<o> < N<o>)
 
-#define OUTER ((model.upset == false) -> EQ(r)) && \
-              ((model.upset == true && old_upset == true) -> EQ(r))
+#define OUTER ((model.upset == false) -> eq(r)) && \
+              ((model.upset == true && old_upset == true) -> eq(r))
 #define OUTER2 ((model.upset == false) -> SPEQR(r)) && \
                ((model.upset == true && old_upset == true) -> SPEQR(r))
 
-#define OLD_UPSET ((init_upset == false) -> (EQ(x))) && init_upset == false
-#define UPSET ((old_upset == false && model.upset == true) -> ((EQ(r) && EQ(Ax)) || (EQ(r2) && EQ(Ax2)))) && \
-              ((model.upset == false) -> (EQ(r) && EQ(r2) && EQ(Ax) && EQ(Ax2))) && \
-              ((model.upset == true && old_upset == true) -> (EQ(r) && EQ(r2) && EQ(Ax) && EQ(Ax2))) && \
+#define OLD_UPSET ((init_upset == false) -> (eq(x))) && init_upset == false
+#define UPSET ((old_upset == false && model.upset == true) -> ((eq(r) && eq(Ax)) || (eq(r2) && eq(Ax2)))) && \
+              ((model.upset == false) -> (eq(r) && eq(r2) && eq(Ax) && eq(Ax2))) && \
+              ((model.upset == true && old_upset == true) -> (eq(r) && eq(r2) && eq(Ax) && eq(Ax2))) && \
               OLD_UPSET
 #define UPSET2 ((old_upset == false && model.upset == true) -> ((SPEQR(r) && SPEQAX(Ax)) || (SPEQR(r2) && SPEQAX(Ax2)))) && \
                ((model.upset == false) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2))) && \
                ((model.upset == true && old_upset == true) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2))) && \
                OLD_UPSET
-#define INV EQ(N) && EQ(A) && EQ(b) && UPSET2 && OUTER2
+#define INV eq(N) && eq(A) && eq(b) && UPSET2 && OUTER2
 
-#define IMPL (((r<o> == r2<o>) && (r<r> == r2<r>)) -> EQ(r))
+#define IMPL (((r<o> == r2<o>) && (r<r> == r2<r>)) -> eq(r))
 #define IMPL2 ((r<r> == r2<r>) -> SPEQR(r))
 
 // TODO: Get working with pseudo-seu-range

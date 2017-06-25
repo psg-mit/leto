@@ -40,6 +40,7 @@
        ODECR
        SPECVAR
        NOINF
+       EQ
 
 
 %left ';'
@@ -400,6 +401,12 @@ relboolexp:
   }
 | FORALL '(' var ')' '(' relboolexp ')' {
     $$ = new lang::RelationalForall($3, $6);
+    lang_ast = $$;
+  }
+| EQ '(' var ')' {
+    RelationalVar* ovar = new RelationalVar(lang::relation_t::ORIGINAL, $3);
+    RelationalVar* rvar = new RelationalVar(lang::relation_t::RELAXED, $3);
+    $$ = new lang::RelationalBoolExp(lang::bool_t::EQUALS, ovar, rvar);
     lang_ast = $$;
   }
 ;

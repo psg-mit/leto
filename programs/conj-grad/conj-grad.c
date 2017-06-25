@@ -4,29 +4,28 @@
 #define MIN_KA 5
 #define MIN_F 4
 
-#define EQ(x) (x<o> == x<r>)
 #define SPEQR(x) (x<r> == spec_r)
 #define SPEQQ(x) (x<r> == spec_q)
-#define BOUND(i) (-1 <= i<o> < N<o> && EQ(i))
+#define BOUND(i) (-1 <= i<o> < N<o> && eq(i))
 #define TBOUND(i) (0 <= i<o> < N<o>)
 
-#define EQS EQ(A) && \
-            EQ(it) && \
-            EQ(M) && \
-            EQ(N) && \
-            EQ(man_mod) && \
-            EQ(F) && \
+#define EQS eq(A) && \
+            eq(it) && \
+            eq(M) && \
+            eq(N) && \
+            eq(man_mod) && \
+            eq(F) && \
             0 < N<r>
 
 #define DMR ((model.upset == false) -> (SPEQR(r) && SPEQR(r2) && SPEQQ(q) && SPEQQ(q2))) && \
-            ((old_upset == false) -> (EQ(x) && EQ(p))) && \
+            ((old_upset == false) -> (eq(x) && eq(p))) && \
             ((r<r> == r2<r>) -> SPEQR(r)) && \
             ((q<r> == q2<r>) -> SPEQQ(q)) && \
             old_upset == false
 
-#define OUTER BOUND(i) && EQ(N) && EQ(A) && (model.upset == false -> (EQ(p)))
+#define OUTER BOUND(i) && eq(N) && eq(A) && (model.upset == false -> (eq(p)))
 
-#define INNER TBOUND(i) && BOUND(j) && (model.upset == false -> (q<r>[i<r>] == q<o>[i<r>] && EQ(p)))
+#define INNER TBOUND(i) && BOUND(j) && (model.upset == false -> (q<r>[i<r>] == q<o>[i<r>] && eq(p)))
 
 #define DQ (q<r>[i<r>] - q<o>[i<r>])
 
@@ -108,7 +107,7 @@ relational_assume(0 < N<r>);
 
       // TODO: Inference runs out of memory without EQ(A).  Noinf used purely
       // for performance, but it can be safely removed
-      @noinf for (int i = N - 1; 0 <= i; --i) (DMR && EQ(A)) {
+      @noinf for (int i = N - 1; 0 <= i; --i) (DMR && eq(A)) {
         for (int j = N - 1; 0 <= j; --j) (DMR) {
           // Compute r
           tmp = A[i][j] *. x[j];

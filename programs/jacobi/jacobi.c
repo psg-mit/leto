@@ -3,31 +3,29 @@
 
 #define XDIST (next_x<o>[upset_index] - next_x<r>[upset_index])
 
-#define EQ(e) (e<o> == e<r>)
-
 #define NZD (forall(fi)((E / EPSILON) < A<r>[fi][fi] || A<r>[fi][fi] < (-(E / EPSILON))))
 
-#define BOUND(i) (-1 <= i<r> < N<r> && EQ(i))
-#define TBOUND(i) (0  <= i<r> < N<r> && EQ(i))
+#define BOUND(i) (-1 <= i<r> < N<r> && eq(i))
+#define TBOUND(i) (0  <= i<r> < N<r> && eq(i))
 #define TBOUNDS(i) (0  <= i < N<r>)
 
-#define SIG ((model.upset == false) -> EQ(sigma)) && \
+#define SIG ((model.upset == false) -> eq(sigma)) && \
             ((last_upset == false && model.upset == true) -> (sigma<r> - E < sigma<o> < sigma<r> + E)) && \
-            ((last_upset == true && model.upset == true) -> EQ(sigma))
+            ((last_upset == true && model.upset == true) -> eq(sigma))
 
 #define UPS ((model.upset == true) -> ((forall(fj)((((i<r>) < fj && fj < N<r>) && (fj != upset_index)) -> next_x<o>[fj] == next_x<r>[fj]))) && \
              -EPSILON < XDIST < EPSILON)
 
-#define OUTER ((model.upset == false) -> (EQ(x) && EQ(next_x))) &&\
+#define OUTER ((model.upset == false) -> (eq(x) && eq(next_x))) &&\
               (last_upset == true -> model.upset == true) &&\
               TBOUNDS(upset_index) && NZD && outer_last_upset == model.upset
 
-#define MIDDLE (outer_last_upset == false -> (EQ(x) && (UPS))) &&\
+#define MIDDLE (outer_last_upset == false -> (eq(x) && (UPS))) &&\
                (last_upset == true-> model.upset == true) &&\
                NZD && TBOUNDS(upset_index) && BOUND(i) &&\
-               (model.upset == false -> (outer_last_upset == false && EQ(next_x)))
+               (model.upset == false -> (outer_last_upset == false && eq(next_x)))
 
-#define INNER (outer_last_upset == false -> (EQ(x) && (SIG))) &&\
+#define INNER (outer_last_upset == false -> (eq(x) && (SIG))) &&\
               (last_upset == true -> model.upset == true) &&\
               TBOUND(i) && BOUND(j) &&\
               (model.upset == false -> outer_last_upset == false)
