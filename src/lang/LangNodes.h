@@ -371,14 +371,17 @@ namespace lang {
     public:
       While(BoolExp *cond_,
             RelationalBoolExp* inv_,
-            Statement *body_) :
-          cond(cond_), inv(inv_), body(body_), seen(false) {}
+            Statement *body_,
+            bool inf_) :
+          cond(cond_), inv(inv_), body(body_), seen(false), inf(inf_) {}
       virtual z3pair accept(ASTVisitor &visitor)  override;
 
       BoolExp* cond;
       RelationalBoolExp* inv;
       Statement* body;
       bool seen;
+      std::vector<std::string> houdini_vars;
+      bool inf;
   };
 
   class Block : public Statement {

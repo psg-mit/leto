@@ -20,17 +20,16 @@
 
 #define OUTER ((model.upset == false) -> (EQ(x) && EQ(next_x))) &&\
               (last_upset == true -> model.upset == true) &&\
-              EQ(iters) && EQ(N)  && EQ(A) && EQ(b) && TBOUNDS(upset_index) && NZD &&\
-              outer_last_upset == model.upset
+              TBOUNDS(upset_index) && NZD && outer_last_upset == model.upset
 
 #define MIDDLE (outer_last_upset == false -> (EQ(x) && (UPS))) &&\
                (last_upset == true-> model.upset == true) &&\
-               NZD && EQ(N) && TBOUNDS(upset_index) && EQ(A) && BOUND(i) && EQ(b) &&\
+               NZD && TBOUNDS(upset_index) && BOUND(i) &&\
                (model.upset == false -> (outer_last_upset == false && EQ(next_x)))
 
 #define INNER (outer_last_upset == false -> (EQ(x) && (SIG))) &&\
               (last_upset == true -> model.upset == true) &&\
-              EQ(A) && TBOUND(i) && BOUND(j) &&\
+              TBOUND(i) && BOUND(j) &&\
               (model.upset == false -> outer_last_upset == false)
 
 int N, iters;

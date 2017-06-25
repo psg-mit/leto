@@ -49,6 +49,7 @@ specvar                             return lang::LangParser::SPECVAR;
 --                                  return lang::LangParser::ODECR;
 \+\+\.                              return lang::LangParser::INCR;
 --\.                                return lang::LangParser::DECR;
+@noinf                              return lang::LangParser::NOINF;
 [[:alpha:]_][[:alpha:][:digit:]_]*  return lang::LangParser::ID;
 .                                   return matched()[0];
 

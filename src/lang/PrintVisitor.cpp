@@ -63,6 +63,7 @@ namespace lang {
 
   z3pair PrintVisitor::visit(While &node) {
     printf("While:\n");
+    printf("  inf: %i\n", node.inf);
     printf("  Condition:\n");
     node.cond->accept(*this);
     printf("  Invarient:\n");

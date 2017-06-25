@@ -114,6 +114,17 @@ namespace lang {
       z3::expr* forall_i;
       z3::expr* forall_j;
       unsigned forall_ctr;
+      bool in_houdini;
+      bool houdini_failed;
+      z3::model* z3_model;
+      size_t h_tmp;
+      bool passed_houdini_pre;
+      bool outer_h_unknown;
+      bool inner_h_unknown;
+
+      // Contains *unqualified* vars to be set equal to eachother
+      std::vector<std::string>* cur_houdini_vars;
+      std::vector<std::string> h_tmps;
 
       z3pair add_var(type_t type, std::string oname, std::string rname);
       vec_pair add_vector(type_t type,
@@ -125,7 +136,12 @@ namespace lang {
       z3::func_decl* get_current_vec(std::string name);
       z3::expr* make_float(const std::string& name);
       bool contains_var(std::string name);
-      void check_loop(While &node, z3::expr cond);
+
+      /**
+       * Returns true if houdini was unknown
+       */
+      bool check_loop(While &node, z3::expr cond);
+
       z3::expr* get_previous_var(std::string name);
       void push_prefix(z3::expr* prefix);
       void pop_prefix();
@@ -144,6 +160,7 @@ namespace lang {
       void legal_path(z3::expr& original,
                       z3::expr& relaxed,
                       z3::expr& inv,
+                      const While& node,
                       std::array<z3::check_result, 3>& results);
 
       /**
@@ -157,5 +174,18 @@ namespace lang {
                               z3::func_decl& y,
                               const std::vector<z3::expr*>& dimensions,
                               std::vector<z3::expr*>& ignore_index);
+
+      z3::expr* houdini_to_constraints(const While& node);
+
+
+      /**
+       * Parses z3_model and modifies houdini_vars accordingly
+       *
+       * Sets houdini_failed to true if a z3 model exists, indicating an
+       * invalid set of houdini_vars
+       */
+      void parse_z3_model();
+
+      std::string houdini_to_str();
   };
 }

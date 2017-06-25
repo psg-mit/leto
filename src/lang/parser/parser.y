@@ -39,6 +39,7 @@
        OINCR
        ODECR
        SPECVAR
+       NOINF
 
 
 %left ';'
@@ -447,15 +448,29 @@ cflow:
   WHILE '(' boolexp ')'
         '(' relboolexp ')'
         '{' statementlist '}' {
-    $$ = new lang::While($3, $6, $9);
+    $$ = new lang::While($3, $6, $9, true);
     lang_ast = $$;
   }
 | FOR '(' statement ';' boolexp ';' statement ')'
       '(' relboolexp ')'
       '{' statementlist '}' {
     lang::Statement* body = new StatementList($13, $7);
-    lang::While* desugar_while = new lang::While($5, $10, body);
+    lang::While* desugar_while = new lang::While($5, $10, body, true);
     $$ = new lang::StatementList($3, desugar_while);
+    lang_ast = $$;
+  }
+| NOINF WHILE '(' boolexp ')'
+              '(' relboolexp ')'
+              '{' statementlist '}' {
+    $$ = new lang::While($4, $7, $10, false);
+    lang_ast = $$;
+  }
+| NOINF FOR '(' statement ';' boolexp ';' statement ')'
+            '(' relboolexp ')'
+            '{' statementlist '}' {
+    lang::Statement* body = new StatementList($14, $8);
+    lang::While* desugar_while = new lang::While($6, $11, body, false);
+    $$ = new lang::StatementList($4, desugar_while);
     lang_ast = $$;
   }
 | IF '(' boolexp ')' '{' statementlist '}' ELSE '{' statementlist '}' {

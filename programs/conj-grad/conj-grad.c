@@ -8,7 +8,7 @@
 #define SPEQR(x) (x<r> == spec_r)
 #define SPEQQ(x) (x<r> == spec_q)
 #define BOUND(i) (-1 <= i<o> < N<o> && EQ(i))
-#define TBOUND(i) (0 <= i<o> < N<o> && EQ(i))
+#define TBOUND(i) (0 <= i<o> < N<o>)
 
 #define EQS EQ(A) && \
             EQ(it) && \
@@ -22,16 +22,16 @@
             ((old_upset == false) -> (EQ(x) && EQ(p))) && \
             ((r<r> == r2<r>) -> SPEQR(r)) && \
             ((q<r> == q2<r>) -> SPEQQ(q)) && \
-            EQ(A) && old_upset == false
+            old_upset == false
 
 #define OUTER BOUND(i) && EQ(N) && EQ(A) && (model.upset == false -> (EQ(p)))
 
-#define INNER TBOUND(i) && BOUND(j) && EQ(A) && (model.upset == false -> (q<r>[i<r>] == q<o>[i<r>] && EQ(p)))
+#define INNER TBOUND(i) && BOUND(j) && (model.upset == false -> (q<r>[i<r>] == q<o>[i<r>] && EQ(p)))
 
 #define DQ (q<r>[i<r>] - q<o>[i<r>])
 
 #define COMPUTE_X_R \
-  for (i = N - 1; 0 <= i; --i) (5 == 5) { \
+  @noinf for (i = N - 1; 0 <= i; --i) (5 == 5) { \
     tmp = alpha * p[i]; \
     next_x[i] = x[i] + tmp; \
     tmp = alpha * q[i]; \
@@ -39,7 +39,7 @@
   }
 
 #define COMPUTE_P \
-  for (i = N - 1; 0 <= i; --i) (7 == 7) { \
+  @noinf for (i = N - 1; 0 <= i; --i) (7 == 7) { \
     tmp = beta * p[i]; \
     next_p[i] = next_r[i] + tmp; \
   }
@@ -86,7 +86,11 @@ assert(tmp < MIN_KA);
 int it = 0;
 
 relational_assume(0 < N<r>);
-while (it < M) (EQS) {
+// TODO:  Inference on this loop finds nothing because the if branch finding
+// comes back unknown, which causes the sysem to fall back to weak inference,
+// which comes back unknown in branch finding for all variables one by one.  It
+// takes forever and nothing in learned.
+@noinf while (it < M) (EQS) {
   if (man_mod == F) {
     // Line 4: [r, q] = A * [x, p]
     // DMR to compute r and q
@@ -102,7 +106,9 @@ while (it < M) (EQS) {
       q2 = zeros;
       spec_q = zeros;
 
-      for (int i = N - 1; 0 <= i; --i) (DMR) {
+      // TODO: Inference runs out of memory without EQ(A).  Noinf used purely
+      // for performance, but it can be safely removed
+      @noinf for (int i = N - 1; 0 <= i; --i) (DMR && EQ(A)) {
         for (int j = N - 1; 0 <= j; --j) (DMR) {
           // Compute r
           tmp = A[i][j] *. x[j];
@@ -127,12 +133,12 @@ while (it < M) (EQS) {
     relational_assert (old_upset == false -> SPEQQ(q));
 
     // Line 5: r = b - r
-    for (int i = N - 1; 0 <= i; --i) (3 == 3) { r[i] = b[i] - r[i]; }
+    @noinf for (int i = N - 1; 0 <= i; --i) (3 == 3) { r[i] = b[i] - r[i]; }
 
     // Line 6: alpha = (r^T * p) / (p^T * q)
     num = 0;
     denom = 0;
-    for (int i = N - 1; 0 <= i; --i) (4 == 4) {
+    @noinf for (int i = N - 1; 0 <= i; --i) (4 == 4) {
       tmp = r[i] * p[i];
       num = num + tmp;
       denom = p[i] * q[i];
@@ -146,7 +152,7 @@ while (it < M) (EQS) {
     // Line 9: beta = (-next_r^T * q) / (p^t * q)
     num = 0;
     denom = 0;
-    for (int i = N - 1; 0 <= i; --i) (6 == 6) {
+    @noinf for (int i = N - 1; 0 <= i; --i) (6 == 6) {
       // Compute num
       tmp = -next_r[i];
       tmp = tmp * q[i];
@@ -163,7 +169,9 @@ while (it < M) (EQS) {
 
   } else {
     // Line 12: q = A * p;
-    for (int i = N - 1; 0 <= i; --i) (OUTER) {
+    // TODO: Inference  on this loop causes the relational_assert in the inner
+    // loop to come back "unknown" :(
+    @noinf for (int i = N - 1; 0 <= i; --i) (OUTER) {
       q[i] = 0;
       for (int j = N - 1; 0 <= j; --j) (INNER) {
         old_upset = model.upset;
@@ -181,7 +189,7 @@ while (it < M) (EQS) {
     // Line 13: alpha = ||r||^2 / (p^T * q)
     num = 0;
     denom = 0;
-    for (int i = N - 1; 0 <= i; --i) (10 == 10) {
+    @noinf for (int i = N - 1; 0 <= i; --i) (10 == 10) {
       tmp = r[i] * r[i];
       num = num + tmp;
       denom = p[i] * q[i];
@@ -195,7 +203,7 @@ while (it < M) (EQS) {
     // Line 16: beta = ||next_r||^2 / ||r||^2
     num = 0;
     denom = 0;
-    for (int i = N - 1; 0 <= i; --i) (12 == 12) {
+    @noinf for (int i = N - 1; 0 <= i; --i) (12 == 12) {
       // Compute num
       num = next_r[i] * next_r[i];
 

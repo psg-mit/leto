@@ -41,15 +41,17 @@ specvar bool init_upset = model.upset;
 relational_assume(OUTER2);
 // TODO: r == r2 -> (old_upset == model.upset)?  Then I could take this upset
 // thing out of the loop condition
-while (r != r2) (OUTER2 && IMPL2) {
+// TODO: Inference runs out of memory on this loop
+@noinf while (r != r2) (OUTER2 && IMPL2) {
   old_upset = model.upset;
   relational_assume (INV);
-  for (int i = N - 1; 0 <= i; --i) (INV) {
+  // TODO: Inference runs out of memory on this loop
+  @noinf for (int i = N - 1; 0 <= i; --i) (INV) {
     // recompute Ax[i]
     Ax[i] = 0;
     spec_Ax[i] = 0;
     Ax2[i] = 0;
-    for (int j = N - 1; 0 <= j; --j) (EQ(A) && UPSET2) {
+    for (int j = N - 1; 0 <= j; --j) (UPSET2) {
       // TODO: Pull assumption into loop inv
       relational_assume ((old_upset == true) -> (model.upset == true));
 
