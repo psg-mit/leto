@@ -2368,7 +2368,7 @@ namespace lang {
     std::cout << cur_houdini_vars->size() << " " << h_tmps.size() << std::endl;
     assert(cur_houdini_vars);
     assert(cur_houdini_vars->size() == h_tmps.size());
-    for (size_t i = 0; i < h_tmps.size();) {
+    for (unsigned i = 0; i < h_tmps.size();) {
       std::string val = assignments.at(h_tmps.at(i));
       assert(val == "true" || val == "false");
 
