@@ -4,6 +4,8 @@
 
 #define NO_CHECK_CONTEXT
 
+#define RETURN_VOID return {nullptr, nullptr}
+
 enum operator_t {RPLUS,
                  RMINUS,
                  RTIMES,

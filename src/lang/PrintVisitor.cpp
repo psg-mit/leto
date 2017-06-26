@@ -1,3 +1,4 @@
+#include "ConjunctionBreaker.h"
 #include "PrintVisitor.h"
 
 
@@ -66,10 +67,22 @@ namespace lang {
     printf("  inf: %i\n", node.inf);
     printf("  Condition:\n");
     node.cond->accept(*this);
-    printf("  Invarient:\n");
+    printf("  Invariant:\n");
     node.inv->accept(*this);
     printf("  Body:\n");
     node.body->accept(*this);
+
+    // Break invariant
+    ConjunctionBreaker breaker(node.inv);
+    inv_vec invs = breaker.fissure();
+
+    printf("  Broken Invariant:\n");
+    for (RelationalExp* e : invs) {
+      printf("---BEGIN---\n");
+      e->accept(*this);
+      printf("---END---\n");
+    }
+
     return {nullptr, nullptr};
   }
 
