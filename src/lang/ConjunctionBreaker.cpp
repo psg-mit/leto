@@ -31,12 +31,32 @@ namespace lang {
 
 
   z3pair ConjunctionBreaker::visit(RelationalBoolExp& node) {
-    if (node.op != AND) {
-      invs.push_back(&node);
-    } else {
-      modified = true;
-      invs.push_back(node.lhs);
-      invs.push_back(node.rhs);
+    switch (node.op) {
+      case AND:
+        modified = true;
+        invs.push_back(node.lhs);
+        invs.push_back(node.rhs);
+        break;
+      case IMPLIES:
+        {
+          inv_vec new_invs(invs);
+          invs.clear();
+          node.rhs->accept(*this);
+
+          for (RelationalExp* inv : invs) {
+            new_invs.push_back(new RelationalBoolExp(IMPLIES, node.lhs, inv));
+          }
+
+          invs = new_invs;
+        }
+        break;
+      case EQUALS:
+      case NEQ:
+      case LT:
+      case XOR:
+      case OR:
+      case LTEQ:
+        invs.push_back(&node);
     }
 
     RETURN_VOID;
