@@ -6,7 +6,7 @@
 #define NZD (forall(fi)((E / EPSILON) < A<r>[fi][fi] || A<r>[fi][fi] < (-(E / EPSILON))))
 
 #define BOUND(i) (-1 <= i<r> < N<r> && eq(i))
-#define TBOUND(i) (0  <= i<r> < N<r> && eq(i))
+#define TBOUND(i) (0  <= i<r> < N<r>)
 #define TBOUNDS(i) (0  <= i < N<r>)
 
 #define SIG ((model.upset == false) -> eq(sigma)) && \
