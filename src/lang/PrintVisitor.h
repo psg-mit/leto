@@ -5,7 +5,7 @@
 namespace lang {
   class PrintVisitor : public ASTVisitor {
     public:
-      PrintVisitor() {}
+      PrintVisitor(bool compress_ = false) : compress(compress_) {}
       virtual z3pair visit(Int &node) override;
       virtual z3pair visit(BinOp &node) override;
       virtual z3pair visit(Block &node) override;
@@ -48,5 +48,11 @@ namespace lang {
       virtual z3pair visit(FaultyRead &node) override;
       virtual z3pair visit(FaultyWrite &node) override;
       virtual z3pair visit(VarList &node) override;
+
+      std::string output;
+    private:
+      const bool compress;
+
+      void print_binop(operator_t op);
   };
 }

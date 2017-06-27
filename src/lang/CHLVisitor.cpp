@@ -2,6 +2,8 @@
 #include <cstring>
 
 #include "CHLVisitor.h"
+#include "ConjunctionBreaker.h"
+#include "PrintVisitor.h"
 
 #define BUF_SIZE 16
 #define Z3_BIN "z3 -smt2 /tmp/constraints.smt2"
@@ -45,8 +47,10 @@ namespace lang {
     houdini_failed = false;
     h_tmp = 0;
     passed_houdini_pre = false;
-    cur_houdini_vars = nullptr;
+    cur_houdini_invs = nullptr;
     inner_h_unknown = false;
+    parent_while = nullptr;
+    h_var_version = nullptr;
   }
 
   static z3::check_result z3_bin(const std::string& constraints,
@@ -1924,7 +1928,7 @@ namespace lang {
     // Add inv to virgin solver
     path_solver.add(inv);
 
-    // Add houdini vars
+    // Add houdini invs
     z3::expr* houdini = houdini_to_constraints(node);
     path_solver.add(*houdini);
 
@@ -1962,22 +1966,16 @@ namespace lang {
   }
 
   z3::expr* CHLVisitor::houdini_to_constraints(const While& node) {
-    const std::vector<std::string>& houdini_vars = in_houdini ? *cur_houdini_vars :
-                                                                node.houdini_vars;
-    assert(in_houdini == bool(cur_houdini_vars));
+    const std::vector<RelationalBoolExp*>& houdini_invs = in_houdini ? *cur_houdini_invs :
+                                                                       node.houdini_invs;
+    assert(in_houdini == bool(cur_houdini_invs));
     z3::expr ret(context->bool_val(true));
 
     if (houdini_failed) return new z3::expr(ret);
 
     h_tmps.clear();
-    for (const std::string& var : houdini_vars) {
-      // Leverage existing binop logic
-      Var v(var);
-      RelationalVar ovar(ORIGINAL, &v);
-      RelationalVar rvar(RELAXED, &v);
-      RelationalBoolExp eq(EQUALS, &ovar, &rvar);
-
-      z3pair res = eq.accept(*this);
+    for (RelationalBoolExp* inv : houdini_invs) {
+      z3pair res = inv->accept(*this);
       assert(res.original);
       assert(!res.relaxed);
 
@@ -1995,7 +1993,7 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(While &node) {
-    assert((!cur_houdini_vars && !in_houdini) || in_houdini);
+    assert((!cur_houdini_invs && !in_houdini) || in_houdini);
 
     ++while_count;
 
@@ -2011,95 +2009,155 @@ namespace lang {
       check();
       solver->pop();
 
+      // Save current var version state
+      assert(!h_var_version);
+      h_var_version = new version_map(var_version);
+      model_visitor->snapshot_vars();
+
       if (node.inf) {
         assert(!in_houdini);
-        assert(node.houdini_vars.empty());
-        assert(!cur_houdini_vars);
+        assert(node.houdini_invs.empty());
+        assert(!cur_houdini_invs);
         in_houdini = true;
         passed_houdini_pre = false;
         outer_h_unknown = false;
 
-        cur_houdini_vars = &node.houdini_vars;
+        // Eq template
+        cur_houdini_invs = &node.houdini_invs;
         for (const std::pair<std::string, type_t>& kv : types) {
           if (!specvars.count(kv.first)) {
-            node.houdini_vars.push_back(kv.first);
+            // Leverage existing binop logic
+            Var* v = new Var(kv.first);
+            RelationalVar* ovar = new RelationalVar(ORIGINAL, v);
+            RelationalVar* rvar = new RelationalVar(RELAXED, v);
+            RelationalBoolExp* eq = new RelationalBoolExp(EQUALS, ovar, rvar);
+
+            node.houdini_invs.push_back(eq);
           }
+        }
+
+        // Parent template
+        if (parent_while) {
+          ConjunctionBreaker cb(parent_while->inv);
+          inv_vec cb_vec = cb.fissure();
+          node.houdini_invs.insert(node.houdini_invs.end(),
+                                   cb_vec.begin(),
+                                   cb_vec.end());
+          node.houdini_invs.insert(node.houdini_invs.end(),
+                                   parent_while->houdini_invs.begin(),
+                                   parent_while->houdini_invs.end());
         }
 
         do {
           if (outer_h_unknown) {
+            // TODO:  One of the reasons weak houdini sucks is that in doing
+            // strong houdini we corrupt the state of the solver / visitor by
+            // partially checking the body.  This revs version numbers so it's
+            // much harder to pass the precondition of the loop for weak
+            // houdini because all of the info in the context about variables
+            // altered in the loop body is lost.  Can we simply roll back the
+            // version map to it's state before entering this function?  I
+            // think this will cause errors as older variables are clobbered,
+            // so it must be restored after checking the precondition but
+            // before stepping into the loop.  It just might work!
+            //
+            // Recall that we don't have this problem with strong houdini
+            // because we cache the fact that we've passed the loop
+            // precondition, so it doesn't matter that we lose connection to
+            // the stuff already in the context.
 
             debug_print("Houdini came up unknown, trying weak Houdini");
-            std::vector<std::string> old_h_vars(node.houdini_vars);
+            std::vector<RelationalBoolExp*> old_h_invs(node.houdini_invs);
             std::vector<std::string> old_h_tmps(h_tmps);
-            assert(old_h_vars.size() == old_h_tmps.size());
-            std::vector<std::string> new_h_vars;
+            assert(old_h_invs.size() == old_h_tmps.size());
+            std::vector<RelationalBoolExp*> new_h_invs;
             std::vector<std::string> new_h_tmps;
-            for (size_t i = 0; i < old_h_vars.size(); ++i) {
-              node.houdini_vars.clear();
+            for (size_t i = 0; i < old_h_invs.size(); ++i) {
+              node.houdini_invs.clear();
               h_tmps.clear();
-              std::string var = old_h_vars.at(i);
+              RelationalBoolExp* h_inv = old_h_invs.at(i);
               std::string tmp = old_h_tmps.at(i);
-              node.houdini_vars.push_back(var);
+              node.houdini_invs.push_back(h_inv);
               h_tmps.push_back(tmp);
               houdini_failed = false;
               outer_h_unknown = false;
               passed_houdini_pre = false;
 
-              debug_print("Trying weak Houdini var: " + houdini_to_str());
+              std::string str_rep = houdini_to_str();
+              debug_print("Trying weak Houdini inv: " + str_rep);
 
               node.accept(*this);
 
-              if (!node.houdini_vars.empty() && !outer_h_unknown) {
-                assert(node.houdini_vars.size() == 1);
+              if (!node.houdini_invs.empty() && !outer_h_unknown) {
+                assert(node.houdini_invs.size() == 1);
                 assert(h_tmps.size() == 1);
 
-                new_h_vars.push_back(var);
+                new_h_invs.push_back(h_inv);
                 new_h_tmps.push_back(tmp);
 
-                debug_print("Saving weak Houdini var: " + var);
+                debug_print("Saving weak Houdini inv: " + str_rep);
               } else {
-                debug_print("Rejecting weak Houdini var: " + var);
+                debug_print("Rejecting weak Houdini inv: " + str_rep);
               }
             }
 
-            node.houdini_vars = new_h_vars;
+            node.houdini_invs = new_h_invs;
             h_tmps = new_h_tmps;
             houdini_failed = false;
             passed_houdini_pre = true;
           } else {
-            debug_print("Trying Houdini vars: " + houdini_to_str());
+            debug_print("Trying Houdini invs: " + houdini_to_str());
             houdini_failed = false;
             node.accept(*this);
           }
         } while (houdini_failed);
-        debug_print("Found Houdini vars: " + houdini_to_str());
+        debug_print("Found Houdini invs: " + houdini_to_str());
 
         in_houdini = false;
-        cur_houdini_vars = nullptr;
+        cur_houdini_invs = nullptr;
       }
     }
+
+    While* old_parent_while = parent_while;
+    parent_while = &node;
+
     star_line();
     debug_print("While: " + std::to_string(while_count));
 
     // Verify houdini invariant
     bool h_unknown = false;
+    // Use old version map *just* for precondition check in outer loop
+    auto cur_var_version(var_version);
+    if (&node.houdini_invs == cur_houdini_invs || !in_houdini) {
+      var_version = *h_var_version;
+      model_visitor->use_snapshot = true;
+    }
     z3::expr* eqs = houdini_to_constraints(node);
-    if (!passed_houdini_pre || &node.houdini_vars != cur_houdini_vars) {
+    if (&node.houdini_invs == cur_houdini_invs || !in_houdini) {
+      var_version = cur_var_version;
+      model_visitor->use_snapshot = false;
+    }
+    if (!in_houdini) {
+      delete h_var_version;
+      h_var_version = nullptr;
+    }
+    if (!passed_houdini_pre || &node.houdini_invs != cur_houdini_invs) {
       debug_print("Pre body houdini: " + std::to_string(while_count));
       solver->push();
       add_checked_constraint(*eqs);
       z3::check_result h_res =  check(!in_houdini);
       h_unknown = h_res == z3::unknown || h_unknown;
       solver->pop();
+
       if (in_houdini) {
         parse_z3_model();
         if (houdini_failed) {
           --while_count;
+          parent_while = old_parent_while;
           return {nullptr, nullptr};
         }
 
-        if (&node.houdini_vars == cur_houdini_vars) passed_houdini_pre = true;
+        if (&node.houdini_invs == cur_houdini_invs) passed_houdini_pre = true;
       }
     }
 
@@ -2114,6 +2172,7 @@ namespace lang {
     assert(cond.original);
     assert(cond.relaxed);
 
+    inv = node.inv->accept(*this);
     z3::expr path_inv = in_houdini ? *eqs : (*inv.original && *eqs);
     std::array<z3::check_result, 3> paths;
     legal_path(*cond.original, *cond.relaxed, path_inv, node, paths);
@@ -2174,10 +2233,11 @@ namespace lang {
         assert(false);
     }
 
-    if (h_unknown && in_houdini && &node.houdini_vars == cur_houdini_vars) {
+    if (h_unknown && in_houdini && &node.houdini_invs == cur_houdini_invs) {
       outer_h_unknown = h_unknown;
       houdini_failed = true;
       --while_count;
+      parent_while = old_parent_while;
       return {nullptr, nullptr};
     }
 
@@ -2203,9 +2263,10 @@ namespace lang {
       add_constraint(*eqs);
     }
     --while_count;
+    parent_while = old_parent_while;
 
     node.seen = true;
-    if (!in_houdini) node.houdini_vars.clear();
+    if (!in_houdini) node.houdini_invs.clear();
     return {nullptr, nullptr};
   }
 
@@ -2365,30 +2426,34 @@ namespace lang {
     }
 
     // Check which var eqs mapped to "false" and remove them
-    std::cout << cur_houdini_vars->size() << " " << h_tmps.size() << std::endl;
-    assert(cur_houdini_vars);
-    assert(cur_houdini_vars->size() == h_tmps.size());
+    std::cout << cur_houdini_invs->size() << " " << h_tmps.size() << std::endl;
+    assert(cur_houdini_invs);
+    assert(cur_houdini_invs->size() == h_tmps.size());
     for (unsigned i = 0; i < h_tmps.size();) {
       std::string val = assignments.at(h_tmps.at(i));
       assert(val == "true" || val == "false");
 
       if (val == "false") {
         h_tmps.erase(h_tmps.begin() + i);
-        cur_houdini_vars->erase(cur_houdini_vars->begin() + i);
+        cur_houdini_invs->erase(cur_houdini_invs->begin() + i);
       } else {
         ++i;
       }
     }
 
-    assert(cur_houdini_vars->size() == h_tmps.size());
+    assert(cur_houdini_invs->size() == h_tmps.size());
   }
 
   std::string CHLVisitor::houdini_to_str() {
+    PrintVisitor pv(true);
     std::string ret = "";
-
-    for (const std::string& var : *cur_houdini_vars) {
-      ret += var + ", ";
+    for (RelationalBoolExp* inv : *cur_houdini_invs) {
+      pv.output.clear();
+      inv->accept(pv);
+      ret += pv.output + ", ";
     }
+
+    ret += "\n";
 
     return ret;
   }

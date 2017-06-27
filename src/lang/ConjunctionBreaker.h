@@ -6,7 +6,7 @@
 #include "ASTVisitor.h"
 
 namespace lang {
-  typedef std::vector<RelationalExp*> inv_vec;
+  typedef std::vector<RelationalBoolExp*> inv_vec;
 
   class ConjunctionBreaker : public ASTVisitor {
     public:
@@ -22,6 +22,7 @@ namespace lang {
       inv_vec fissure();
 
       virtual z3pair visit(RelationalBoolExp &node) override;
+      virtual z3pair visit(RelationalForall &node) override;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -63,7 +64,6 @@ namespace lang {
       virtual z3pair visit(Exponent &node) override {assert(false);}
       virtual z3pair visit(ExprList &node) override {assert(false);}
       virtual z3pair visit(ArrayAssign &node) override {assert(false);}
-      virtual z3pair visit(RelationalForall &node) override {assert(false);}
       virtual z3pair visit(FaultyRead &node) override {assert(false);}
       virtual z3pair visit(FaultyWrite &node) override {assert(false);}
 #pragma clang diagnostic pop

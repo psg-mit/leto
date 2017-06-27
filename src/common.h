@@ -1,10 +1,15 @@
 #pragma once
 
+#include <unordered_map>
+
 #include <z3++.h>
 
 #define NO_CHECK_CONTEXT
 
 #define RETURN_VOID return {nullptr, nullptr}
+
+typedef std::unordered_map<std::string, unsigned> version_map;
+
 
 enum operator_t {RPLUS,
                  RMINUS,

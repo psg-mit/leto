@@ -87,7 +87,8 @@ namespace lang {
       z3::context* context;
       z3::solver* solver;
       std::unordered_map<std::string, z3::expr*> vars;
-      std::unordered_map<std::string, unsigned> var_version;
+      version_map var_version;
+      version_map* h_var_version;
       model::Z3Visitor* model_visitor;
       std::unordered_map<std::string, z3::func_decl*> vectors;
       bool in_assign;
@@ -121,9 +122,10 @@ namespace lang {
       bool passed_houdini_pre;
       bool outer_h_unknown;
       bool inner_h_unknown;
+      While* parent_while;
 
       // Contains *unqualified* vars to be set equal to eachother
-      std::vector<std::string>* cur_houdini_vars;
+      std::vector<RelationalBoolExp*>* cur_houdini_invs;
       std::vector<std::string> h_tmps;
 
       z3pair add_var(type_t type, std::string oname, std::string rname);

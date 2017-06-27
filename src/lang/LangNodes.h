@@ -380,7 +380,7 @@ namespace lang {
       RelationalBoolExp* inv;
       Statement* body;
       bool seen;
-      std::vector<std::string> houdini_vars;
+      std::vector<RelationalBoolExp*> houdini_invs;
       bool inf;
   };
 

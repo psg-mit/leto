@@ -40,14 +40,16 @@ namespace model {
     BuildOp(ODIV, op_arg1, op_arg2, result, when);
 
     current_mods = nullptr;
+    use_snapshot = false;
   }
 
   z3::expr* Z3Visitor::get_current_var(const std::string& name) {
-    return vars.at(name + "-" + std::to_string(var_version.at(name)));
+    unsigned version = use_snapshot ? snapshot.at(name) : var_version.at(name);
+    return vars.at(name + "-" + std::to_string(version));
   }
 
   z3::expr* Z3Visitor::get_previous_var(const std::string& name) {
-    unsigned version = var_version.at(name);
+    unsigned version = use_snapshot ? snapshot.at(name) : var_version.at(name);
     assert(version);
     return vars.at(name + "-" + std::to_string(version - 1));
   }
@@ -301,5 +303,9 @@ namespace model {
     }
     */
     std::cout << *solver << std::endl;
+  }
+
+  void Z3Visitor::snapshot_vars() {
+    snapshot = var_version;
   }
 }

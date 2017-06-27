@@ -25,7 +25,7 @@
 
 #define OUTER BOUND(i) && eq(N) && eq(A) && (model.upset == false -> (eq(p)))
 
-#define INNER TBOUND(i) && BOUND(j) && (model.upset == false -> (q<r>[i<r>] == q<o>[i<r>] && eq(p)))
+#define INNER TBOUND(i) && BOUND(j) && (model.upset == false -> q<r>[i<r>] == q<o>[i<r>])
 
 #define DQ (q<r>[i<r>] - q<o>[i<r>])
 
@@ -105,10 +105,9 @@ relational_assume(0 < N<r>);
       q2 = zeros;
       spec_q = zeros;
 
-      // TODO: Inference runs out of memory without EQ(A).  Noinf used purely
-      // for performance, but it can be safely removed
+      // TODO: Inference runs out of memory.
       @noinf for (int i = N - 1; 0 <= i; --i) (DMR && eq(A)) {
-        for (int j = N - 1; 0 <= j; --j) (DMR) {
+        for (int j = N - 1; 0 <= j; --j) (1 == 1) {
           // Compute r
           tmp = A[i][j] *. x[j];
           tmp2 = A[i][j] *. x[j];

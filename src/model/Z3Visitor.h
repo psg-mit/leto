@@ -18,7 +18,6 @@ namespace z3 {
 namespace model {
 
   typedef std::unordered_map<std::string, z3::expr*> var_map;
-  typedef std::unordered_map<std::string, unsigned> version_map;
 
   class Z3Visitor : public ASTVisitor {
     public:
@@ -51,10 +50,15 @@ namespace model {
 
       void check();
 
+      void snapshot_vars();
+
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
       virtual z3::expr* visit(const Block &node) { assert(false); }
 #pragma clang diagnostic pop
+
+      bool use_snapshot;
 
     protected:
       std::unordered_set<std::string>* current_mods;
@@ -65,6 +69,7 @@ namespace model {
       var_map vars;
       std::unordered_map<std::string, type_t> types;
       version_map var_version;
+      version_map snapshot;
       std::map<operator_t, std::vector<const Operator*>> ops;
       std::map<operator_t, std::unordered_set<std::string>*> op_mods;
 
@@ -79,5 +84,6 @@ namespace model {
                    Var* op_arg2,
                    Var* result,
                    Bool* when);
+
   };
 }

@@ -7,7 +7,7 @@ namespace lang {
     invs.push_back(inv);
   }
 
-  std::vector<RelationalExp*> ConjunctionBreaker::fissure() {
+  inv_vec ConjunctionBreaker::fissure() {
     assert(!invs.empty());
     if (invs.size() != 1) return invs;
 
@@ -33,9 +33,16 @@ namespace lang {
   z3pair ConjunctionBreaker::visit(RelationalBoolExp& node) {
     switch (node.op) {
       case AND:
-        modified = true;
-        invs.push_back(node.lhs);
-        invs.push_back(node.rhs);
+        {
+          modified = true;
+
+          RelationalBoolExp* child = dynamic_cast<RelationalBoolExp*>(node.lhs);
+          assert(child);
+          invs.push_back(child);
+          child = dynamic_cast<RelationalBoolExp*>(node.rhs);
+          assert(child);
+          invs.push_back(child);
+        }
         break;
       case IMPLIES:
         {
@@ -58,6 +65,12 @@ namespace lang {
       case LTEQ:
         invs.push_back(&node);
     }
+
+    RETURN_VOID;
+  }
+
+  z3pair ConjunctionBreaker::visit(RelationalForall& node) {
+    invs.push_back(&node);
 
     RETURN_VOID;
   }

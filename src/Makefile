@@ -5,6 +5,8 @@ leto: main.cpp \
 	    lang/lexer/lex.o \
 			lang/parser/parse.o \
 			lang/CHLVisitor.o \
+			lang/ConjunctionBreaker.o \
+			lang/PrintVisitor.o \
 			model/lexer/lex.o \
 			model/parser/parse.o \
 			model/Z3Visitor.o \
@@ -30,6 +32,12 @@ model/parser/parse.o: model/parser/parser.y
 
 lang/CHLVisitor.o: lang/CHLVisitor.cpp lang/CHLVisitor.h
 	$(MAKE) -C lang CHLVisitor.o
+
+lang/ConjunctionBreaker.o: lang/ConjunctionBreaker.cpp lang/ConjunctionBreaker.h
+	$(MAKE) -C lang ConjunctionBreaker.o
+
+lang/PrintVisitor.o: lang/PrintVisitor.cpp lang/PrintVisitor.h
+	$(MAKE) -C lang PrintVisitor.o
 
 model/Z3Visitor.o: model/Z3Visitor.cpp model/Z3Visitor.h
 	$(MAKE) -C model Z3Visitor.o
