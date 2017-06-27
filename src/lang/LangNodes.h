@@ -239,6 +239,7 @@ namespace lang {
 
   class BoolExp: public Expression {
     public:
+      BoolExp() {}
       BoolExp(bool_t op_, Expression *lhs_, Expression *rhs_) :
           op(op_), lhs(lhs_), rhs(rhs_) {}
       virtual z3pair accept(ASTVisitor &visitor)  override;
@@ -246,6 +247,16 @@ namespace lang {
       bool_t op;
       Expression* lhs;
       Expression* rhs;
+  };
+
+  class Forall : public BoolExp {
+    public:
+      Forall(Var* var_, BoolExp* exp_) :
+          var(var_), exp(exp_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      Var* var;
+      BoolExp* exp;
   };
 
 

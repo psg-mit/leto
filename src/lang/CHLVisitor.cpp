@@ -2353,13 +2353,10 @@ namespace lang {
     return {res_o, res_r};
   }
 
-  z3pair CHLVisitor::visit(RelationalForall &node) {
-    assert(node.var);
-    assert(node.exp);
-
+  z3::expr* CHLVisitor::build_forall_var(const std::string& name) {
     // Generate var names
-    std::string oname = node.var->name + "<o>";
-    std::string rname = node.var->name + "<r>";
+    std::string oname = name + "<o>";
+    std::string rname = name + "<r>";
     std::string tmp_base = "forall-tmp-" + std::to_string(forall_ctr);
     std::string otmp = tmp_base + "<o>";
     std::string rtmp = tmp_base + "<r>";
@@ -2371,17 +2368,39 @@ namespace lang {
 
     // Add var
     // TODO: Support more than just ints
-    // TODO: Do something more intelligent than forcing that <o> is used
-    //       Or at least detect if <r> is used and fail
     add_var(type_t::INT, otmp, rtmp);
-    types[node.var->name] = type_t::INT;
-    specvars.insert(node.var->name);
+    types[name] = type_t::INT;
+    specvars.insert(name);
     z3::expr* var = get_current_var(rtmp);
     assert(var);
 
     // Map var name to tmp var
     var_version[rname] = 0;
     vars[rname + "-0"] = var;
+
+    return var;
+  }
+
+  void CHLVisitor::destroy_forall_var(const std::string& name) {
+    std::string rname = name + "<r>";
+
+    // Remove the forall var
+    size_t res = var_version.erase(rname);
+    assert(res);
+    res = vars.erase(rname + "-0");
+    assert(res);
+    res = types.erase(name);
+    assert(res);
+    res = specvars.erase(name);
+    assert(res);
+
+  }
+
+  z3pair CHLVisitor::visit(RelationalForall &node) {
+    assert(node.var);
+    assert(node.exp);
+
+    z3::expr* var = build_forall_var(node.var->name);
 
     // Eval expression
     z3pair exp = node.exp->accept(*this);
@@ -2392,17 +2411,31 @@ namespace lang {
     z3::expr *ret = new z3::expr(z3::forall(*var, *exp.original));
     assert(ret);
 
-    // Remove the forall var
-    size_t res = var_version.erase(rname);
-    assert(res);
-    res = vars.erase(rname + "-0");
-    assert(res);
-    res = types.erase(node.var->name);
-    assert(res);
-    res = specvars.erase(node.var->name);
-    assert(res);
+    destroy_forall_var(node.var->name);
 
     return {ret, nullptr};
+  }
+
+  z3pair CHLVisitor::visit(Forall &node) {
+    assert(node.var);
+    assert(node.exp);
+
+    z3::expr* var = build_forall_var(node.var->name);
+
+    // Eval expression
+    z3pair exp = node.exp->accept(*this);
+    assert(exp.original);
+    assert(exp.relaxed);
+
+    // Construct forall
+    z3::expr *original = new z3::expr(z3::forall(*var, *exp.original));
+    assert(original);
+    z3::expr *relaxed = new z3::expr(z3::forall(*var, *exp.relaxed));
+    assert(relaxed);
+
+    destroy_forall_var(node.var->name);
+
+    return {original, relaxed};
   }
 
   void CHLVisitor::parse_z3_model() {

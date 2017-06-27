@@ -245,6 +245,10 @@ boolexp:
   $$ = $2;
   lang_ast = $2;
 }
+| FORALL '(' var ')' '(' boolexp ')' {
+    $$ = new lang::Forall($3, $6);
+    lang_ast = $$;
+  }
 ;
 
 relexpression:

@@ -158,6 +158,10 @@ namespace lang {
     return visitor.visit(*this);
   }
 
+  z3pair Forall::accept(ASTVisitor &visitor)  {
+    return visitor.visit(*this);
+  }
+
   z3pair FaultyRead::accept(ASTVisitor &visitor) {
     return visitor.visit(*this);
   }

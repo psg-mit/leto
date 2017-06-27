@@ -70,6 +70,7 @@ namespace lang {
       virtual z3pair visit(ExprList &node) override;
       virtual z3pair visit(ArrayAssign &node) override;
       virtual z3pair visit(RelationalForall &node) override;
+      virtual z3pair visit(Forall &node) override;
       virtual z3pair visit(FaultyRead &node) override;
       virtual z3pair visit(FaultyWrite &node) override;
 
@@ -191,5 +192,9 @@ namespace lang {
       void parse_z3_model();
 
       std::string houdini_to_str();
+
+      z3::expr* build_forall_var(const std::string& name);
+      void destroy_forall_var(const std::string& name);
+
   };
 }

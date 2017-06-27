@@ -66,6 +66,7 @@ namespace lang {
       virtual z3pair visit(ArrayAssign &node) override {assert(false);}
       virtual z3pair visit(FaultyRead &node) override {assert(false);}
       virtual z3pair visit(FaultyWrite &node) override {assert(false);}
+      virtual z3pair visit(Forall &node) override {assert(false);}
 #pragma clang diagnostic pop
 
     private:

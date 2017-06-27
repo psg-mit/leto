@@ -516,6 +516,21 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
+  z3pair PrintVisitor::visit(Forall &node) {
+    if (compress) {
+      output += "forall(";
+    } else {
+      printf("RelationalForall:\n");
+      printf("  var:\n");
+    }
+    node.var->accept(*this);
+    if (compress) output += ")(";
+    else printf("  exp:\n");
+    node.exp->accept(*this);
+    if (compress) output += (")");
+    return {nullptr, nullptr};
+  }
+
   z3pair PrintVisitor::visit(FaultyRead &node) {
     printf("FaultyRead:\n");
     printf("  var:\n");
