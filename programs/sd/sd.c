@@ -51,7 +51,7 @@ relational_assume(OUTER2);
     spec_Ax[i] = 0;
     Ax2[i] = 0;
     // TODO: Inference runs out of memory on this loop
-    @noinf for (int j = N - 1; 0 <= j; --j) (EQ(A) && UPSET2) {
+    @noinf for (int j = N - 1; 0 <= j; --j) (eq(A) && UPSET2) {
       // TODO: Pull assumption into loop inv
       relational_assume ((old_upset == true) -> (model.upset == true));
 
