@@ -1,9 +1,5 @@
 #define SQR_MIN_MAX_AIJ 2
 
-#define MIN_C real(74, 100)
-#define MIN_KA 5
-#define MIN_F 4
-
 #define SPEQR(x) (x<r> == spec_r)
 #define SPEQQ(x) (x<r> == spec_q)
 #define BOUND(i) (-1 <= i<o> < N<o> && eq(i))
@@ -67,20 +63,13 @@ matrix<real> next_p(N<o>);
 
 // Misc helpers
 int man_mod;
-real tmp2, num, denom;
+real tmp, tmp2, num, denom;
 matrix<real> zeros(N<o>);
 
 // Spec vars
 specvar matrix<real> spec_r(N<o>), spec_q(N<o>);
 specvar real spec_tmp;
 specvar bool old_upset;
-
-// TODO: This only holds for seu (eta = 1)
-// Verify F: c^(-F) < k(A)
-real tmp = -MIN_F;
-real lhs = POW(MIN_C, tmp);
-assert(tmp < MIN_KA);
-
 
 int it = 0;
 
