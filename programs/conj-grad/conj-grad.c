@@ -41,33 +41,33 @@
 
 // Params
 int N, M, F;
-matrix<real> A(N<o>, N<o>), b(N<o>), x(N<o>), r(N<o>), p(N<o>);
+matrix<real> A(N, N), b(N), x(N), r(N), p(N);
 
 // Introduced line 4
-matrix<real> r2(N<o>), q(N<o>), q2(N<o>);
+matrix<real> r2(N), q(N), q2(N);
 
 // Introduced line 6
 real alpha;
 
 // Introduced line 7
-matrix<real> next_x(N<o>);
+matrix<real> next_x(N);
 
 // Introduced line 8
-matrix<real> next_r(N<o>);
+matrix<real> next_r(N);
 
 // Introduced line 9
 real beta;
 
 // Introduced line 10
-matrix<real> next_p(N<o>);
+matrix<real> next_p(N);
 
 // Misc helpers
 int man_mod;
 real tmp, tmp2, num, denom;
-matrix<real> zeros(N<o>);
+matrix<real> zeros(N);
 
 // Spec vars
-specvar matrix<real> spec_r(N<o>), spec_q(N<o>);
+specvar matrix<real> spec_r(N), spec_q(N);
 specvar real spec_tmp;
 specvar bool old_upset;
 
