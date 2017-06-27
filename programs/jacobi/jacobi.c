@@ -27,7 +27,7 @@
 #define INNER (outer_last_upset == false -> (SIG)) && TBOUND(i) && BOUND(j)
 
 int N, iters;
-matrix<real> A(N<r>,N<r>), b(N<r>), x(N<r>), next_x(N<r>);
+matrix<real> A(N, N), b(N), x(N), next_x(N);
 real sigma, delta, num;
 specvar int upset_index = 0;
 specvar bool last_upset = false;

@@ -540,7 +540,7 @@ namespace lang {
 
       if (!node.dimensions.empty()) {
         printf("Dimensions:\n");
-        for (RelationalExp* exp : node.dimensions) {
+        for (Expression* exp : node.dimensions) {
           exp->accept(*this);
         }
       }

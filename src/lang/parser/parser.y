@@ -665,19 +665,19 @@ varlist:
 ;
 
 matvarlist:
-  var '(' relexpression ')' ',' matvarlist {
+  var '(' expression ')' ',' matvarlist {
     $$ = new lang::VarList($1, {$3}, $6);
     lang_ast = $$;
   }
-| var '(' relexpression ')' {
+| var '(' expression ')' {
     $$ = new lang::VarList($1, {$3}, nullptr);
     lang_ast = $$;
   }
-| var '(' relexpression ',' relexpression ')' ',' matvarlist {
+| var '(' expression ',' expression ')' ',' matvarlist {
     $$ = new lang::VarList($1, {$3, $5}, $8);
     lang_ast = $$;
   }
-| var '(' relexpression ',' relexpression ')' {
+| var '(' expression ',' expression ')' {
     $$ = new lang::VarList($1, {$3, $5}, nullptr);
     lang_ast = $$;
   }

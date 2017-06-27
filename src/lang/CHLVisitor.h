@@ -23,6 +23,8 @@ struct vec_pair {
 };
 
 namespace lang {
+  typedef std::vector<z3pair> dim_vec;
+
   class CHLVisitor : public ASTVisitor {
     public:
       CHLVisitor(z3::context* context_,
@@ -95,14 +97,14 @@ namespace lang {
       int errors;
       std::unordered_map<std::string, type_t> types;
       std::unordered_set<std::string> specvars;
-      std::unordered_map<std::string, std::vector<z3::expr*>*> dim_map;
+      std::unordered_map<std::string, dim_vec*> dim_map;
       std::unordered_map<std::string, std::vector<int>*> light_dim_map;
       std::unordered_set<std::string> light_mats;
       type_t expr_type;
       vec_pair last_array;
       std::vector<Expression*> virtual_vec;
       std::vector<int>* last_light_dim;
-      std::vector<z3::expr*>* last_dim;
+      dim_vec* last_dim;
       unsigned while_count;
       unsigned ignore_original;
       unsigned ignore_relaxed;
@@ -132,7 +134,7 @@ namespace lang {
       vec_pair add_vector(type_t type,
                           const std::string& oname,
                           const std::string& rname,
-                          const std::vector<z3::expr*>& dimensions);
+                          const dim_vec& dimensions);
       void add_constraint(const z3::expr& constraint, bool invert_last=false);
       z3::expr* get_current_var(std::string name);
       z3::func_decl* get_current_vec(std::string name);
@@ -174,7 +176,7 @@ namespace lang {
        */
       z3::expr* vector_equals(z3::func_decl& x,
                               z3::func_decl& y,
-                              const std::vector<z3::expr*>& dimensions,
+                              const dim_vec& dimensions,
                               std::vector<z3::expr*>& ignore_index);
 
       z3::expr* houdini_to_constraints(const While& node);

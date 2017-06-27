@@ -112,12 +112,12 @@ namespace lang {
     public:
       VarList(Var *car_, VarList *cdr_) : car(car_), cdr(cdr_) {}
       VarList(Var *car_,
-              std::vector<RelationalExp*> dimensions_,
+              std::vector<Expression*> dimensions_,
               VarList *cdr_) : car(car_), dimensions(dimensions_), cdr(cdr_) {}
       virtual z3pair accept(ASTVisitor &visitor) override;
 
       Var* car;
-      std::vector<RelationalExp*> dimensions;
+      std::vector<Expression*> dimensions;
       VarList* cdr;
   };
 

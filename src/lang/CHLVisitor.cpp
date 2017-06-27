@@ -234,7 +234,7 @@ namespace lang {
 
   z3::expr* CHLVisitor::vector_equals(z3::func_decl& x,
                                       z3::func_decl& y,
-                                      const std::vector<z3::expr*>& dimensions,
+                                      const dim_vec& dimensions,
                                       std::vector<z3::expr*>& ignore_index) {
     assert(ignore_index.size() == dimensions.size());
 
@@ -243,7 +243,7 @@ namespace lang {
       case 1:
         {
           z3::expr bounds = (*forall_i >= context->int_val(0)) &&
-                            (*forall_i < *dimensions.at(0));
+                            (*forall_i < *dimensions.at(0).original);
           z3::expr eq = z3::implies(bounds, (x(*forall_i) == y(*forall_i)));
           if (ignore_index.at(0)) {
             z3::expr cond = *forall_i != *ignore_index.at(0);
@@ -261,9 +261,9 @@ namespace lang {
 
 
           z3::expr bounds = (*forall_i >= context->int_val(0)) &&
-                            (*forall_i < *dimensions.at(0)) &&
+                            (*forall_i < *dimensions.at(0).original) &&
                             (*forall_j >= context->int_val(0)) &&
-                            (*forall_j < *dimensions.at(1));
+                            (*forall_j < *dimensions.at(1).original);
           z3::expr eq = (x(*forall_i, *forall_j) == y(*forall_i, *forall_j));
           if (ignore_i) {
             z3::expr cond = !(*forall_i != *ignore_i &&
@@ -287,7 +287,7 @@ namespace lang {
   vec_pair CHLVisitor::add_vector(type_t type,
                                   const std::string& oname,
                                   const std::string& rname,
-                                  const std::vector<z3::expr*>& dimensions) {
+                                  const dim_vec& dimensions) {
     z3::func_decl* ofun = nullptr;
     z3::func_decl* rfun = nullptr;
     z3::sort is = context->int_sort();
@@ -410,13 +410,16 @@ namespace lang {
       rname += "-0";
 
       // Build dimension vector
-      std::vector<z3::expr*>* dimensions = new std::vector<z3::expr*>();
-      for (RelationalExp* expr : head->dimensions) {
+      dim_vec* dimensions = new dim_vec();
+      for (Expression* expr : head->dimensions) {
         assert(expr);
         z3pair res = expr->accept(*this);
         assert(res.original);
-        assert(!res.relaxed);
-        dimensions->push_back(res.original);
+        assert(res.relaxed);
+        dimensions->push_back({res.original, res.relaxed});
+
+        // Assume dimensions are equal
+        add_constraint(*res.original == *res.relaxed);
       }
 
       vec_pair res = add_vector(node.type, oname, rname, *dimensions);
@@ -431,7 +434,6 @@ namespace lang {
                                    *res.relaxed,
                                    *dimensions,
                                    dimensions->size() == 1 ? IGNORE_1D : IGNORE_2D);
-
       add_constraint(*eq);
     }
 
@@ -1540,7 +1542,7 @@ namespace lang {
       std::vector<z3::expr*> ignore;
       old_o = old_r = nullptr;
       type_t type = types.at(node.lhs->name);
-      std::vector<z3::expr*>* dimension = dim_map.at(node.lhs->name);
+      dim_vec* dimension = dim_map.at(node.lhs->name);
       ++version;
       ++var_version.at(node.lhs->name + "<o>");
       ++var_version.at(node.lhs->name + "<r>");
@@ -2319,7 +2321,7 @@ namespace lang {
 
     // Set all values equal
     // TODO: Support 2d arrays here
-    std::vector<z3::expr*>* dimensions = dim_map.at(node.dest->name);
+    dim_vec* dimensions = dim_map.at(node.dest->name);
     assert(dimensions->size() == 1);
     add_constraint(*(vector_equals(*dest.original,
                                    *src.original,
