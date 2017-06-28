@@ -92,6 +92,7 @@ matrix<real> ss_cg(int N,
     }
     r[i] = b[i] - tmp;
   }
+  p = r;
 
   // TODO:  Inference on this loop finds nothing because the if branch finding
   // comes back unknown, which causes the system to fall back to weak inference,
