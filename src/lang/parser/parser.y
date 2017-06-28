@@ -41,6 +41,9 @@
        SPECVAR
        NOINF
        EQ
+       REQUIRES
+       R_REQUIRES
+       RETURN
 
 
 %left ';'
@@ -60,6 +63,8 @@
              DECL: lang::Declare*;
              DECLMAT: lang::DeclareMat*;
              VARLIST: lang::VarList*;
+             DECLARELIST: lang::DeclareList*;
+             TYPE: type_t;
 
 %type <EXP>  expression
 %type <STMT> statement cflow statementlist
@@ -69,9 +74,11 @@
 %type <RELBOOL> relboolexp
 %type <SIZE> size
 %type <EXPLST> exprlist
-%type <DECL> declare
-%type <DECLMAT> declaremat
+%type <DECL> declare singledeclare
+%type <DECLMAT> declaremat singledeclaremat
 %type <VARLIST> varlist matvarlist
+%type <DECLARELIST> declarelist
+%type <TYPE> type
 
 %%
 
@@ -80,6 +87,12 @@ program:
 | statementlist
 ;
 
+type:
+  FLOAT { $$ = type_t::FLOAT; }
+| REAL  { $$ = type_t::REAL;  }
+| BOOL  { $$ = type_t::BOOL;  }
+| INT   { $$ = type_t::INT;   }
+;
 
 expression:
   expression '+' expression {
@@ -422,35 +435,33 @@ size:
 ;
 
 declare:
-  INT varlist {
-    $$ = new lang::Declare(type_t::INT, $2);
-    lang_ast = $$;
-  }
-| FLOAT varlist {
-    $$ = new lang::Declare(type_t::FLOAT, $2);
-    lang_ast = $$;
-  }
-| REAL varlist {
-    $$ = new lang::Declare(type_t::REAL , $2);
-    lang_ast = $$;
-  }
-| BOOL varlist {
-    $$ = new lang::Declare(type_t::BOOL, $2);
+  type varlist {
+    $$ = new lang::Declare($1, $2);
     lang_ast = $$;
   }
 ;
 
 declaremat:
-  MATRIX INT '>' matvarlist {
-    $$ = new lang::DeclareMat(type_t::INT, $4);
+  MATRIX type '>' matvarlist {
+    $$ = new lang::DeclareMat($2, $4);
     lang_ast = $$;
   }
-| MATRIX FLOAT '>' matvarlist {
-    $$ = new lang::DeclareMat(type_t::FLOAT, $4);
+;
+
+singledeclare:
+  type var {
+    $$ = new lang::Declare($1, new lang::VarList($2, nullptr));
     lang_ast = $$;
   }
-| MATRIX REAL '>' matvarlist {
-    $$ = new lang::DeclareMat(type_t::REAL , $4);
+;
+
+singledeclaremat:
+  MATRIX type '>' var '(' expression ')' {
+    $$ = new lang::DeclareMat($2, new lang::VarList($4, {$6}, nullptr));
+    lang_ast = $$;
+  }
+| MATRIX type '>' var '(' expression ',' expression')' {
+    $$ = new lang::DeclareMat($2, new lang::VarList($4, {$6, $8}, nullptr));
     lang_ast = $$;
   }
 ;
@@ -492,11 +503,27 @@ cflow:
     $$ = new lang::If($3, $6, new lang::Skip());
     lang_ast = $$;
   }
+| REQUIRES boolexp
+  R_REQUIRES relboolexp
+  type var '(' declarelist ')' '{' statementlist '}' {
+    $$ = new lang::Function($2, $4, false, $5, $6, $8, $11);
+    lang_ast = $$;
+  }
+| REQUIRES boolexp
+  R_REQUIRES relboolexp
+  MATRIX type '>' var '(' declarelist ')' '{' statementlist '}' {
+    $$ = new lang::Function($2, $4, true, $6, $8, $10, $13);
+    lang_ast = $$;
+  }
 ;
 
 
 statement:
-  ASSERT '(' boolexp ')' {
+  RETURN expression {
+    $$ = new lang::Return($2);
+    lang_ast = $$;
+  }
+| ASSERT '(' boolexp ')' {
     $$ = new lang::Assert($3);
     lang_ast = $$;
   }
@@ -683,6 +710,25 @@ matvarlist:
   }
 | var '(' expression ',' expression ')' {
     $$ = new lang::VarList($1, {$3, $5}, nullptr);
+    lang_ast = $$;
+  }
+;
+
+declarelist:
+  singledeclare ',' declarelist {
+    $$ = new lang::DeclareList($1, $3);
+    lang_ast = $$;
+  }
+| singledeclare {
+    $$ = new lang::DeclareList($1, nullptr);
+    lang_ast = $$;
+  }
+| singledeclaremat ',' declarelist {
+    $$ = new lang::DeclareList($1, $3);
+    lang_ast = $$;
+  }
+| singledeclaremat {
+    $$ = new lang::DeclareList($1, nullptr);
     lang_ast = $$;
   }
 ;

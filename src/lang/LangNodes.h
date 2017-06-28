@@ -465,4 +465,51 @@ namespace lang {
       Expression* val;
   };
 
+  class DeclareList : public Statement {
+    public:
+      DeclareList(Declare *car_, DeclareList* cdr_) :
+          car(car_), mat_car(nullptr), cdr(cdr_) {}
+      DeclareList(DeclareMat *mat_car_, DeclareList* cdr_) :
+          car(nullptr), mat_car(mat_car_), cdr(cdr_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      Declare* car;
+      DeclareMat* mat_car;
+      DeclareList* cdr;
+  };
+
+  class Function : public Statement {
+    public:
+      Function(BoolExp* requires_,
+               RelationalBoolExp* r_requires_,
+               bool returns_matrix_,
+               type_t type_,
+               Var* name_,
+               DeclareList* decls_,
+               Statement* body_) :
+          requires(requires_),
+          r_requires(r_requires_),
+          returns_matrix(returns_matrix_),
+          type(type_),
+          name(name_),
+          decls(decls_),
+          body(body_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      BoolExp* requires;
+      RelationalBoolExp* r_requires;
+      bool returns_matrix;
+      type_t type;
+      Var* name;
+      DeclareList* decls;
+      Statement* body;
+  };
+
+  class Return : public Statement {
+    public:
+      Return(Expression* exp_) : exp(exp_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      Expression* exp;
+  };
 }

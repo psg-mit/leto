@@ -49,6 +49,9 @@ namespace lang {
       virtual z3pair visit(FaultyRead &node) override;
       virtual z3pair visit(FaultyWrite &node) override;
       virtual z3pair visit(VarList &node) override;
+      virtual z3pair visit(DeclareList &node) override;
+      virtual z3pair visit(Function &node) override;
+      virtual z3pair visit(Return &node) override;
 
       std::string output;
     private:

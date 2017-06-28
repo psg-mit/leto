@@ -173,4 +173,16 @@ namespace lang {
   z3pair VarList::accept(ASTVisitor &visitor) {
     return visitor.visit(*this);
   }
+
+  z3pair DeclareList::accept(ASTVisitor& visitor) {
+    return visitor.visit(*this);
+  }
+
+  z3pair Function::accept(ASTVisitor& visitor) {
+    return visitor.visit(*this);
+  }
+
+  z3pair Return::accept(ASTVisitor& visitor) {
+    return visitor.visit(*this);
+  }
 }

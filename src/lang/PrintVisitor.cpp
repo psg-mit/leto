@@ -1,6 +1,22 @@
 #include "ConjunctionBreaker.h"
 #include "PrintVisitor.h"
 
+static void print_type(type_t type) {
+  switch (type) {
+    case BOOL:
+      printf("bool\n");
+      break;
+    case INT:
+      printf("int\n");
+      break;
+    case REAL:
+      printf("real\n");
+      break;
+    case FLOAT:
+      printf("float\n");
+      break;
+  }
+}
 
 namespace lang {
   void PrintVisitor::print_binop(operator_t op) {
@@ -170,20 +186,7 @@ namespace lang {
   z3pair PrintVisitor::visit(Declare &node) {
     printf("Declare:\n");
     printf("Type: ");
-    switch (node.type) {
-      case BOOL:
-        printf("bool\n");
-        break;
-      case INT:
-        printf("int\n");
-        break;
-      case REAL:
-        printf("real\n");
-        break;
-      case FLOAT:
-        printf("float\n");
-        break;
-    }
+    print_type(node.type);
     printf("specvar: %d\n", node.specvar);
     node.vars->accept(*this);
     return {nullptr, nullptr};
@@ -192,20 +195,7 @@ namespace lang {
   z3pair PrintVisitor::visit(DeclareMat &node) {
     printf("DeclareMat:\n");
     printf("Type: ");
-    switch (node.type) {
-      case BOOL:
-        printf("bool\n");
-        break;
-      case INT:
-        printf("int\n");
-        break;
-      case REAL:
-        printf("real\n");
-        break;
-      case FLOAT:
-        printf("float\n");
-        break;
-    }
+    print_type(node.type);
 
     printf("specvar: %d\n", node.specvar);
 
@@ -216,20 +206,7 @@ namespace lang {
   z3pair PrintVisitor::visit(DeclareLMat &node) {
     printf("DeclareLMat:\n");
     printf("Type: ");
-    switch (node.type) {
-      case BOOL:
-        printf("bool\n");
-        break;
-      case INT:
-        printf("int\n");
-        break;
-      case REAL:
-        printf("real\n");
-        break;
-      case FLOAT:
-        printf("float\n");
-        break;
-    }
+    print_type(node.type);
 
     printf("Dimension: %d", node.dimensions.at(0));
     for (size_t i = 1; i < node.dimensions.size(); ++i) {
@@ -564,5 +541,49 @@ namespace lang {
     else printf("nil\n");
 
     return {nullptr, nullptr};
+  }
+
+  z3pair PrintVisitor::visit(DeclareList &node) {
+    printf("DeclareList: ");
+    if (node.car) {
+      printf("\n");
+      node.car->accept(*this);
+
+      if (node.cdr) node.cdr->accept(*this);
+    } else if (node.mat_car) {
+      printf("\n");
+      node.mat_car->accept(*this);
+
+      if (node.cdr) node.cdr->accept(*this);
+    }
+    else printf("nil\n");
+
+    return {nullptr, nullptr};
+  }
+
+  z3pair PrintVisitor::visit(Function &node) {
+    printf("Function:\n");
+    printf("  requires:\n");
+    node.requires->accept(*this);
+    printf("  r_requires:\n");
+    node.r_requires->accept(*this);
+    printf("  returns_matrix: %d\n", node.returns_matrix);
+    printf("  type:");
+    print_type(node.type);
+    printf("  name:\n");
+    node.name->accept(*this);
+    printf("  decls:\n");
+    node.decls->accept(*this);
+    printf("  body:\n");
+    node.body->accept(*this);
+
+    RETURN_VOID;
+  }
+
+  z3pair PrintVisitor::visit(Return &node) {
+    printf("Return:\n");
+    node.exp->accept(*this);
+
+    RETURN_VOID;
   }
 }

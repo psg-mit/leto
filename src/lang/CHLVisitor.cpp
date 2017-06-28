@@ -51,6 +51,7 @@ namespace lang {
     inner_h_unknown = false;
     parent_while = nullptr;
     h_var_version = nullptr;
+    assume_eq = true;
   }
 
   static z3::check_result z3_bin(const std::string& constraints,
@@ -391,7 +392,7 @@ namespace lang {
       if (node.specvar) specvars.insert(var->name);
 
       // Assume variables are equal at declare time
-      add_constraint(*res.original == *res.relaxed);
+      if (assume_eq) add_constraint(*res.original == *res.relaxed);
     }
 
     return {nullptr, nullptr};
@@ -430,11 +431,13 @@ namespace lang {
       if (node.specvar) specvars.insert(var->name);
 
       // Assume vectors are equal at declare time
-      z3::expr* eq = vector_equals(*res.original,
-                                   *res.relaxed,
-                                   *dimensions,
-                                   dimensions->size() == 1 ? IGNORE_1D : IGNORE_2D);
-      add_constraint(*eq);
+      if  (assume_eq) {
+        z3::expr* eq = vector_equals(*res.original,
+                                     *res.relaxed,
+                                     *dimensions,
+                                     dimensions->size() == 1 ? IGNORE_1D : IGNORE_2D);
+        add_constraint(*eq);
+      }
     }
 
     return {nullptr, nullptr};
@@ -2491,6 +2494,50 @@ namespace lang {
     ret += "\n";
 
     return ret;
+  }
+
+  z3pair CHLVisitor::visit(DeclareList& node) {
+    assert(static_cast<bool>(node.car) ^ static_cast<bool>(node.mat_car));
+
+    if (node.car) node.car->accept(*this);
+    else node.mat_car->accept(*this);
+
+    if (node.cdr) node.cdr->accept(*this);
+
+    RETURN_VOID;
+  }
+
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+  z3pair CHLVisitor::visit(Return& node) {
+    // TODO:  Do something when we have function calls.
+    RETURN_VOID;
+  }
+#pragma clang diagnostic pop
+
+  z3pair CHLVisitor::visit(Function& node) {
+    // TODO: This will need to be changed when we have function calls
+
+    // Declare vars
+    assume_eq = false;
+    node.decls->accept(*this);
+    assume_eq = true;
+
+    // Assume requirements
+    z3pair requires = node.requires->accept(*this);
+    assert(requires.original);
+    assert(requires.relaxed);
+    add_constraint(*requires.original);
+    add_constraint(*requires.relaxed);
+
+    // Leverage existing code for r_requires
+    RelationalAssume r_requires_node(node.r_requires);
+    r_requires_node.accept(*this);
+
+    // Step into the body
+    node.body->accept(*this);
+
+    RETURN_VOID;
   }
 }
 

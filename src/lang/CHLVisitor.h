@@ -73,6 +73,9 @@ namespace lang {
       virtual z3pair visit(Forall &node) override;
       virtual z3pair visit(FaultyRead &node) override;
       virtual z3pair visit(FaultyWrite &node) override;
+      virtual z3pair visit(DeclareList &node) override;
+      virtual z3pair visit(Return &node) override;
+      virtual z3pair visit(Function &node) override;
 
       z3::check_result check(bool exit_on_sat=true);
       int get_errors() { return errors; }
@@ -126,6 +129,7 @@ namespace lang {
       bool outer_h_unknown;
       bool inner_h_unknown;
       While* parent_while;
+      bool assume_eq;
 
       // Contains *unqualified* vars to be set equal to eachother
       std::vector<RelationalBoolExp*>* cur_houdini_invs;

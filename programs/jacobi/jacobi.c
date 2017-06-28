@@ -26,36 +26,45 @@
 
 #define INNER (outer_last_upset == false -> (SIG)) && TBOUND(i) && BOUND(j)
 
-int N, iters;
-matrix<real> A(N, N), b(N), x(N), next_x(N);
-real sigma, delta, num;
-specvar int upset_index = 0;
-specvar bool last_upset = false;
-specvar bool outer_last_upset = model.upset;
-relational_assume (NZD && 0 < N<r>);
-while (0 <= iters) (OUTER) {
-  // TODO: Try to reduce this again after adding non-relational invariants.
-  // BOUND(i) in an unrelational invariant may allow us to infer
-  // TBOUNDS(upset_index)
-  for (int i = N - 1; 0 <= i; --i) (MIDDLE) {
-    last_upset = model.upset;
-    sigma = 0;
-    for (int j = N - 1; 0 <= j; --j) (INNER) {
-      delta = 0;
-      if (i != j) {
-        delta = A[i][j] *. x[j];
-        sigma = sigma +. delta;
+// TODO: Non_relational NZD in requires
+requires 0 < N
+r_requires NZD && eq(N) && eq(iters) && eq(A) && eq(b) && eq(x)
+matrix<real> jacobi(int N,
+                    int iters,
+                    matrix<real> A(N,N),
+                    matrix<real> b(N),
+                    matrix<real> x(N)) {
+  matrix<real> next_x(N);
+  real sigma, delta, num;
+  specvar int upset_index = 0;
+  specvar bool last_upset = false;
+  specvar bool outer_last_upset = model.upset;
+  while (0 <= iters) (OUTER) {
+    // TODO: Try to reduce this again after adding non-relational invariants.
+    // BOUND(i) in an unrelational invariant may allow us to infer
+    // TBOUNDS(upset_index)
+    for (int i = N - 1; 0 <= i; --i) (MIDDLE) {
+      last_upset = model.upset;
+      sigma = 0;
+      for (int j = N - 1; 0 <= j; --j) (INNER) {
+        delta = 0;
+        if (i != j) {
+          delta = A[i][j] *. x[j];
+          sigma = sigma +. delta;
+        }
+      }
+      num = b[i] - sigma;
+      next_x[i] = num / A[i][i];
+
+      if (last_upset == false && model.upset == true) {
+        upset_index = i;
       }
     }
-    num = b[i] - sigma;
-    next_x[i] = num / A[i][i];
-
-    if (last_upset == false && model.upset == true) {
-      upset_index = i;
-    }
+    --iters;
+    x = next_x;
+    relational_assert(outer_last_upset == false -> (UPS));
+    outer_last_upset = model.upset;
   }
-  --iters;
-  x = next_x;
-  relational_assert(outer_last_upset == false -> (UPS));
-  outer_last_upset = model.upset;
+
+  return x;
 }
