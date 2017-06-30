@@ -20,7 +20,7 @@
 
 #define OUTER eq(i) && eq(N) && eq(A) && (model.upset == false -> (eq(p)))
 
-#define INNER eq(j) && (model.upset == false -> q<r>[i<r>] == q<o>[i<r>])
+#define INNER (model.upset == false -> q<r>[i<r>] == q<o>[i<r>])
 
 #define DQ (q<r>[i<r>] - q<o>[i<r>])
 
