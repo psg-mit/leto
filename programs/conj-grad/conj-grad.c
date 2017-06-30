@@ -2,16 +2,15 @@
 
 #define SPEQR(x) (x<r> == spec_r)
 #define SPEQQ(x) (x<r> == spec_q)
-#define BOUND(i) (-1 <= i<o> < N<o> && eq(i))
-#define TBOUND(i) (0 <= i<o> < N<o>)
+#define BOUND(i) (-1 <= i < N)
+#define TBOUND(i) (0 <= i < N)
 
 #define EQS eq(A) && \
             eq(it) && \
             eq(M) && \
             eq(N) && \
             eq(man_mod) && \
-            eq(F) && \
-            0 < N<r>
+            eq(F)
 
 #define DMR ((model.upset == false) -> (SPEQR(r) && SPEQR(r2) && SPEQQ(q) && SPEQQ(q2))) && \
             ((old_upset == false) -> (eq(x) && eq(p))) && \
@@ -19,14 +18,14 @@
             ((q<r> == q2<r>) -> SPEQQ(q)) && \
             old_upset == false
 
-#define OUTER BOUND(i) && eq(N) && eq(A) && (model.upset == false -> (eq(p)))
+#define OUTER eq(i) && eq(N) && eq(A) && (model.upset == false -> (eq(p)))
 
-#define INNER TBOUND(i) && BOUND(j) && (model.upset == false -> q<r>[i<r>] == q<o>[i<r>])
+#define INNER eq(j) && (model.upset == false -> q<r>[i<r>] == q<o>[i<r>])
 
 #define DQ (q<r>[i<r>] - q<o>[i<r>])
 
 #define COMPUTE_X_R \
-  @noinf for (i = N - 1; 0 <= i; --i) (5 == 5) { \
+  @noinf for (i = N - 1; 0 <= i; --i) (5 == 5) (5 == 5) { \
     tmp = alpha * p[i]; \
     next_x[i] = x[i] + tmp; \
     tmp = alpha * q[i]; \
@@ -34,7 +33,7 @@
   }
 
 #define COMPUTE_P \
-  @noinf for (i = N - 1; 0 <= i; --i) (7 == 7) { \
+  @noinf for (i = N - 1; 0 <= i; --i) (7 == 7) (7 == 7) { \
     tmp = beta * p[i]; \
     next_p[i] = next_r[i] + tmp; \
   }
@@ -85,9 +84,9 @@ matrix<real> ss_cg(int N,
   // we'll do)
   // noinf because we don't actually care about this step for what we're
   // verifying
-  @noinf for (int i = 0; i < N; ++i) (1 == 1) {
+  @noinf for (int i = 0; i < N; ++i) (1 == 1) (1 == 1) {
     tmp = 0;
-    @noinf for (int j = 0 ; j < N; ++j) (1 == 1) {
+    @noinf for (int j = 0 ; j < N; ++j) (1 == 1) (1 == 1) {
       tmp = tmp + A[i][j] * x[i];
     }
     r[i] = b[i] - tmp;
@@ -98,13 +97,13 @@ matrix<real> ss_cg(int N,
   // comes back unknown, which causes the system to fall back to weak inference,
   // which comes back unknown in branch finding for all variables one by one.  It
   // takes forever and nothing in learned.
-  @noinf while (it < M) (EQS) {
+  @noinf while (it < M) (0 < N) (EQS) {
     if (man_mod == F) {
       // Line 4: [r, q] = A * [x, p]
       // DMR to compute r and q
       old_upset = model.upset;
       relational_assume (DMR);
-      while (r != r2 || q != q2) (DMR) {
+      while (r != r2 || q != q2) (2 == 2) (DMR) {
 
         // Zero out sum destinations
         r = zeros;
@@ -115,8 +114,8 @@ matrix<real> ss_cg(int N,
         spec_q = zeros;
 
         // TODO: Inference runs out of memory.
-        @noinf for (int i = N - 1; 0 <= i; --i) (DMR && eq(A)) {
-          for (int j = N - 1; 0 <= j; --j) (1 == 1) {
+        @noinf for (int i = N - 1; 0 <= i; --i) (2 == 2) (DMR && eq(A)) {
+          for (int j = N - 1; 0 <= j; --j) (1 == 1) (1 == 1) {
             // Compute r
             tmp = A[i][j] *. x[j];
             tmp2 = A[i][j] *. x[j];
@@ -140,12 +139,12 @@ matrix<real> ss_cg(int N,
       relational_assert (old_upset == false -> SPEQQ(q));
 
       // Line 5: r = b - r
-      @noinf for (int i = N - 1; 0 <= i; --i) (3 == 3) { r[i] = b[i] - r[i]; }
+      @noinf for (int i = N - 1; 0 <= i; --i) (1 == 1) (3 == 3) { r[i] = b[i] - r[i]; }
 
       // Line 6: alpha = (r^T * p) / (p^T * q)
       num = 0;
       denom = 0;
-      @noinf for (int i = N - 1; 0 <= i; --i) (4 == 4) {
+      @noinf for (int i = N - 1; 0 <= i; --i) (1 == 1) (4 == 4) {
         tmp = r[i] * p[i];
         num = num + tmp;
         denom = p[i] * q[i];
@@ -159,7 +158,7 @@ matrix<real> ss_cg(int N,
       // Line 9: beta = (-next_r^T * q) / (p^t * q)
       num = 0;
       denom = 0;
-      @noinf for (int i = N - 1; 0 <= i; --i) (6 == 6) {
+      @noinf for (int i = N - 1; 0 <= i; --i) (1 == 1) (6 == 6) {
         // Compute num
         tmp = -next_r[i];
         tmp = tmp * q[i];
@@ -178,9 +177,9 @@ matrix<real> ss_cg(int N,
       // Line 12: q = A * p;
       // TODO: Inference  on this loop causes the relational_assert in the inner
       // loop to come back "unknown" :(
-      @noinf for (int i = N - 1; 0 <= i; --i) (OUTER) {
+      @noinf for (int i = N - 1; 0 <= i; --i) (BOUND(i)) (OUTER) {
         q[i] = 0;
-        for (int j = N - 1; 0 <= j; --j) (INNER) {
+        for (int j = N - 1; 0 <= j; --j) (BOUND(j) && TBOUND(i)) (INNER) {
           old_upset = model.upset;
 
           // Compute q
@@ -196,7 +195,7 @@ matrix<real> ss_cg(int N,
       // Line 13: alpha = ||r||^2 / (p^T * q)
       num = 0;
       denom = 0;
-      @noinf for (int i = N - 1; 0 <= i; --i) (10 == 10) {
+      @noinf for (int i = N - 1; 0 <= i; --i) (10 == 10) (10 == 10) {
         tmp = r[i] * r[i];
         num = num + tmp;
         denom = p[i] * q[i];
@@ -210,7 +209,7 @@ matrix<real> ss_cg(int N,
       // Line 16: beta = ||next_r||^2 / ||r||^2
       num = 0;
       denom = 0;
-      @noinf for (int i = N - 1; 0 <= i; --i) (12 == 12) {
+      @noinf for (int i = N - 1; 0 <= i; --i) (12 == 12) (12 == 12) {
         // Compute num
         num = next_r[i] * next_r[i];
 

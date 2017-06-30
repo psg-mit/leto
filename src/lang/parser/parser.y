@@ -468,30 +468,34 @@ singledeclaremat:
 
 cflow:
   WHILE '(' boolexp ')'
+        '(' boolexp ')'
         '(' relboolexp ')'
         '{' statementlist '}' {
-    $$ = new lang::While($3, $6, $9, true);
+    $$ = new lang::While($3, $6, $9, $12, true);
     lang_ast = $$;
   }
 | FOR '(' statement ';' boolexp ';' statement ')'
+      '(' boolexp ')'
       '(' relboolexp ')'
       '{' statementlist '}' {
-    lang::Statement* body = new StatementList($13, $7);
-    lang::While* desugar_while = new lang::While($5, $10, body, true);
+    lang::Statement* body = new StatementList($16, $7);
+    lang::While* desugar_while = new lang::While($5, $10, $13, body, true);
     $$ = new lang::StatementList($3, desugar_while);
     lang_ast = $$;
   }
 | NOINF WHILE '(' boolexp ')'
+              '(' boolexp ')'
               '(' relboolexp ')'
               '{' statementlist '}' {
-    $$ = new lang::While($4, $7, $10, false);
+    $$ = new lang::While($4, $7, $10, $13, false);
     lang_ast = $$;
   }
 | NOINF FOR '(' statement ';' boolexp ';' statement ')'
+            '(' boolexp ')'
             '(' relboolexp ')'
             '{' statementlist '}' {
-    lang::Statement* body = new StatementList($14, $8);
-    lang::While* desugar_while = new lang::While($6, $11, body, false);
+    lang::Statement* body = new StatementList($17, $8);
+    lang::While* desugar_while = new lang::While($6, $11, $14, body, false);
     $$ = new lang::StatementList($4, desugar_while);
     lang_ast = $$;
   }

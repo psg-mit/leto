@@ -19,8 +19,11 @@ static void print_type(type_t type) {
 }
 
 namespace lang {
-  void PrintVisitor::print_binop(operator_t op) {
-    switch (op) {
+  template<typename T>
+  void PrintVisitor::print_binop(T& node, std::string type) {
+    if (compress) output += "(";
+    else printf("%s: ", type.c_str());
+    switch (node.op) {
       case OPLUS:
         if (compress) output += "+";
         else printf("+\n");
@@ -56,23 +59,30 @@ namespace lang {
         printf("fwrite\n");
         break;
     }
+    if (compress) output += " ";
+    node.lhs->accept(*this);
+    if (compress) output += " ";
+    node.rhs->accept(*this);
+    if (compress) output += ")";
+  }
+
+  template<typename T> void PrintVisitor::print_value(T& node) {
+    if (compress) output += std::to_string(node.value);
+    else std::cout << node.value << std::endl;
   }
 
   z3pair PrintVisitor::visit(Int &node) {
-    printf("Int: %d\n", node.value);
+    print_value(node);
     return {nullptr, nullptr};
   }
 
   z3pair PrintVisitor::visit(Float &node) {
-    printf("Float: %f\n", node.value);
+    print_value(node);
     return {nullptr, nullptr};
   }
 
   z3pair PrintVisitor::visit(BinOp &node) {
-    printf("BinOp: ");
-    print_binop(node.op);
-    node.lhs->accept(*this);
-    node.rhs->accept(*this);
+    print_binop(node, "BinOp");
     return {nullptr, nullptr};
   }
 
@@ -87,7 +97,9 @@ namespace lang {
     printf("  inf: %i\n", node.inf);
     printf("  Condition:\n");
     node.cond->accept(*this);
-    printf("  Invariant:\n");
+    printf("  Non-Relational Invariant:\n");
+    node.nonrel_inv->accept(*this);
+    printf("  Relational Invariant:\n");
     node.inv->accept(*this);
     printf("  Body:\n");
     node.body->accept(*this);
@@ -150,25 +162,28 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
-  z3pair PrintVisitor::visit(ArrayAccess &node) {
-    printf("ArrayAccess:\n");
-    printf("lhs:\n");
+  template<typename T> void PrintVisitor::print_array_access(T& node) {
+    if (!compress) printf("lhs:\n");
+
     node.lhs->accept(*this);
-    printf("rhs:\n");
+
+    if (!compress) printf("rhs:\n");
     for (Expression* exp : node.rhs) {
+      if (compress) output += "[";
       exp->accept(*this);
+      if (compress) output += "]";
     }
+  }
+
+  z3pair PrintVisitor::visit(ArrayAccess &node) {
+    if (!compress) printf("ArrayAccess:\n");
+    print_array_access(node);
     return {nullptr, nullptr};
   }
 
   z3pair PrintVisitor::visit(SpecArrayAccess &node) {
-    printf("SpecArrayAccess:\n");
-    printf("lhs:\n");
-    node.lhs->accept(*this);
-    printf("rhs:\n");
-    for (RelationalExp* exp : node.rhs) {
-      exp->accept(*this);
-    }
+    if (!compress) printf("SpecArrayAccess:\n");
+    print_array_access(node);
     return {nullptr, nullptr};
   }
 
@@ -218,72 +233,10 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
-  z3pair PrintVisitor::visit(BoolExp &node) {
-    printf("BoolExp: ");
-    switch (node.op) {
-      case XOR:
-        printf("^\n");
-        break;
-      case EQUALS:
-        printf("==\n");
-        break;
-      case LT:
-        printf("<\n");
-        break;
-      case LTEQ:
-        printf("<=\n");
-        break;
-      case NEQ:
-        printf("!=\n");
-        break;
-      case AND:
-        printf("&&\n");
-        break;
-      case IMPLIES:
-        printf("->\n");
-        break;
-      case OR:
-        printf("||\n");
-        break;
-    }
-
-    node.lhs->accept(*this);
-    node.rhs->accept(*this);
-    return {nullptr, nullptr};
-  }
-
-  z3pair PrintVisitor::visit(ModelDeref &node) {
-    printf("ModelDeref:\n");
-    node.var->accept(*this);
-    return {nullptr, nullptr};
-  }
-
-  z3pair PrintVisitor::visit(RelationalVar &node) {
-    if (!compress) printf("RelationalVar:\n");
-    node.var->accept(*this);
-    if (!compress) printf("Relation: ");
-    switch (node.relation) {
-      case ORIGINAL:
-        if (compress) output += "<o>";
-        else printf("original\n");
-        break;
-      case RELAXED:
-        if (compress) output += "<r>";
-        else printf("relaxed\n");
-        break;
-    }
-    return {nullptr, nullptr};
-  }
-
-  z3pair PrintVisitor::visit(SpecVar &node) {
-    if (!compress) printf("SpecVar:\n");
-    node.var->accept(*this);
-    return {nullptr, nullptr};
-  }
-
-  z3pair PrintVisitor::visit(RelationalBoolExp &node) {
+  template<typename T>
+  void PrintVisitor::print_bool_exp(T& node, std::string type) {
     if (compress) output += "(";
-    else printf("RelationalBoolExp: ");
+    else printf("%s: ", type.c_str());
     switch (node.op) {
       case XOR:
         if (compress) output += "^";
@@ -324,18 +277,49 @@ namespace lang {
     if (compress) output += " ";
     node.rhs->accept(*this);
     if (compress) output += ")";
+  }
+
+  z3pair PrintVisitor::visit(BoolExp &node) {
+    print_bool_exp(node, "BoolExp");
+    return {nullptr, nullptr};
+  }
+
+  z3pair PrintVisitor::visit(ModelDeref &node) {
+    printf("ModelDeref:\n");
+    node.var->accept(*this);
+    return {nullptr, nullptr};
+  }
+
+  z3pair PrintVisitor::visit(RelationalVar &node) {
+    if (!compress) printf("RelationalVar:\n");
+    node.var->accept(*this);
+    if (!compress) printf("Relation: ");
+    switch (node.relation) {
+      case ORIGINAL:
+        if (compress) output += "<o>";
+        else printf("original\n");
+        break;
+      case RELAXED:
+        if (compress) output += "<r>";
+        else printf("relaxed\n");
+        break;
+    }
+    return {nullptr, nullptr};
+  }
+
+  z3pair PrintVisitor::visit(SpecVar &node) {
+    if (!compress) printf("SpecVar:\n");
+    node.var->accept(*this);
+    return {nullptr, nullptr};
+  }
+
+  z3pair PrintVisitor::visit(RelationalBoolExp &node) {
+    print_bool_exp(node, "RelationalBoolExp");
     return {nullptr, nullptr};
   }
 
   z3pair PrintVisitor::visit(RelationalBinOp &node) {
-    if (compress) output += "(";
-    else printf("RelationalBinOp: ");
-    print_binop(node.op);
-    if (compress) output += " ";
-    node.lhs->accept(*this);
-    if (compress) output += " ";
-    node.rhs->accept(*this);
-    if (compress) output += ")";
+    print_binop(node, "RelationalBinOp");
     return {nullptr, nullptr};
   }
 
@@ -352,13 +336,12 @@ namespace lang {
   }
 
   z3pair PrintVisitor::visit(Bool &node) {
-    printf("Bool: %d\n", node.value);
+    print_value(node);
     return {nullptr, nullptr};
   }
 
   z3pair PrintVisitor::visit(RelationalFloat &node) {
-    if (compress) output += std::to_string(node.value);
-    else printf("RelationalFloat: %f\n", node.value);
+    print_value(node);
     return {nullptr, nullptr};
   }
 
@@ -391,14 +374,8 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
-  z3pair PrintVisitor::visit(Real &node) {
-    printf("Real:\n");
-    printf("  numerator: %d\n", node.numerator);
-    printf("  denominator : %d\n", node.denominator);
-    return {nullptr, nullptr};
-  }
-
-  z3pair PrintVisitor::visit(RelationalReal &node) {
+  template<typename T>
+  void PrintVisitor::print_real(T& node, std::string type) {
     if (compress) {
       output += "real(" +
                 std::to_string(node.numerator) +
@@ -406,10 +383,19 @@ namespace lang {
                 std::to_string(node.denominator) +
                 ")";
     } else {
-      printf("RelationalReal:\n");
+      printf("%s:\n", type.c_str());
       printf("  numerator: %d\n", node.numerator);
       printf("  denominator : %d\n", node.denominator);
     }
+  }
+
+  z3pair PrintVisitor::visit(Real &node) {
+    print_real(node, "Real");
+    return {nullptr, nullptr};
+  }
+
+  z3pair PrintVisitor::visit(RelationalReal &node) {
+    print_real(node, "RelationalReal");
     return {nullptr, nullptr};
   }
 
@@ -478,11 +464,12 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
-  z3pair PrintVisitor::visit(RelationalForall &node) {
+  template<typename T>
+  void PrintVisitor::print_forall(T& node, std::string type) {
     if (compress) {
       output += "forall(";
     } else {
-      printf("RelationalForall:\n");
+      printf("%s:\n", type.c_str());
       printf("  var:\n");
     }
     node.var->accept(*this);
@@ -490,21 +477,15 @@ namespace lang {
     else printf("  exp:\n");
     node.exp->accept(*this);
     if (compress) output += (")");
+  }
+
+  z3pair PrintVisitor::visit(RelationalForall &node) {
+    print_forall(node, "RelationalForall");
     return {nullptr, nullptr};
   }
 
   z3pair PrintVisitor::visit(Forall &node) {
-    if (compress) {
-      output += "forall(";
-    } else {
-      printf("RelationalForall:\n");
-      printf("  var:\n");
-    }
-    node.var->accept(*this);
-    if (compress) output += ")(";
-    else printf("  exp:\n");
-    node.exp->accept(*this);
-    if (compress) output += (")");
+    print_forall(node, "Forall");
     return {nullptr, nullptr};
   }
 

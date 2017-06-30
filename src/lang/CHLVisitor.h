@@ -22,8 +22,14 @@ struct vec_pair {
   z3::func_decl* relaxed;
 };
 
+struct h_z3pair {
+  z3::expr* assumes;
+  z3::expr* asserts;
+};
+
 namespace lang {
   typedef std::vector<z3pair> dim_vec;
+  typedef std::unordered_map<std::string, std::string> assign_map;
 
   class CHLVisitor : public ASTVisitor {
     public:
@@ -133,7 +139,9 @@ namespace lang {
 
       // Contains *unqualified* vars to be set equal to eachother
       std::vector<RelationalBoolExp*>* cur_houdini_invs;
+      std::vector<BoolExp*>* cur_nonrel_houdini_invs;
       std::vector<std::string> h_tmps;
+      std::vector<std::string> nonrel_h_tmps;
 
       z3pair add_var(type_t type, std::string oname, std::string rname);
       vec_pair add_vector(type_t type,
@@ -184,7 +192,7 @@ namespace lang {
                               const dim_vec& dimensions,
                               std::vector<z3::expr*>& ignore_index);
 
-      z3::expr* houdini_to_constraints(const While& node);
+      h_z3pair houdini_to_constraints(const While& node);
 
 
       /**
@@ -200,5 +208,17 @@ namespace lang {
       z3::expr* build_forall_var(const std::string& name);
       void destroy_forall_var(const std::string& name);
 
+      template<typename T>
+      void handle_h_removals(const assign_map& assignments,
+                             std::vector<T>& invs,
+                             std::vector<std::string>& tmps);
+      template<typename T>
+      void weak_houdini(const std::vector<T>& old_invs,
+                        const std::vector<std::string>& old_tmps,
+                        std::vector<T>& cur_invs,
+                        std::vector<std::string>& tmps,
+                        std::vector<T>& new_invs,
+                        std::vector<std::string>& new_tmps,
+                        While& node);
   };
 }

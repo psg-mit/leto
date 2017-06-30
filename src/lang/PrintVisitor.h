@@ -57,6 +57,11 @@ namespace lang {
     private:
       const bool compress;
 
-      void print_binop(operator_t op);
+      template<typename T> void print_binop(T& node, std::string type);
+      template<typename T> void print_array_access(T& node);
+      template<typename T> void print_bool_exp(T& node, std::string type);
+      template<typename T> void print_value(T& node);
+      template<typename T> void print_real(T& node, std::string type);
+      template<typename T> void print_forall(T& node, std::string type);
   };
 }

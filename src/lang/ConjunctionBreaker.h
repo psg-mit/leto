@@ -7,10 +7,12 @@
 
 namespace lang {
   typedef std::vector<RelationalBoolExp*> inv_vec;
+  typedef std::vector<BoolExp*> nonrel_inv_vec;
 
   class ConjunctionBreaker : public ASTVisitor {
     public:
       ConjunctionBreaker(RelationalBoolExp* inv);
+      ConjunctionBreaker(BoolExp* inv);
 
       /**
        * Breaks the RelationalBoolExp this object was created with into a
@@ -20,9 +22,12 @@ namespace lang {
        * vector generated from the first time it was called
        */
       inv_vec fissure();
+      nonrel_inv_vec nonrel_fissure();
 
       virtual z3pair visit(RelationalBoolExp &node) override;
       virtual z3pair visit(RelationalForall &node) override;
+      virtual z3pair visit(BoolExp &node) override;
+      virtual z3pair visit(Forall &node) override;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -32,7 +37,6 @@ namespace lang {
       virtual z3pair visit(Var &node) override {assert(false);}
       virtual z3pair visit(Assign &node) override {assert(false);}
       virtual z3pair visit(Declare &node) override {assert(false);}
-      virtual z3pair visit(BoolExp &node) override {assert(false);}
       virtual z3pair visit(RelationalVar &node) override {assert(false);}
       virtual z3pair visit(SpecVar &node) override {assert(false);}
       virtual z3pair visit(BinOp &node) override {assert(false);}
@@ -66,7 +70,6 @@ namespace lang {
       virtual z3pair visit(ArrayAssign &node) override {assert(false);}
       virtual z3pair visit(FaultyRead &node) override {assert(false);}
       virtual z3pair visit(FaultyWrite &node) override {assert(false);}
-      virtual z3pair visit(Forall &node) override {assert(false);}
       virtual z3pair visit(DeclareList &node) override {assert(false);}
       virtual z3pair visit(Function &node) override {assert(false);}
       virtual z3pair visit(Return  &node) override {assert(false);}
@@ -74,6 +77,7 @@ namespace lang {
 
     private:
       inv_vec invs;
+      nonrel_inv_vec nonrel_invs;
       bool modified;
 
   };

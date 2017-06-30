@@ -381,17 +381,25 @@ namespace lang {
   class While : public Statement {
     public:
       While(BoolExp *cond_,
+            BoolExp* nonrel_inv_,
             RelationalBoolExp* inv_,
             Statement *body_,
             bool inf_) :
-          cond(cond_), inv(inv_), body(body_), seen(false), inf(inf_) {}
+          cond(cond_),
+          nonrel_inv(nonrel_inv_),
+          inv(inv_),
+          body(body_),
+          seen(false),
+          inf(inf_) {}
       virtual z3pair accept(ASTVisitor &visitor)  override;
 
       BoolExp* cond;
+      BoolExp* nonrel_inv;
       RelationalBoolExp* inv;
       Statement* body;
       bool seen;
       std::vector<RelationalBoolExp*> houdini_invs;
+      std::vector<BoolExp*> nonrel_houdini_invs;
       bool inf;
   };
 

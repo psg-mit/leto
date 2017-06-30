@@ -3,10 +3,10 @@
 
 #define XDIST (next_x<o>[upset_index] - next_x<r>[upset_index])
 
-#define NZD (forall(fi)((E / EPSILON) < A<r>[fi][fi] || A<r>[fi][fi] < (-(E / EPSILON))))
+#define NZD (forall(fi)((E / EPSILON) < A[fi][fi] || A[fi][fi] < (-(E / EPSILON))))
 
-#define BOUND(i) (-1 <= i<r> < N<r>)
-#define TBOUND(i) (0  <= i<r> < N<r>)
+#define BOUND(i) (-1 <= i < N)
+#define TBOUND(i) (0  <= i < N)
 #define TBOUNDS(i) (0  <= i < N<r>)
 
 #define SIG ((model.upset == false) -> eq(sigma)) && \
@@ -18,17 +18,17 @@
 
 #define OUTER ((model.upset == false) -> (eq(x) && eq(next_x))) &&\
               (last_upset == true -> model.upset == true) &&\
-              TBOUNDS(upset_index) && NZD && outer_last_upset == model.upset
+              TBOUNDS(upset_index) && outer_last_upset == model.upset
 
 #define MIDDLE (outer_last_upset == false -> (eq(x) && (UPS))) &&\
-               TBOUNDS(upset_index) && BOUND(i) &&\
+               TBOUNDS(upset_index) &&\
                (model.upset == false -> (outer_last_upset == false && eq(next_x)))
 
-#define INNER (outer_last_upset == false -> (SIG)) && TBOUND(i) && BOUND(j)
+#define INNER (outer_last_upset == false -> (SIG))
 
 // TODO: Non_relational NZD in requires
-requires 0 < N
-r_requires NZD && eq(N) && eq(iters) && eq(A) && eq(b) && eq(x)
+requires 0 < N && NZD
+r_requires eq(N) && eq(iters) && eq(A) && eq(b) && eq(x)
 matrix<real> jacobi(int N,
                     int iters,
                     matrix<real> A(N,N),
@@ -39,14 +39,14 @@ matrix<real> jacobi(int N,
   specvar int upset_index = 0;
   specvar bool last_upset = false;
   specvar bool outer_last_upset = model.upset;
-  while (0 <= iters) (OUTER) {
+  while (0 <= iters) (NZD) (OUTER) {
     // TODO: Try to reduce this again after adding non-relational invariants.
     // BOUND(i) in an unrelational invariant may allow us to infer
     // TBOUNDS(upset_index)
-    for (int i = N - 1; 0 <= i; --i) (MIDDLE) {
+    for (int i = N - 1; 0 <= i; --i) (BOUND(i)) (MIDDLE) {
       last_upset = model.upset;
       sigma = 0;
-      for (int j = N - 1; 0 <= j; --j) (INNER) {
+      for (int j = N - 1; 0 <= j; --j) (TBOUND(i) && BOUND(j)) (INNER) {
         delta = 0;
         if (i != j) {
           delta = A[i][j] *. x[j];
