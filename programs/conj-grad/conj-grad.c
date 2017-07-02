@@ -37,7 +37,7 @@
   }
 
 requires 0 < N
-r_requires eq(N) && eq(M) && eq(F) && eq(A) && eq(b) && eq(x)
+r_requires eq(N) && eq(M) && eq(F) && eq(A)
 matrix<real> ss_cg(int N,
                    int M,
                    int F,
@@ -82,9 +82,9 @@ matrix<real> ss_cg(int N,
   // we'll do)
   // noinf because we don't actually care about this step for what we're
   // verifying
-  for (int i = 0; i < N; ++i) (1 == 1) (eq(r)) {
+  for (int i = 0; i < N; ++i) (1 == 1) (1 == 1) {
     tmp = 0;
-    for (int j = 0 ; j < N; ++j) (BOUND(j)) (eq(j)) {
+    for (int j = 0 ; j < N; ++j) (1 == 1) (1 == 1) {
       tmp = tmp + A[i][j] * x[i];
     }
     r[i] = b[i] - tmp;
