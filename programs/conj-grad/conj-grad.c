@@ -82,9 +82,9 @@ matrix<real> ss_cg(int N,
   // we'll do)
   // noinf because we don't actually care about this step for what we're
   // verifying
-  for (int i = 0; i < N; ++i) (1 == 1) (1 == 1) {
+  @noinf for (int i = 0; i < N; ++i) (1 == 1) (1 == 1) {
     tmp = 0;
-    for (int j = 0 ; j < N; ++j) (1 == 1) (1 == 1) {
+    @noinf for (int j = 0 ; j < N; ++j) (1 == 1) (1 == 1) {
       tmp = tmp + A[i][j] * x[i];
     }
     r[i] = b[i] - tmp;
@@ -181,7 +181,7 @@ matrix<real> ss_cg(int N,
       // Line 12: q = A * p;
       // TODO: Inference  on this loop causes the relational_assert in the inner
       // loop to come back "unknown" :(
-      @noinf for (int i = N - 1; 0 <= i; --i) (BOUND(i)) (OUTER) {
+      for (int i = N - 1; 0 <= i; --i) (BOUND(i)) (eq(i)) {
         q[i] = 0;
         for (int j = N - 1; 0 <= j; --j) (BOUND(j) && TBOUND(i)) (INNER) {
           old_upset = model.upset;
