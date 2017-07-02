@@ -13,14 +13,12 @@
             eq(F)
 
 #define DMR ((model.upset == false) -> (SPEQR(r) && SPEQR(r2) && SPEQQ(q) && SPEQQ(q2))) && \
-            ((old_upset == false) -> (eq(x) && eq(p))) && \
             ((r<r> == r2<r>) -> SPEQR(r)) && \
-            ((q<r> == q2<r>) -> SPEQQ(q)) && \
-            old_upset == false
+            ((q<r> == q2<r>) -> SPEQQ(q))
 
-#define OUTER eq(i) && eq(N) && eq(A) && (model.upset == false -> (eq(p)))
+#define OUTER eq(i) && eq(N) && eq(A)
 
-#define INNER (model.upset == false -> q<r>[i<r>] == q<o>[i<r>])
+#define INNER ((model.upset == false && eq(p)) -> q<r>[i<r>] == q<o>[i<o>])
 
 #define DQ (q<r>[i<r>] - q<o>[i<r>])
 
@@ -39,7 +37,7 @@
   }
 
 requires 0 < N
-r_requires eq(N) && eq(M) && eq(F) && eq(A)
+r_requires eq(N) && eq(M) && eq(F) && eq(A) && eq(b) && eq(x)
 matrix<real> ss_cg(int N,
                    int M,
                    int F,
@@ -84,9 +82,9 @@ matrix<real> ss_cg(int N,
   // we'll do)
   // noinf because we don't actually care about this step for what we're
   // verifying
-  @noinf for (int i = 0; i < N; ++i) (1 == 1) (1 == 1) {
+  for (int i = 0; i < N; ++i) (1 == 1) (eq(r)) {
     tmp = 0;
-    @noinf for (int j = 0 ; j < N; ++j) (1 == 1) (1 == 1) {
+    for (int j = 0 ; j < N; ++j) (BOUND(j)) (eq(j)) {
       tmp = tmp + A[i][j] * x[i];
     }
     r[i] = b[i] - tmp;
@@ -102,8 +100,14 @@ matrix<real> ss_cg(int N,
       // Line 4: [r, q] = A * [x, p]
       // DMR to compute r and q
       old_upset = model.upset;
-      relational_assume (DMR);
-      while (r != r2 || q != q2) (2 == 2) (DMR) {
+
+      r2 = r;
+      spec_r = r;
+      q2 = q;
+      spec_q = q;
+      bool not_run = true;
+      @noinf while (not_run == true || r != r2 || q != q2) (2 == 2) (DMR) {
+        not_run = false;
 
         // Zero out sum destinations
         r = zeros;
@@ -114,7 +118,7 @@ matrix<real> ss_cg(int N,
         spec_q = zeros;
 
         // TODO: Inference runs out of memory.
-        @noinf for (int i = N - 1; 0 <= i; --i) (2 == 2) (DMR && eq(A)) {
+        @noinf for (int i = N - 1; 0 <= i; --i) (2 == 2) (DMR) {
           for (int j = N - 1; 0 <= j; --j) (1 == 1) (1 == 1) {
             // Compute r
             tmp = A[i][j] *. x[j];
@@ -188,7 +192,7 @@ matrix<real> ss_cg(int N,
 
           // For verification that error is sufficiently small
           // TODO: This needs to be adjusted for non SEU models
-          relational_assert((old_upset == false) -> ((DQ * DQ) < SQR_MIN_MAX_AIJ));
+          relational_assert((old_upset == false && eq(p)) -> ((DQ * DQ) < SQR_MIN_MAX_AIJ));
         }
       }
 
@@ -222,9 +226,11 @@ matrix<real> ss_cg(int N,
       COMPUTE_P
     }
     ++it;
+
     p = next_p;
     x = next_x;
     r = next_r;
+
 
     ++man_mod;
 

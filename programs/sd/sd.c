@@ -4,16 +4,15 @@
 #define OUTER2 ((model.upset == false) -> SPEQR(r)) && \
                ((model.upset == true && old_upset == true) -> SPEQR(r))
 
-#define OLD_UPSET ((init_upset == false) -> (eq(x))) && init_upset == false
 #define UPSET2 ((old_upset == false && model.upset == true) -> ((SPEQR(r) && SPEQAX(Ax)) || (SPEQR(r2) && SPEQAX(Ax2)))) && \
                ((model.upset == false) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2))) && \
-               ((model.upset == true && old_upset == true) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2))) && \
-               OLD_UPSET
+               ((model.upset == true && old_upset == true) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2)))
 #define INV eq(N) && eq(A) && eq(b) && UPSET2 && OUTER2
 
 #define IMPL2 ((r<r> == r2<r>) -> SPEQR(r))
 
 #define TRANS (old_upset == true) -> (model.upset == true)
+
 
 // TODO: Get working with pseudo-seu-range
 
@@ -23,6 +22,8 @@ matrix<real> correct_sd(int N,
                         matrix<real> A(N, N),
                         matrix<real> b(N),
                         matrix<real> x(N)) {
+  matrix<real> zeros(N);
+
   matrix<real> Ax(N), r(N), Ax2(N), r2(N);
   real tmp, tmp2;
 
@@ -37,9 +38,16 @@ matrix<real> correct_sd(int N,
   // TODO: r == r2 -> (old_upset == model.upset)?  Then I could take this upset
   // thing out of the loop condition
   // TODO: Inference runs out of memory on this loop
-  @noinf while (r != r2) (1 == 1) (OUTER2 && IMPL2 && TRANS) {
+  @noinf while (r != r2) (1 == 1) (eq(N) && eq(A) && eq(b) && OUTER2 && IMPL2 && TRANS) {
     old_upset = model.upset;
-    relational_assume (INV);
+
+    Ax = zeros;
+    Ax2 = zeros;
+    spec_Ax = zeros;
+    r = zeros;
+    r2 = zeros;
+    spec_r = zeros;
+
     // TODO: Inference runs out of memory on this loop
     @noinf for (int i = N - 1; 0 <= i; --i) (1 == 1) (INV && TRANS) {
       // recompute Ax[i]
