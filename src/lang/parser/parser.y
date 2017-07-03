@@ -352,7 +352,7 @@ relexpression:
 ;
 
 relboolexp:
-  relexpression '^' relexpression {
+  relboolexp '^' relboolexp {
     $$ = new lang::RelationalBoolExp(lang::XOR, $1, $3);
     lang_ast = $$;
   }

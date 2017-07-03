@@ -1263,7 +1263,9 @@ namespace lang {
           res = new z3::expr(z3::implies(*lhs.original, *rhs.original));
           break;
         case XOR:
-          assert(false);
+          res = new z3::expr((*lhs.original || *rhs.original) &&
+                             !(*lhs.original && *rhs.original));
+          break;
       }
     }
 
