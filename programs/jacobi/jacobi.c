@@ -39,7 +39,7 @@ matrix<real> jacobi(int N,
   specvar int upset_index = 0;
   specvar bool last_upset = false;
   specvar bool outer_last_upset = model.upset;
-  while (0 <= iters) (NZD) (OUTER) {
+  while (0 <= iters) (1 == 1) (OUTER) {
     // TODO: Try to reduce this again after adding non-relational invariants.
     // BOUND(i) in an unrelational invariant may allow us to infer
     // TBOUNDS(upset_index)

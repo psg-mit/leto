@@ -51,6 +51,7 @@ namespace lang {
     cur_nonrel_houdini_invs = nullptr;
     inner_h_unknown = false;
     parent_while = nullptr;
+    parent_function = nullptr;
     h_var_version = nullptr;
     assume_eq = true;
   }
@@ -2086,6 +2087,34 @@ namespace lang {
     }
   }
 
+  void CHLVisitor::parent_inf(BoolExp* nonrel_inv, RelationalBoolExp* rel_inv) {
+    {
+      ConjunctionBreaker cb(rel_inv);
+      inv_vec cb_vec = cb.fissure();
+      cur_houdini_invs->insert(cur_houdini_invs->end(),
+                               cb_vec.begin(),
+                               cb_vec.end());
+      if (parent_while) {
+        cur_houdini_invs->insert(cur_houdini_invs->end(),
+                                 parent_while->houdini_invs.begin(),
+                                 parent_while->houdini_invs.end());
+      }
+    }
+
+    {
+      ConjunctionBreaker cb(nonrel_inv);
+      nonrel_inv_vec cb_vec = cb.nonrel_fissure();
+      cur_nonrel_houdini_invs->insert(cur_nonrel_houdini_invs->end(),
+                                      cb_vec.begin(),
+                                      cb_vec.end());
+      if (parent_while) {
+        cur_nonrel_houdini_invs->insert(cur_nonrel_houdini_invs->end(),
+                                        parent_while->nonrel_houdini_invs.begin(),
+                                        parent_while->nonrel_houdini_invs.end());
+      }
+    }
+  }
+
   z3pair CHLVisitor::visit(While &node) {
     assert((!cur_houdini_invs && !in_houdini) || in_houdini);
     assert((!cur_nonrel_houdini_invs && !in_houdini) || in_houdini);
@@ -2142,27 +2171,9 @@ namespace lang {
 
         // Parent template
         if (parent_while) {
-          {
-            ConjunctionBreaker cb(parent_while->inv);
-            inv_vec cb_vec = cb.fissure();
-            node.houdini_invs.insert(node.houdini_invs.end(),
-                                     cb_vec.begin(),
-                                     cb_vec.end());
-            node.houdini_invs.insert(node.houdini_invs.end(),
-                                     parent_while->houdini_invs.begin(),
-                                     parent_while->houdini_invs.end());
-          }
-
-          {
-            ConjunctionBreaker cb(parent_while->nonrel_inv);
-            nonrel_inv_vec cb_vec = cb.nonrel_fissure();
-            node.nonrel_houdini_invs.insert(node.nonrel_houdini_invs.end(),
-                                            cb_vec.begin(),
-                                            cb_vec.end());
-            node.nonrel_houdini_invs.insert(node.nonrel_houdini_invs.end(),
-                                            parent_while->nonrel_houdini_invs.begin(),
-                                            parent_while->nonrel_houdini_invs.end());
-          }
+          parent_inf(parent_while->nonrel_inv, parent_while->inv);
+        } else if (parent_function) {
+          parent_inf(parent_function->requires, parent_function->r_requires);
         }
 
         do {
@@ -2652,6 +2663,8 @@ namespace lang {
 
   z3pair CHLVisitor::visit(Function& node) {
     // TODO: This will need to be changed when we have function calls
+    assert(!parent_function);
+    parent_function = &node;
 
     // Declare vars
     assume_eq = false;
@@ -2671,6 +2684,8 @@ namespace lang {
 
     // Step into the body
     node.body->accept(*this);
+
+    parent_function = nullptr;
 
     RETURN_VOID;
   }

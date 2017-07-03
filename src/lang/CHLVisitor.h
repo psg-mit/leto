@@ -136,6 +136,7 @@ namespace lang {
       bool inner_h_unknown;
       While* parent_while;
       bool assume_eq;
+      Function* parent_function;
 
       // Contains *unqualified* vars to be set equal to eachother
       std::vector<RelationalBoolExp*>* cur_houdini_invs;
@@ -220,5 +221,7 @@ namespace lang {
                         std::vector<T>& new_invs,
                         std::vector<std::string>& new_tmps,
                         While& node);
+
+      void parent_inf(BoolExp* nonrel_inv, RelationalBoolExp* rel_inv);
   };
 }
