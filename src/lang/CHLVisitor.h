@@ -144,6 +144,7 @@ namespace lang {
       std::unordered_map<std::string, Property*> properties;
       std::unordered_map<std::string, RelationalProperty*> rel_properties;
       std::unordered_map<std::string, std::string> substitutions;
+      std::unordered_map<std::string, std::string> regions;
 
       // Contains *unqualified* vars to be set equal to eachother
       std::vector<RelationalBoolExp*>* cur_houdini_invs;

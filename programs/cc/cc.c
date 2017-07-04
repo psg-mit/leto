@@ -1,16 +1,13 @@
 #define MAX_N 10000
 
-#define EQ_TO(X, index) (forall(fi)((0 <= fi < index) -> (X<o>[fi] == X<r>[fi])))
-
-#define INV forall(fi)(next_CC<r>[fi] == nextCC<o>[fi] || v<r> < next_CC<r>[v<r>] || next_CC<r>[v<r>] < 0)
-
-#define SPEC_FROM(from, to, X, spec_X) forall(fi)((from <= fi < to) -> X[fi] == spec_X[fi])
-
 property mat_bound(matrix<real> A, real max) :
   forall(fi)(forall(fj)(0 <= A[fi][fj] < max));
 
 property vec_bound(matrix<real> V, int to, int max) :
   forall(fi)((0 <= fi < to) -> (0 <= V[fi] < max));
+
+property large_error(matrix<real> x, matrix<real> spec_x, int v) :
+  x[v] == spec_x[v] || v < x[v] || x[v] < 0;
 
 
 // Inputs
@@ -26,7 +23,8 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
   int u;
   int N_s;
   matrix<int> CC(N);
-  matrix<int> next_CC(N);
+  @region(unreliable) matrix<int> next_CC(N);
+  matrix<int> corrected_next_CC(N);
   matrix<int> P_star(N);
   specvar matrix<int> spec_next_CC(N);
 
@@ -51,8 +49,12 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
   // TODO: Enable inference (across the whole file)
   @noinf while (0 < N_s) (N < MAX_N && mat_bound(adj, N)) (eq(N)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
-    next_CC = CC;
-    spec_next_CC = CC;
+    for (int v = 0; v < N; ++v) (0 <= v <= N) (1 == 1) {
+      next_CC[v] = CC[v];
+      spec_next_CC[v] = CC[v];
+
+      assert(vec_bound(CC, N, N) -> large_error(next_CC, spec_next_CC, v));
+    }
 
     // Line 7: for each v in V do
     for (v = 0; v < N; ++v) (0 <= v <= N) (1 == 1) {
@@ -61,8 +63,8 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
 
         u = adj[v][j];
 
-        // Line 9: if CC^{i-1}[u] < CC^{i-1}[v] then
-        if (CC[u] < CC[v]) {
+        // Line 9: if CC^{i-1}[u] < CC^{i}[v] then
+        if (CC[u] < next_CC[v]) {
           // TODO: Put next_CC and P_star in unreliable memory so that bad
           // writes cause errors.  CC should non be in unreliable memory
           // because it could cause a bad branch which would violate the
@@ -72,20 +74,25 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
           // values (easy) and use those values for our branch
 
           // Line 10: CC^i[v] = CC^{i-1}[u]
-          next_CC[v] = fread(CC[u]);
+          next_CC[v] = CC[u];
           spec_next_CC[v] = CC[u];
 
           // Line 11: P*[v] = &u
-          P_star[v] = fread(j);
+          P_star[v] = j;
 
-          assert(vec_bound(CC, N, N) -> (next_CC[v] == spec_next_CC[v] ||
-                                         v < next_CC[v] ||
-                                         next_CC[v] < 0));
+          assert(vec_bound(CC, N, N) -> large_error(next_CC, spec_next_CC, v));
         }
       }
     }
 
     // Fault detection and correction (reliable)
+
+    // Set corrected_next_CC to be full of -1 (an invalid result)
+    @noinf for (int i = 0; i < N; ++i) (1 == 1) (1 == 1) {
+      corrected_next_CC[i] = -1;
+    }
+
+
     // Line 12: N_s = 0
     N_s = 0;
 
@@ -101,24 +108,26 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
       } else {
 
         // Line 15: CC^i[v] = CC^{i-1}[v]
-        next_CC[v] = CC[v];
+        corrected_next_CC[v] = CC[v];
         spec_next_CC[v] = CC[v];
 
         // Line 16: for each u in adj(v) do
-        @noinf for (j = 0; j < adj[v][N]; ++j) (0 <= v < N && mat_bound(adj, N) && next_CC[v] == spec_next_CC[v]) (1 == 1) {
+        @noinf for (j = 0; j < adj[v][N]; ++j)
+                   (0 <= v < N && mat_bound(adj, N) && corrected_next_CC[v] == spec_next_CC[v])
+                   (1 == 1) {
           u = adj[v][j];
 
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then
           if (CC[u] < next_CC[v]) {
             // Line 18: CC^i[v] = CC^{i-1}[u]
-            next_CC[v] = CC[u];
+            corrected_next_CC[v] = CC[u];
             spec_next_CC[v] = CC[u];
 
             // Line 19: P*[v] = &u
             P_star[v] = j;
 
             // CCBOUND restored for next iteration
-            assert(vec_bound(CC, N, N) -> (0 <= next_CC[v] < N));
+            assert(vec_bound(CC, N, N) -> (0 <= corrected_next_CC[v] < N));
           }
         }
       }
@@ -133,8 +142,16 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
     // Line 22: i = i + 1
     ++i;
 
-    // Update CC
-    CC = next_CC;
+    // Update CC (merge results)
+    for (int i = 0; i < N; ++i) (1 == 1) (1 == 1) {
+      if (corrected_next_CC[i] == -1) {
+        CC[i] = next_CC[i];
+        assert(CC[i] == next_CC[i]);
+      } else {
+        CC[i] = corrected_next_CC[i];
+        assert(CC[i] == corrected_next_CC[i]);
+      }
+    }
   }
 
 

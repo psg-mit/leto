@@ -19,6 +19,7 @@
        FREAD
        FWRITE
        OLD
+       REGION
 
 %left ';'
 %left AND OR
@@ -198,18 +199,20 @@ statement:
     $$ = new model::Operator($2, $4, $6, $10, $14, $18);
     model_ast = $$;
   }
-| FREAD '(' var ')'
+| REGION '(' var ')'
+  FREAD '(' var ')'
   WHEN '(' boolexp ')'
   MODIFIES '(' varlist ')'
   ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(operator_t::FREAD, $3, nullptr, $7, $11, $15);
+    $$ = new model::Operator(operator_t::FREAD, $7, nullptr, $11, $15, $19);
     model_ast = $$;
   }
-| FWRITE '(' var ',' var ')'
+| REGION '(' var ')'
+  FWRITE '(' var ',' var ')'
   WHEN '(' boolexp ')'
   MODIFIES '(' varlist ')'
   ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(operator_t::FWRITE, $3, $5, $9, $13, $17);
+    $$ = new model::Operator(operator_t::FWRITE, $7, $9, $13, $17, $21);
     model_ast = $$;
   }
 | OPERATOR op '(' var ',' var ')'
@@ -219,18 +222,20 @@ statement:
     $$ = new model::Operator($2, $4, $6, $10, nullptr, $17);
     model_ast = $$;
   }
-| FREAD '(' var ')'
+| REGION '(' var ')'
+  FREAD '(' var ')'
   WHEN '(' boolexp ')'
   MODIFIES '(' ')'
   ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(operator_t::FREAD, $3, nullptr, $7, nullptr, $14);
+    $$ = new model::Operator(operator_t::FREAD, $7, nullptr, $11, nullptr, $18);
     model_ast = $$;
   }
-| FWRITE '(' var ',' var ')'
+| REGION '(' var ')'
+  FWRITE '(' var ',' var ')'
   WHEN '(' boolexp ')'
   MODIFIES '(' ')'
   ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(operator_t::FWRITE, $3, $5, $9, nullptr, $16);
+    $$ = new model::Operator(operator_t::FWRITE, $7, $9, $13, nullptr, $20);
     model_ast = $$;
   }
 | OPERATOR op '(' var ',' var ')'
@@ -239,21 +244,23 @@ statement:
     $$ = new model::Operator($2, $4, $6, &TRUE_NODE, $10, $14);
     model_ast = $$;
   }
-| FREAD '(' var ')'
+| REGION '(' var ')'
+  FREAD '(' var ')'
   MODIFIES '(' varlist ')'
   ENSURES '(' boolexp ')' {
     $$ = new model::Operator(operator_t::FREAD,
-                             $3,
+                             $7,
                              nullptr,
                              &TRUE_NODE,
-                             $7,
-                             $11);
+                             $11,
+                             $15);
     model_ast = $$;
   }
-| FWRITE '(' var ',' var ')'
+| REGION '(' var ')'
+  FWRITE '(' var ',' var ')'
   MODIFIES '(' varlist ')'
   ENSURES '(' boolexp ')' {
-    $$ = new model::Operator(operator_t::FWRITE, $3, $5, &TRUE_NODE, $9, $13);
+    $$ = new model::Operator(operator_t::FWRITE, $7, $9, &TRUE_NODE, $13, $17);
     model_ast = $$;
   }
 | OPERATOR op '(' var ',' var ')'
@@ -262,26 +269,28 @@ statement:
     $$ = new model::Operator($2, $4, $6, &TRUE_NODE, nullptr, $13);
     model_ast = $$;
   }
-| FREAD '(' var ')'
+| REGION '(' var ')'
+  FREAD '(' var ')'
   MODIFIES '(' ')'
   ENSURES '(' boolexp ')' {
     $$ = new model::Operator(operator_t::FREAD,
-                             $3,
+                             $7,
                              nullptr,
                              &TRUE_NODE,
                              nullptr,
-                             $10);
+                             $14);
     model_ast = $$;
   }
-| FWRITE '(' var ',' var ')'
+| REGION '(' var ')'
+  FWRITE '(' var ',' var ')'
   MODIFIES '(' ')'
   ENSURES '(' boolexp ')' {
     $$ = new model::Operator(operator_t::FWRITE,
-                             $3,
-                             $5,
+                             $7,
+                             $9,
                              &TRUE_NODE,
                              nullptr,
-                             $12);
+                             $16);
     model_ast = $$;
   }
 | '{' statement '}' {

@@ -325,23 +325,25 @@ namespace lang {
 
   class Declare : public Statement {
     public:
-      Declare(type_t type_, VarList *vars_)
-        : type(type_), vars(vars_), specvar(false) { }
+      Declare(type_t type_, VarList *vars_, Var* region_)
+        : type(type_), vars(vars_), region(region_), specvar(false) { }
       virtual z3pair accept(ASTVisitor &visitor)  override;
 
       type_t type;
       VarList* vars;
+      Var* region;
       bool specvar;
   };
 
   class DeclareMat : public Statement {
     public:
-      DeclareMat(type_t type_, VarList *vars_)
-        : type(type_), vars(vars_), specvar(false) {}
+      DeclareMat(type_t type_, VarList *vars_, Var* region_)
+        : type(type_), vars(vars_), region(region_), specvar(false) {}
       virtual z3pair accept(ASTVisitor &visitor)  override;
 
       type_t type;
       VarList* vars;
+      Var* region;
       bool specvar;
   };
 

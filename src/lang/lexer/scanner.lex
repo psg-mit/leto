@@ -56,6 +56,7 @@ r_requires                          return lang::LangParser::R_REQUIRES;
 return                              return lang::LangParser::RETURN;
 property                            return lang::LangParser::PROPERTY;
 property_r                          return lang::LangParser::PROPERTY_R;
+@region                             return lang::LangParser::REGION;
 [[:alpha:]_][[:alpha:][:digit:]_]*  return lang::LangParser::ID;
 .                                   return matched()[0];
 

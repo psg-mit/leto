@@ -401,6 +401,8 @@ namespace lang {
 
       // Assume variables are equal at declare time
       if (assume_eq) add_constraint(*res.original == *res.relaxed);
+
+      if (node.region) regions[var->name] = node.region->name;
     }
 
     return {nullptr, nullptr};
@@ -453,6 +455,8 @@ namespace lang {
                                      dimensions->size() == 1 ? IGNORE_1D : IGNORE_2D);
         add_constraint(*eq);
       }
+
+      if (node.region) regions[var->name] = node.region->name;
     }
 
     return {nullptr, nullptr};
@@ -630,6 +634,14 @@ namespace lang {
   // hand expressions in conditionals are too.  Perhaps something more fine
   // grained is needed here
   z3pair CHLVisitor::visit(Assign &node) {
+    last_base_name = nullptr;
+    z3pair lhs = node.lhs->accept(*this);
+    assert(last_base_name);
+    if (regions.count(*last_base_name)) {
+      FaultyWrite fwrite(node.lhs, node.rhs);
+      return fwrite.accept(*this);
+    }
+
     // Check for <array> = <array>
     Var* vlhs = dynamic_cast<Var*>(node.lhs);
     if (vlhs && (light_mats.count(vlhs->name) || dim_map.count(vlhs->name))) {
@@ -646,7 +658,7 @@ namespace lang {
     // Get both pairs
     z3pair rhs = node.rhs->accept(*this);
     in_assign = true;
-    z3pair lhs = node.lhs->accept(*this);
+    lhs = node.lhs->accept(*this);
     in_assign = false;
 
     assert(old_o);
@@ -1540,6 +1552,9 @@ namespace lang {
     std::string name = substitutions.count(node.lhs->name) ?
                        substitutions.at(node.lhs->name) :
                        node.lhs->name;
+
+    last_base_name = new std::string(name);
+
     if (light_mats.count(name)) {
       // Convert this to a variable access
 

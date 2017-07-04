@@ -46,6 +46,7 @@
        RETURN
        PROPERTY
        PROPERTY_R
+       REGION
 
 
 %left ';'
@@ -446,36 +447,45 @@ size:
 
 declare:
   type varlist {
-    $$ = new lang::Declare($1, $2);
+    $$ = new lang::Declare($1, $2, nullptr);
+    lang_ast = $$;
+  }
+
+| REGION '(' var ')' type varlist {
+    $$ = new lang::Declare($5, $6, $3);
     lang_ast = $$;
   }
 ;
 
 declaremat:
   MATRIX type '>' matvarlist {
-    $$ = new lang::DeclareMat($2, $4);
+    $$ = new lang::DeclareMat($2, $4, nullptr);
+    lang_ast = $$;
+  }
+| REGION '(' var ')' MATRIX type '>' matvarlist {
+    $$ = new lang::DeclareMat($6, $8, $3);
     lang_ast = $$;
   }
 ;
 
 singledeclare:
   type var {
-    $$ = new lang::Declare($1, new lang::VarList($2, nullptr));
+    $$ = new lang::Declare($1, new lang::VarList($2, nullptr), nullptr);
     lang_ast = $$;
   }
 ;
 
 singledeclaremat:
   MATRIX type '>' var {
-    $$ = new lang::DeclareMat($2, new lang::VarList($4, {}, nullptr));
+    $$ = new lang::DeclareMat($2, new lang::VarList($4, {}, nullptr), nullptr);
     lang_ast = $$;
   }
 | MATRIX type '>' var '(' expression ')' {
-    $$ = new lang::DeclareMat($2, new lang::VarList($4, {$6}, nullptr));
+    $$ = new lang::DeclareMat($2, new lang::VarList($4, {$6}, nullptr), nullptr);
     lang_ast = $$;
   }
 | MATRIX type '>' var '(' expression ',' expression')' {
-    $$ = new lang::DeclareMat($2, new lang::VarList($4, {$6, $8}, nullptr));
+    $$ = new lang::DeclareMat($2, new lang::VarList($4, {$6, $8}, nullptr), nullptr);
     lang_ast = $$;
   }
 ;
