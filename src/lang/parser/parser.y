@@ -44,6 +44,8 @@
        REQUIRES
        R_REQUIRES
        RETURN
+       PROPERTY
+       PROPERTY_R
 
 
 %left ';'
@@ -262,6 +264,10 @@ boolexp:
     $$ = new lang::Forall($3, $6);
     lang_ast = $$;
   }
+| var '(' varlist ')' {
+    $$ = new lang::PropertyApplication($1, $3);
+    lang_ast = $$;
+  }
 ;
 
 relexpression:
@@ -426,6 +432,10 @@ relboolexp:
     $$ = new lang::RelationalBoolExp(lang::bool_t::EQUALS, ovar, rvar);
     lang_ast = $$;
   }
+| var '(' varlist ')' {
+    $$ = new lang::RelationalPropertyApplication($1, $3);
+    lang_ast = $$;
+  }
 ;
 
 size:
@@ -456,7 +466,11 @@ singledeclare:
 ;
 
 singledeclaremat:
-  MATRIX type '>' var '(' expression ')' {
+  MATRIX type '>' var {
+    $$ = new lang::DeclareMat($2, new lang::VarList($4, {}, nullptr));
+    lang_ast = $$;
+  }
+| MATRIX type '>' var '(' expression ')' {
     $$ = new lang::DeclareMat($2, new lang::VarList($4, {$6}, nullptr));
     lang_ast = $$;
   }
@@ -523,7 +537,15 @@ cflow:
 
 
 statement:
-  RETURN expression {
+  PROPERTY var '(' declarelist ')' ':' boolexp {
+    $$ = new lang::Property($2, $4, $7);
+    lang_ast = $$;
+  }
+| PROPERTY_R var '(' declarelist ')' ':' relboolexp {
+    $$ = new lang::RelationalProperty($2, $4, $7);
+    lang_ast = $$;
+  }
+| RETURN expression {
     $$ = new lang::Return($2);
     lang_ast = $$;
   }

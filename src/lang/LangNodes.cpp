@@ -185,4 +185,20 @@ namespace lang {
   z3pair Return::accept(ASTVisitor& visitor) {
     return visitor.visit(*this);
   }
+
+  z3pair Property::accept(ASTVisitor& visitor) {
+    return visitor.visit(*this);
+  }
+
+  z3pair RelationalProperty::accept(ASTVisitor& visitor) {
+    return visitor.visit(*this);
+  }
+
+  z3pair PropertyApplication::accept(ASTVisitor& visitor) {
+    return visitor.visit(*this);
+  }
+
+  z3pair RelationalPropertyApplication::accept(ASTVisitor& visitor) {
+    return visitor.visit(*this);
+  }
 }

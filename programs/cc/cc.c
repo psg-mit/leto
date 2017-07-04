@@ -1,27 +1,22 @@
 #define MAX_N 10000
 
-#define BOUND(i, N) (0 <= i <= N)
-#define TBOUND(i, N) (0  <= i < N)
-
-#define ADJBOUND (forall(fi)(forall(fj)(0 <= adj[fi][fj] < N)))
-
-#define CCBOUND(CC, index, max) (forall(fi)((0 <= fi < index) -> (0 <= CC[fi] < max)))
-
 #define EQ_TO(X, index) (forall(fi)((0 <= fi < index) -> (X<o>[fi] == X<r>[fi])))
 
 #define INV forall(fi)(next_CC<r>[fi] == nextCC<o>[fi] || v<r> < next_CC<r>[v<r>] || next_CC<r>[v<r>] < 0)
 
 #define SPEC_FROM(from, to, X, spec_X) forall(fi)((from <= fi < to) -> X[fi] == spec_X[fi])
 
-#define LARGE_ERROR next_CC[v] == spec_next_CC[v] || v < next_CC[v] || next_CC[v] < 0
+property mat_bound(matrix<real> A, real max) :
+  forall(fi)(forall(fj)(0 <= A[fi][fj] < max));
 
-#define ALL_LARGE_ERROR forall(fi)(0 <= fi < N<r> -> (next_CC<r>[fi] == spec_next_CC[fi] || fi < next_CC<r>[fi] || next_CC<r>[fi] < 0))
+property vec_bound(matrix<real> V, int to, int max) :
+  forall(fi)((0 <= fi < to) -> (0 <= V[fi] < max));
 
 
 // Inputs
 // TODO: I'm assuming that the vertices are numbered 0 to N (exclusive).
 // Thus, there is no V vector in this implementation
-requires N < MAX_N && ADJBOUND
+requires N < MAX_N && mat_bound(adj, N)
 r_requires eq(N) && eq(adj)
 matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
   // Helpers
@@ -37,7 +32,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
 
   // Line 1: for each v in V do
   // TODO: Prove CCBOUND over this loop, remove from OUTER assumption
-  for (v = 0; v < N; ++v) (CCBOUND(CC, v, N)) (1 == 1) {
+  for (v = 0; v < N; ++v) (vec_bound(CC, v, N)) (1 == 1) {
     // Line 2: CC^1[v] = v;
     //         CC^0[v] = v;
     //         P*[v] = -1;
@@ -54,15 +49,15 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
 
   // Line 5: while N_s > 0 do:
   // TODO: Enable inference (across the whole file)
-  @noinf while (0 < N_s) (N < MAX_N && ADJBOUND) (eq(N)) {
+  @noinf while (0 < N_s) (N < MAX_N && mat_bound(adj, N)) (eq(N)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
     next_CC = CC;
     spec_next_CC = CC;
 
     // Line 7: for each v in V do
-    for (v = 0; v < N; ++v) (BOUND(v, N)) (1 == 1) {
+    for (v = 0; v < N; ++v) (0 <= v <= N) (1 == 1) {
       // Line 8: for each u in adj(v) do:
-      for (j = 0; j < adj[v][N]; ++j) (BOUND(j, N) && TBOUND(v, N)) (1 == 1) {
+      for (j = 0; j < adj[v][N]; ++j) (0 <= j <= N && 0 <= v < N) (1 == 1) {
 
         u = adj[v][j];
 
@@ -83,7 +78,9 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
           // Line 11: P*[v] = &u
           P_star[v] = fread(j);
 
-          assert(CCBOUND(CC, N, N) -> LARGE_ERROR);
+          assert(vec_bound(CC, N, N) -> (next_CC[v] == spec_next_CC[v] ||
+                                         v < next_CC[v] ||
+                                         next_CC[v] < 0));
         }
       }
     }
@@ -93,7 +90,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
     N_s = 0;
 
     // Line 13: for each v in V do
-    for (v = 0; v < N; ++v) (BOUND(v, N)) (1 == 1) {
+    for (v = 0; v < N; ++v) (0 <= v <= N) (1 == 1) {
       // Line 14: if Eq 1 (Section 5) does not hold for v then
       // TODO:  flip this conditional and remove else branch
       if (0 <= next_CC[v] <= v &&
@@ -108,7 +105,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
         spec_next_CC[v] = CC[v];
 
         // Line 16: for each u in adj(v) do
-        @noinf for (j = 0; j < adj[v][N]; ++j) (TBOUND(v, N) && ADJBOUND && next_CC[v] == spec_next_CC[v]) (1 == 1) {
+        @noinf for (j = 0; j < adj[v][N]; ++j) (0 <= v < N && mat_bound(adj, N) && next_CC[v] == spec_next_CC[v]) (1 == 1) {
           u = adj[v][j];
 
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then
@@ -121,7 +118,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
             P_star[v] = j;
 
             // CCBOUND restored for next iteration
-            assert(CCBOUND(CC, N, N) -> (0 <= next_CC[v] < N));
+            assert(vec_bound(CC, N, N) -> (0 <= next_CC[v] < N));
           }
         }
       }

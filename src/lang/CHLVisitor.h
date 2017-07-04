@@ -82,6 +82,10 @@ namespace lang {
       virtual z3pair visit(DeclareList &node) override;
       virtual z3pair visit(Return &node) override;
       virtual z3pair visit(Function &node) override;
+      virtual z3pair visit(Property& node) override;
+      virtual z3pair visit(PropertyApplication& node) override;
+      virtual z3pair visit(RelationalProperty& node) override;
+      virtual z3pair visit(RelationalPropertyApplication& node) override;
 
       z3::check_result check(bool exit_on_sat=true);
       int get_errors() { return errors; }
@@ -137,6 +141,9 @@ namespace lang {
       While* parent_while;
       bool assume_eq;
       Function* parent_function;
+      std::unordered_map<std::string, Property*> properties;
+      std::unordered_map<std::string, RelationalProperty*> rel_properties;
+      std::unordered_map<std::string, std::string> substitutions;
 
       // Contains *unqualified* vars to be set equal to eachother
       std::vector<RelationalBoolExp*>* cur_houdini_invs;
@@ -223,5 +230,9 @@ namespace lang {
                         While& node);
 
       void parent_inf(BoolExp* nonrel_inv, RelationalBoolExp* rel_inv);
+
+      template<typename T, typename U>
+      z3pair visit_property_application(T& node,
+                                        std::unordered_map<std::string, U*>& props);
   };
 }

@@ -54,6 +54,8 @@ eq                                  return lang::LangParser::EQ;
 requires                            return lang::LangParser::REQUIRES;
 r_requires                          return lang::LangParser::R_REQUIRES;
 return                              return lang::LangParser::RETURN;
+property                            return lang::LangParser::PROPERTY;
+property_r                          return lang::LangParser::PROPERTY_R;
 [[:alpha:]_][[:alpha:][:digit:]_]*  return lang::LangParser::ID;
 .                                   return matched()[0];
 

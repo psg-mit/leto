@@ -28,6 +28,8 @@ namespace lang {
       virtual z3pair visit(RelationalForall &node) override;
       virtual z3pair visit(BoolExp &node) override;
       virtual z3pair visit(Forall &node) override;
+      virtual z3pair visit(PropertyApplication &node) override;
+      virtual z3pair visit(RelationalPropertyApplication &node) override;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -72,7 +74,9 @@ namespace lang {
       virtual z3pair visit(FaultyWrite &node) override {assert(false);}
       virtual z3pair visit(DeclareList &node) override {assert(false);}
       virtual z3pair visit(Function &node) override {assert(false);}
-      virtual z3pair visit(Return  &node) override {assert(false);}
+      virtual z3pair visit(Return &node) override {assert(false);}
+      virtual z3pair visit(Property &node) override {assert(false);}
+      virtual z3pair visit(RelationalProperty &node) override {assert(false);}
 #pragma clang diagnostic pop
 
     private:

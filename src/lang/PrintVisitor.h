@@ -52,6 +52,10 @@ namespace lang {
       virtual z3pair visit(DeclareList &node) override;
       virtual z3pair visit(Function &node) override;
       virtual z3pair visit(Return &node) override;
+      virtual z3pair visit(Property &node) override;
+      virtual z3pair visit(RelationalProperty &node) override;
+      virtual z3pair visit(PropertyApplication &node) override;
+      virtual z3pair visit(RelationalPropertyApplication &node) override;
 
       std::string output;
     private:
@@ -63,5 +67,8 @@ namespace lang {
       template<typename T> void print_value(T& node);
       template<typename T> void print_real(T& node, std::string type);
       template<typename T> void print_forall(T& node, std::string type);
+      template<typename T> void print_property(T& node, std::string type);
+      template<typename T>
+      void print_property_application(T& node, std::string type);
   };
 }

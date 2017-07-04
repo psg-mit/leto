@@ -259,6 +259,16 @@ namespace lang {
       BoolExp* exp;
   };
 
+  class PropertyApplication : public BoolExp {
+    public:
+      PropertyApplication(Var* name_, VarList* args_) :
+        name(name_), args(args_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      Var* name;
+      VarList* args;
+  };
+
 
   class RelationalBoolExp : public RelationalExp {
     public:
@@ -270,6 +280,16 @@ namespace lang {
       bool_t op;
       RelationalExp* lhs;
       RelationalExp* rhs;
+  };
+
+  class RelationalPropertyApplication : public RelationalBoolExp {
+    public:
+      RelationalPropertyApplication(Var* name_, VarList* args_) :
+        name(name_), args(args_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      Var* name;
+      VarList* args;
   };
 
   class RelationalNormal : public RelationalBoolExp {
@@ -511,6 +531,30 @@ namespace lang {
       Var* name;
       DeclareList* decls;
       Statement* body;
+  };
+
+  class Property : public Statement {
+    public:
+      Property(Var* name_, DeclareList* decls_, BoolExp* prop_) :
+          name(name_), decls(decls_), prop(prop_) {}
+      virtual z3pair accept(ASTVisitor& visitor) override;
+
+      Var* name;
+      DeclareList* decls;
+      BoolExp* prop;
+  };
+
+  class RelationalProperty : public Statement {
+    public:
+      RelationalProperty(Var* name_,
+                         DeclareList* decls_,
+                         RelationalBoolExp* prop_) :
+          name(name_), decls(decls_), prop(prop_) {}
+      virtual z3pair accept(ASTVisitor& visitor) override;
+
+      Var* name;
+      DeclareList* decls;
+      RelationalBoolExp* prop;
   };
 
   class Return : public Statement {

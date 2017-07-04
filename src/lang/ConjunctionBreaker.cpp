@@ -2,6 +2,18 @@
 
 #include "../common.h"
 
+#define NONREL_NOTHING(type) \
+  z3pair ConjunctionBreaker::visit(type& node) { \
+    nonrel_invs.push_back(&node); \
+    RETURN_VOID; \
+  }
+
+#define REL_NOTHING(type) \
+  z3pair ConjunctionBreaker::visit(type& node) { \
+    invs.push_back(&node); \
+    RETURN_VOID; \
+  }
+
 namespace lang {
   ConjunctionBreaker::ConjunctionBreaker(RelationalBoolExp* inv) {
     invs.push_back(inv);
@@ -134,16 +146,8 @@ namespace lang {
     RETURN_VOID;
   }
 
-  z3pair ConjunctionBreaker::visit(RelationalForall& node) {
-    invs.push_back(&node);
-
-    RETURN_VOID;
-  }
-
-  z3pair ConjunctionBreaker::visit(Forall& node) {
-    nonrel_invs.push_back(&node);
-
-    RETURN_VOID;
-  }
-
+  NONREL_NOTHING(Forall)
+  REL_NOTHING(RelationalForall)
+  NONREL_NOTHING(PropertyApplication)
+  REL_NOTHING(RelationalPropertyApplication)
 }

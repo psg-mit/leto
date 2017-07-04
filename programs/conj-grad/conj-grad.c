@@ -1,27 +1,5 @@
 #define SQR_MIN_MAX_AIJ 2
 
-#define SPEQR(x) (x<r> == spec_r)
-#define SPEQQ(x) (x<r> == spec_q)
-#define BOUND(i) (-1 <= i < N)
-#define TBOUND(i) (0 <= i < N)
-
-#define EQS eq(A) && \
-            eq(it) && \
-            eq(M) && \
-            eq(N) && \
-            eq(man_mod) && \
-            eq(F)
-
-#define DMR ((model.upset == false) -> (SPEQR(r) && SPEQR(r2) && SPEQQ(q) && SPEQQ(q2))) && \
-            ((r<r> == r2<r>) -> SPEQR(r)) && \
-            ((q<r> == q2<r>) -> SPEQQ(q))
-
-#define OUTER eq(i) && eq(N) && eq(A)
-
-#define INNER ((model.upset == false && eq(p)) -> q<r>[i<r>] == q<o>[i<o>])
-
-#define DQ (q<r>[i<r>] - q<o>[i<r>])
-
 #define COMPUTE_X_R \
   @noinf for (i = N - 1; 0 <= i; --i) (5 == 5) (5 == 5) { \
     tmp = alpha * p[i]; \
@@ -35,6 +13,15 @@
     tmp = beta * p[i]; \
     next_p[i] = next_r[i] + tmp; \
   }
+
+property_r sqr_lt(matrix<real> v, int i) :
+  ((q<r>[i<r>] - q<o>[i<o>]) * (q<r>[i<r>] - q<o>[i<o>])) < SQR_MIN_MAX_AIJ;
+
+property_r dmr_eq(matrix<real> x1, matrix<real> x2, matrix<real> spec_x) :
+  x1<r> == spec_x && x2<r> == spec_x;
+
+property_r dmr_imp(matrix<real> x1, matrix<real> x2, matrix<real> spec_x) :
+  (x1<r> == x2<r>) -> (x1<r> == spec_x);
 
 requires 0 < N
 r_requires eq(N) && eq(M) && eq(F) && eq(A)
@@ -95,7 +82,9 @@ matrix<real> ss_cg(int N,
   // comes back unknown, which causes the system to fall back to weak inference,
   // which comes back unknown in branch finding for all variables one by one.  It
   // takes forever and nothing in learned.
-  @noinf while (it < M) (0 < N) (EQS) {
+  @noinf while (it < M)
+               (0 < N)
+               (eq(A) && eq(it) && eq(M) && eq(N) && eq(man_mod) && eq(F)) {
     if (man_mod == F) {
       // Line 4: [r, q] = A * [x, p]
       // DMR to compute r and q
@@ -106,7 +95,12 @@ matrix<real> ss_cg(int N,
       q2 = q;
       spec_q = q;
       bool not_run = true;
-      @noinf while (not_run == true || r != r2 || q != q2) (2 == 2) (DMR) {
+      @noinf while (not_run == true || r != r2 || q != q2)
+                   (2 == 2)
+                   (((model.upset == false) -> (dmr_eq(r, r2, spec_r) &&
+                                                dmr_eq(q, q2, spec_q))) &&
+                    dmr_imp(r, r2, spec_r) &&
+                    dmr_imp(q, q2, spec_q)) {
         not_run = false;
 
         // Zero out sum destinations
@@ -118,7 +112,12 @@ matrix<real> ss_cg(int N,
         spec_q = zeros;
 
         // TODO: Inference runs out of memory.
-        @noinf for (int i = N - 1; 0 <= i; --i) (2 == 2) (DMR) {
+        @noinf for (int i = N - 1; 0 <= i; --i)
+                   (2 == 2)
+                   (((model.upset == false) -> (dmr_eq(r, r2, spec_r) &&
+                                                dmr_eq(q, q2, spec_q))) &&
+                    dmr_imp(r, r2, spec_r) &&
+                    dmr_imp(q, q2, spec_q)) {
           for (int j = N - 1; 0 <= j; --j) (1 == 1) (1 == 1) {
             // Compute r
             tmp = A[i][j] *. x[j];
@@ -139,8 +138,8 @@ matrix<real> ss_cg(int N,
         }
       }
 
-      relational_assert (old_upset == false -> SPEQR(r));
-      relational_assert (old_upset == false -> SPEQQ(q));
+      relational_assert (old_upset == false -> (r<r> == spec_r));
+      relational_assert (old_upset == false -> (q<r> == spec_q));
 
       // Line 5: r = b - r
       @noinf for (int i = N - 1; 0 <= i; --i) (1 == 1) (3 == 3) { r[i] = b[i] - r[i]; }
@@ -181,9 +180,11 @@ matrix<real> ss_cg(int N,
       // Line 12: q = A * p;
       // TODO: Inference  on this loop causes the relational_assert in the inner
       // loop to come back "unknown" :(
-      for (int i = N - 1; 0 <= i; --i) (BOUND(i)) (eq(i)) {
+      for (int i = N - 1; 0 <= i; --i) (-1 <= i < N) (eq(i)) {
         q[i] = 0;
-        for (int j = N - 1; 0 <= j; --j) (BOUND(j) && TBOUND(i)) (INNER) {
+        for (int j = N - 1; 0 <= j; --j)
+            (-1 <= j < N && 0 <= i < N)
+            ((model.upset == false && eq(p)) -> q<r>[i<r>] == q<o>[i<o>]) {
           old_upset = model.upset;
 
           // Compute q
@@ -192,7 +193,7 @@ matrix<real> ss_cg(int N,
 
           // For verification that error is sufficiently small
           // TODO: This needs to be adjusted for non SEU models
-          relational_assert((old_upset == false && eq(p)) -> ((DQ * DQ) < SQR_MIN_MAX_AIJ));
+          relational_assert((old_upset == false && eq(p)) -> sqr_lt(q, i));
         }
       }
 

@@ -51,6 +51,10 @@ namespace lang {
       virtual z3pair visit(DeclareList &node) = 0;
       virtual z3pair visit(Function &node) = 0;
       virtual z3pair visit(Return &node) = 0;
+      virtual z3pair visit(Property &node) = 0;
+      virtual z3pair visit(RelationalProperty &node) = 0;
+      virtual z3pair visit(PropertyApplication &node) = 0;
+      virtual z3pair visit(RelationalPropertyApplication &node) = 0;
 
       virtual ~ASTVisitor() {}
   };

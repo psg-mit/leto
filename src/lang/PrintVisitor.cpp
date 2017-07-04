@@ -105,6 +105,19 @@ namespace lang {
     node.body->accept(*this);
 
     // Break invariant
+    {
+      ConjunctionBreaker breaker(node.nonrel_inv);
+      nonrel_inv_vec invs = breaker.nonrel_fissure();
+
+      printf("  Broken Nonrelational Invariant:\n");
+      for (Expression* e : invs) {
+        printf("---BEGIN---\n");
+        e->accept(*this);
+        printf("---END---\n");
+      }
+    }
+
+    // Break invariant
     ConjunctionBreaker breaker(node.inv);
     inv_vec invs = breaker.fissure();
 
@@ -506,18 +519,21 @@ namespace lang {
   }
 
   z3pair PrintVisitor::visit(VarList &node) {
-    printf("VarList: ");
+    if (!compress) printf("VarList: ");
     if (node.car) {
-      printf("\n");
+      if (!compress) printf("\n");
       node.car->accept(*this);
 
-      if (!node.dimensions.empty()) {
+      if (!compress && !node.dimensions.empty()) {
         printf("Dimensions:\n");
         for (Expression* exp : node.dimensions) {
           exp->accept(*this);
         }
       }
-      if (node.cdr) node.cdr->accept(*this);
+      if (node.cdr) {
+        if (compress) output += ", ";
+        node.cdr->accept(*this);
+      }
     }
     else printf("nil\n");
 
@@ -567,4 +583,50 @@ namespace lang {
 
     RETURN_VOID;
   }
+
+  template<typename T>
+  void PrintVisitor::print_property(T& node, std::string type) {
+    printf("%s:\n", type.c_str());
+    printf("  name:\n");
+    node.name->accept(*this);
+    printf("  decls:\n");
+    node.decls->accept(*this);
+    printf("  prop:\n");
+    node.prop->accept(*this);
+
+  }
+
+  z3pair PrintVisitor::visit(Property& node) {
+    print_property(node, "Property");
+    RETURN_VOID;
+  }
+
+  z3pair PrintVisitor::visit(RelationalProperty& node) {
+    print_property(node, "RelationalProperty");
+    RETURN_VOID;
+  }
+
+  template<typename T>
+  void PrintVisitor::print_property_application(T& node, std::string type) {
+    if (!compress) {
+      printf("%s:\n", type.c_str());
+      printf("  name:\n");
+    }
+    node.name->accept(*this);
+    if (compress) output += "(";
+    else printf("  args:\n");
+    node.args->accept(*this);
+    if (compress) output += ")";
+  }
+
+  z3pair PrintVisitor::visit(PropertyApplication& node) {
+    print_property_application(node, "PropertyApplication");
+    RETURN_VOID;
+  }
+
+  z3pair PrintVisitor::visit(RelationalPropertyApplication& node) {
+    print_property_application(node, "RelationalPropertyApplication");
+    RETURN_VOID;
+  }
+
 }

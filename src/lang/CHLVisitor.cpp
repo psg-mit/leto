@@ -118,9 +118,9 @@ namespace lang {
     unsigned version;
     try {
       version = var_version.at(name);
-    } catch (const std::out_of_range& oor) {
+    } catch (const std::out_of_range&) {
       std::cerr << "No such matrix: " << name << std::endl;
-      throw oor;
+      exit(1);
     }
     name += "-" + std::to_string(version);
     return vectors.at(name);
@@ -419,6 +419,13 @@ namespace lang {
       rname += "-0";
 
       // Build dimension vector
+      if (head->dimensions.empty()) {
+        std::cerr << "ERROR:  Matrix "
+                  << var->name
+                  << " has no dimensions."
+                  << std::endl;
+        exit(1);
+      }
       dim_vec* dimensions = new dim_vec();
       for (Expression* expr : head->dimensions) {
         assert(expr);
@@ -689,13 +696,18 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(Var &node) {
+    // Perform substitution if necessary
+    std::string name = substitutions.count(node.name) ?
+                       substitutions.at(node.name) :
+                       node.name;
+
     // Unversioned var names
-    last_base_name = &node.name;
-    std::string oname = node.name + "<o>";
-    std::string rname = node.name + "<r>";
+    last_base_name = new std::string(name);
+    std::string oname = name + "<o>";
+    std::string rname = name + "<r>";
     z3::expr* oexpr = nullptr;
     z3::expr* rexpr = nullptr;
-    expr_type = types.at(node.name);
+    expr_type = types.at(name);
     if (in_assign) {
       old_o = old_r = nullptr;
       // Get old version
@@ -736,14 +748,14 @@ namespace lang {
       assert(old_o);
       assert(old_r);
     } else {
-      bool is_light_mat = light_mats.count(node.name);
+      bool is_light_mat = light_mats.count(name);
       if (is_light_mat || !contains_var(oname)) {
         // Working with undereferenced array, do backchannel return
         if (is_light_mat) {
-          last_light_dim = light_dim_map.at(node.name);
+          last_light_dim = light_dim_map.at(name);
         } else {
           last_array = {get_current_vec(oname), get_current_vec(rname)};
-          last_dim = dim_map.at(node.name);
+          last_dim = dim_map.at(name);
         }
         return {nullptr, nullptr};
       }
@@ -1028,51 +1040,59 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(RelationalVar &node) {
-    if (node.check_spec && specvars.count(node.var->name)) {
+    std::string name = substitutions.count(node.var->name) ?
+                       substitutions.at(node.var->name) :
+                       node.var->name;
+
+    if (node.check_spec && specvars.count(name)) {
       fprintf(stderr,
               "ERROR: %s is a specification variable\n",
-              node.var->name.c_str());
+              name.c_str());
       exit(EXIT_RUNTIME_ERROR);
     }
-    last_base_name = &node.var->name;
-    expr_type = types.at(node.var->name);
-    std::string name;
+    last_base_name = new std::string(name);
+    expr_type = types.at(name);
+    std::string qname;
     switch (node.relation) {
       case ORIGINAL:
-        name = node.var->name + "<o>";
+        qname = name + "<o>";
         break;
       case RELAXED:
-        name = node.var->name + "<r>";
+        qname = name + "<r>";
         break;
     }
 
-    bool is_light_mat = light_mats.count(node.var->name);
-    if (!is_light_mat && contains_var(name)) {
-      return {get_current_var(name), nullptr};
+    bool is_light_mat = light_mats.count(name);
+    if (!is_light_mat && contains_var(qname)) {
+      return {get_current_var(qname), nullptr};
     }
 
     // Working with an undereferenced array, need to do backchannel return
-    unsigned version = var_version.at(name);
-    name += "-" + std::to_string(version);
-    if (is_light_mat) last_light_dim = light_dim_map.at(node.var->name);
+    unsigned version = var_version.at(qname);
+    qname += "-" + std::to_string(version);
+    if (is_light_mat) last_light_dim = light_dim_map.at(name);
     else {
-      last_array = {vectors.at(name), nullptr};
+      last_array = {vectors.at(qname), nullptr};
       assert(last_array.original);
-      last_dim = dim_map.at(node.var->name);
+      last_dim = dim_map.at(name);
     }
     return {nullptr, nullptr};
   }
 
   z3pair CHLVisitor::visit(SpecVar &node) {
-    if (!specvars.count(node.var->name)) {
+    std::string name = substitutions.count(node.var->name) ?
+                       substitutions.at(node.var->name) :
+                       node.var->name;
+
+    if (!specvars.count(name)) {
       fprintf(stderr,
               "ERROR: %s is not a specification variable\n",
-              node.var->name.c_str());
+              name.c_str());
       exit(EXIT_RUNTIME_ERROR);
     }
 
     // TODO: Allow light specmats
-    assert (!light_mats.count(node.var->name));
+    assert (!light_mats.count(name));
 
     RelationalVar relvar(RELAXED, node.var, false);
 
@@ -1517,11 +1537,14 @@ namespace lang {
 
 
   z3pair CHLVisitor::visit(ArrayAccess &node) {
-    if (light_mats.count(node.lhs->name)) {
+    std::string name = substitutions.count(node.lhs->name) ?
+                       substitutions.at(node.lhs->name) :
+                       node.lhs->name;
+    if (light_mats.count(name)) {
       // Convert this to a variable access
 
       // Build up name
-      std::string base = node.lhs->name;
+      std::string base = name;
       assert(!node.rhs.empty());
       assert(node.rhs.size() <= 2);
       for (size_t i = 0; i < node.rhs.size(); ++i) {
@@ -1536,8 +1559,8 @@ namespace lang {
       return v.accept(*this);
     }
 
-    std::string oname = node.lhs->name + "<o>";
-    std::string rname = node.lhs->name + "<r>";
+    std::string oname = name + "<o>";
+    std::string rname = name + "<r>";
     unsigned version = var_version.at(oname);
     assert(version == var_version.at(rname));
     oname += "-" + std::to_string(version);
@@ -1554,13 +1577,13 @@ namespace lang {
     if (in_assign) {
       std::vector<z3::expr*> ignore;
       old_o = old_r = nullptr;
-      type_t type = types.at(node.lhs->name);
-      dim_vec* dimension = dim_map.at(node.lhs->name);
+      type_t type = types.at(name);
+      dim_vec* dimension = dim_map.at(name);
       ++version;
-      ++var_version.at(node.lhs->name + "<o>");
-      ++var_version.at(node.lhs->name + "<r>");
-      std::string new_oname = node.lhs->name + "<o>-" + std::to_string(version);
-      std::string new_rname = node.lhs->name + "<r>-" + std::to_string(version);
+      ++var_version.at(name + "<o>");
+      ++var_version.at(name + "<r>");
+      std::string new_oname = name + "<o>-" + std::to_string(version);
+      std::string new_rname = name + "<r>-" + std::to_string(version);
       add_vector(type, new_oname, new_rname, *dimension);
       z3::func_decl* new_oarray = vectors.at(new_oname);
       z3::func_decl* new_rarray = vectors.at(new_rname);
@@ -1671,25 +1694,29 @@ namespace lang {
     assert(oexpr);
     assert(rexpr);
 
-    expr_type = types.at(node.lhs->name);
+    expr_type = types.at(name);
 
     return {oexpr, rexpr};
   }
 
   z3pair CHLVisitor::visit(RelationalArrayAccess &node) {
-    if (node.check_spec && specvars.count(node.lhs->name)) {
+    std::string name = substitutions.count(node.lhs->name) ?
+                       substitutions.at(node.lhs->name) :
+                       node.lhs->name;
+
+    if (node.check_spec && specvars.count(name)) {
       fprintf(stderr,
               "ERROR: %s is a specification variable\n",
-              node.lhs->name.c_str());
+              name.c_str());
       exit(EXIT_RUNTIME_ERROR);
     }
 
-    std::string name = node.lhs->name;
-    if (light_mats.count(name)) {
+    std::string qname = name;
+    if (light_mats.count(qname)) {
       // Convert to relational variable access
 
       // Build up name
-      std::string base = name;
+      std::string base = qname;
       assert(!node.rhs.empty());
       assert(node.rhs.size() <= 2);
       for (size_t i = 0; i < node.rhs.size(); ++i) {
@@ -1707,16 +1734,16 @@ namespace lang {
 
     switch (node.relation) {
       case ORIGINAL:
-        name += "<o>";
+        qname += "<o>";
         break;
       case RELAXED:
-        name += "<r>";
+        qname += "<r>";
         break;
     }
 
-    unsigned version = var_version.at(name);
-    name += "-" + std::to_string(version);
-    z3::func_decl* array = vectors.at(name);
+    unsigned version = var_version.at(qname);
+    qname += "-" + std::to_string(version);
+    z3::func_decl* array = vectors.at(qname);
     z3pair i1 = node.rhs.at(0)->accept(*this);
     assert(array);
     assert(i1.original);
@@ -1742,19 +1769,23 @@ namespace lang {
     }
     assert(expr);
 
-    expr_type = types.at(node.lhs->name);
+    expr_type = types.at(name);
 
     return {expr, nullptr};
   }
 
   z3pair CHLVisitor::visit(SpecArrayAccess &node) {
-    // TODO: Allow for spec array accesses for light mats
-    assert(!light_mats.count(node.lhs->name));
+    std::string name = substitutions.count(node.lhs->name) ?
+                       substitutions.at(node.lhs->name) :
+                       node.lhs->name;
 
-    if (!specvars.count(node.lhs->name)) {
+    // TODO: Allow for spec array accesses for light mats
+    assert(!light_mats.count(name));
+
+    if (!specvars.count(name)) {
       fprintf(stderr,
               "ERROR: %s is not a specification variable\n",
-              node.lhs->name.c_str());
+              name.c_str());
       exit(EXIT_RUNTIME_ERROR);
     }
 
@@ -2545,6 +2576,8 @@ namespace lang {
 
     destroy_forall_var(node.var->name);
 
+    expr_type = BOOL;
+
     return {ret, nullptr};
   }
 
@@ -2566,6 +2599,8 @@ namespace lang {
     assert(relaxed);
 
     destroy_forall_var(node.var->name);
+
+    expr_type = BOOL;
 
     return {original, relaxed};
   }
@@ -2688,6 +2723,100 @@ namespace lang {
     parent_function = nullptr;
 
     RETURN_VOID;
+  }
+
+  template <typename T>
+  static void visit_property(T& node,
+                             std::unordered_map<std::string, T*>& props) {
+    const std::string& name = node.name->name;
+    auto ret = props.emplace(name, &node);
+    if (!ret.second) {
+      std::cerr << "ERROR:  Property "
+                << name
+                << " already defined."
+                << std::endl;
+      exit(1);
+    }
+  }
+
+  z3pair CHLVisitor::visit(Property& node) {
+    visit_property(node, properties);
+
+    RETURN_VOID;
+  }
+
+  z3pair CHLVisitor::visit(RelationalProperty& node) {
+    visit_property(node, rel_properties);
+
+    RETURN_VOID;
+  }
+
+  template<typename T, typename U>
+  z3pair CHLVisitor::visit_property_application(T& node,
+                                                std::unordered_map<std::string, U*>& props) {
+    assert(substitutions.empty());
+
+    const std::string& name = node.name->name;
+    U* prop = nullptr;
+    try {
+      prop = props.at(name);
+    } catch (const std::out_of_range&) {
+      std::cerr << "ERROR: No such property: " << name << std::endl;
+      exit(1);
+    }
+    assert(prop);
+
+    VarList* app_head = node.args;
+    DeclareList* prop_head = prop->decls;
+    while (app_head && prop_head) {
+      // TODO:  Type checking?
+      // Build substitution map
+      assert(static_cast<bool>(prop_head->car) ^
+             static_cast<bool>(prop_head->mat_car));
+      std::string key = prop_head->car ? prop_head->car->vars->car->name :
+                                         prop_head->mat_car->vars->car->name;
+      auto res = substitutions.emplace(key, app_head->car->name);
+
+      if (!res.second) {
+        std::cerr << "ERROR:  Parameter "
+                  << key
+                  << " is duplicated"
+                  << std::endl;
+        exit(1);
+      }
+
+      app_head = app_head->cdr;
+      prop_head = prop_head->cdr;
+    }
+    if (app_head) {
+      std::cerr << "ERROR:  Property application "
+                << name
+                << " has too many arguments."
+                << std::endl;
+      exit(1);
+    }
+    if (prop_head) {
+      std::cerr << "ERROR:  Property application "
+                << name
+                << " has too few arguments."
+                << std::endl;
+      exit(1);
+    }
+
+    z3pair ret = prop->prop->accept(*this);
+
+    substitutions.clear();
+    expr_type = BOOL;
+
+    return ret;
+  }
+
+  z3pair CHLVisitor::visit(PropertyApplication& node) {
+    return visit_property_application(node, properties);
+  }
+
+  z3pair CHLVisitor::visit(RelationalPropertyApplication& node) {
+    return visit_property_application(node, rel_properties);
   }
 }
 
