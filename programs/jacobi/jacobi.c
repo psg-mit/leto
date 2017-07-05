@@ -25,12 +25,11 @@ matrix<real> jacobi(int N,
                     matrix<real> b(N),
                     matrix<real> x(N)) {
   matrix<real> next_x(N);
-  real sigma, delta, num;
   specvar int upset_index = 0;
   specvar bool last_upset = false;
   specvar bool outer_last_upset = model.upset;
   while (0 <= iters)
-        (1 == 1) 
+        (1 == 1)
         (((model.upset == false) -> (eq(x) && eq(next_x))) &&
          (last_upset == true -> model.upset == true) &&
          0 <= upset_index < N<r> &&
@@ -40,24 +39,22 @@ matrix<real> jacobi(int N,
     // TBOUNDS(upset_index)
     for (int i = N - 1; 0 <= i; --i)
         (-1 <= i < N)
-
         ((outer_last_upset == false -> (eq(x) &&
                                         (model.upset == true) -> not_equal_at(next_x, i, N, upset_index) &&
                                         bounded_diff_at(next_x, upset_index))) &&
          0 <= upset_index < N<r> &&
          (model.upset == false -> (outer_last_upset == false && eq(next_x)))) {
       last_upset = model.upset;
-      sigma = 0;
+      real sigma = 0;
       for (int j = N - 1; 0 <= j; --j)
           (0 <= i < N && -1 <= j < N)
           (outer_last_upset == false -> sig(sigma, last_upset)) {
-        delta = 0;
         if (i != j) {
-          delta = A[i][j] *. x[j];
+          real delta = A[i][j] *. x[j];
           sigma = sigma +. delta;
         }
       }
-      num = b[i] - sigma;
+      real num = b[i] - sigma;
       next_x[i] = num / A[i][i];
 
       if (last_upset == false && model.upset == true) {
