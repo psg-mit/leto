@@ -10,11 +10,9 @@ property_r sig(real sigma, bool last_upset) :
     (sigma<r> - E < sigma<o> < sigma<r> + E)) &&
   ((last_upset == true && model.upset == true) -> eq(sigma));
 
-property_r bounded_diff_at(matrix<real> x, int index) :
-  -EPSILON < x<o>[index] - x<r>[index] < EPSILON;
-
-property_r not_equal_at(matrix<real> v, int i, int N, int index) :
-  forall(fi)(((i<r> < fi < N<r>) && (fi != index)) -> v<o>[fi] == v<r>[fi]);
+property_r bounded_diff_at(matrix<real> x, int index, int i, int N) :
+  -EPSILON < x<o>[index] - x<r>[index] < EPSILON &&
+  forall(fi)(((i<r> < fi < N<r>) && (fi != index)) -> x<o>[fi] == x<r>[fi]);
 
 // TODO: Non_relational NZD in requires
 requires 0 < N && nzd(A)
@@ -31,19 +29,18 @@ matrix<real> jacobi(int N,
   while (0 <= iters)
         (1 == 1)
         ((last_upset == true -> model.upset == true) &&
-         0 <= upset_index < N<r> &&
          outer_last_upset == model.upset &&
-         ((model.upset == false) -> (eq(x) && eq(next_x)))) {
+         ((model.upset == false) -> (eq(next_x))) &&
+         0 <= upset_index < N<r> &&
+         (outer_last_upset == false -> eq(x))) {
     // TODO: Try to reduce this again after adding non-relational invariants.
     // BOUND(i) in an unrelational invariant may allow us to infer
     // TBOUNDS(upset_index)
     for (int i = 0; i < N; ++i)
         (0 <= i <= N)
-        ((outer_last_upset == false -> (eq(x) &&
-                                        (model.upset == true) -> not_equal_at(next_x, i, N, upset_index) &&
-                                        bounded_diff_at(next_x, upset_index))) &&
-         0 <= upset_index < N<r> &&
-         (model.upset == false -> (outer_last_upset == false))) {
+        (((outer_last_upset == false && model.upset == true) -> bounded_diff_at(next_x, upset_index, i, N)) &&
+         0 <= upset_index &&
+         (model.upset == false -> (outer_last_upset == false && eq(next_x)))) {
       last_upset = model.upset;
       real sigma = 0;
       for (int j = 0; j < N; ++j)
@@ -64,8 +61,7 @@ matrix<real> jacobi(int N,
     --iters;
     x = next_x;
     relational_assert((outer_last_upset == false && model.upset == true) ->
-                        (not_equal_at(next_x, i, N, upset_index) &&
-                         bounded_diff_at(next_x, upset_index)));
+                        bounded_diff_at(next_x, upset_index, i, N));
     outer_last_upset = model.upset;
   }
 
