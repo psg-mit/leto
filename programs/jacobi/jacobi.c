@@ -37,18 +37,19 @@ matrix<real> jacobi(int N,
     // TODO: Try to reduce this again after adding non-relational invariants.
     // BOUND(i) in an unrelational invariant may allow us to infer
     // TBOUNDS(upset_index)
-    for (int i = N - 1; 0 <= i; --i)
-        (-1 <= i < N)
+    for (int i = 0; i < N; ++i)
+        (0 <= i <= N)
         ((outer_last_upset == false -> (eq(x) &&
                                         (model.upset == true) -> not_equal_at(next_x, i, N, upset_index) &&
                                         bounded_diff_at(next_x, upset_index))) &&
          0 <= upset_index < N<r> &&
-         (model.upset == false -> (outer_last_upset == false && eq(next_x)))) {
+         (model.upset == false -> (outer_last_upset == false && eq(next_x))) &&
+         eq(i)) {
       last_upset = model.upset;
       real sigma = 0;
-      for (int j = N - 1; 0 <= j; --j)
-          (0 <= i < N && -1 <= j < N)
-          (outer_last_upset == false -> sig(sigma, last_upset)) {
+      for (int j = 0; j < N; ++j)
+          (0 <= i < N && 0 <= j <= N)
+          (outer_last_upset == false -> sig(sigma, last_upset) && eq(j)) {
         if (i != j) {
           real delta = A[i][j] *. x[j];
           sigma = sigma +. delta;
