@@ -36,7 +36,8 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
   int N_s = N;
 
   // Line 5: while N_s > 0 do:
-  @noinf while (0 < N_s) (N < MAX_N && mat_bound(adj, N)) (eq(N)) {
+  while (0 < N_s) (1 == 1) (1 == 1) {
+  //@noinf while (0 < N_s) (N < MAX_N && mat_bound(adj, N)) (eq(N)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
     for (int v = 0; v < N; ++v) (0 <= v <= N) (1 == 1) {
       next_CC[v] = CC[v];
