@@ -2104,8 +2104,6 @@ namespace lang {
                                 std::vector<std::string>& new_tmps,
                                 While& node) {
     for (size_t i = 0; i < old_invs.size(); ++i) {
-      cur_invs.clear();
-      tmps.clear();
       T h_inv = old_invs.at(i);
       std::string tmp = old_tmps.at(i);
       cur_invs.push_back(h_inv);
@@ -2120,9 +2118,6 @@ namespace lang {
       node.accept(*this);
 
       if (!cur_invs.empty() && !outer_h_unknown) {
-        assert(cur_invs.size() == 1);
-        assert(tmps.size() == 1);
-
         new_invs.push_back(h_inv);
         new_tmps.push_back(tmp);
 
@@ -2239,6 +2234,8 @@ namespace lang {
 
             node.nonrel_houdini_invs.clear();
             nonrel_h_tmps.clear();
+            node.houdini_invs.clear();
+            h_tmps.clear();
             weak_houdini(old_h_invs,
                          old_h_tmps,
                          node.houdini_invs,
@@ -2247,8 +2244,6 @@ namespace lang {
                          new_h_tmps,
                          node);
 
-            node.houdini_invs.clear();
-            h_tmps.clear();
             weak_houdini(old_nonrel_h_invs,
                          old_nonrel_h_tmps,
                          node.nonrel_houdini_invs,

@@ -94,11 +94,10 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
         spec_next_CC[v] = CC[v];
 
         // Line 16: for each u in adj(v) do
-        @noinf for (int j = 0; j < adj[v][N]; ++j)
-                   (0 <= v < N &&
-                    mat_bound(adj, N) &&
-                    corrected_next_CC[v] == spec_next_CC[v])
-                   (1 == 1) {
+        for (int j = 0; j < adj[v][N]; ++j)
+            (0 <= v < N &&
+             corrected_next_CC[v] == spec_next_CC[v])
+            (1 == 1) {
           int u = adj[v][j];
 
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then

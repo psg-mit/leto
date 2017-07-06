@@ -178,8 +178,6 @@ matrix<real> ss_cg(int N,
 
     } else {
       // Line 12: q = A * p;
-      // TODO: Inference  on this loop causes the relational_assert in the inner
-      // loop to come back "unknown" :(
       for (int i = N - 1; 0 <= i; --i) (-1 <= i < N) (eq(i)) {
         q[i] = 0;
         for (int j = N - 1; 0 <= j; --j)

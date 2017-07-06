@@ -42,9 +42,7 @@ matrix<real> jacobi(int N,
         ((outer_last_upset == false -> (eq(x) &&
                                         (model.upset == true) -> not_equal_at(next_x, i, N, upset_index) &&
                                         bounded_diff_at(next_x, upset_index))) &&
-         0 <= upset_index < N<r> &&
-         (model.upset == false -> (outer_last_upset == false && eq(next_x))) &&
-         eq(i)) {
+         (model.upset == false -> (outer_last_upset == false))) {
       last_upset = model.upset;
       real sigma = 0;
       for (int j = 0; j < N; ++j)
