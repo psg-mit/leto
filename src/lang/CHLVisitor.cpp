@@ -2104,6 +2104,7 @@ namespace lang {
                                 std::vector<std::string>& new_tmps,
                                 While& node) {
     for (size_t i = 0; i < old_invs.size(); ++i) {
+      size_t num_invs = cur_invs.size();
       T h_inv = old_invs.at(i);
       std::string tmp = old_tmps.at(i);
       cur_invs.push_back(h_inv);
@@ -2115,9 +2116,10 @@ namespace lang {
       std::string str_rep = houdini_to_str();
       debug_print("Trying weak Houdini inv: " + str_rep);
 
+
       node.accept(*this);
 
-      if (!cur_invs.empty() && !outer_h_unknown) {
+      if (cur_invs.size() == num_invs + 1 && !outer_h_unknown) {
         new_invs.push_back(h_inv);
         new_tmps.push_back(tmp);
 

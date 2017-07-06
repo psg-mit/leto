@@ -30,10 +30,10 @@ matrix<real> jacobi(int N,
   specvar bool outer_last_upset = model.upset;
   while (0 <= iters)
         (1 == 1)
-        (((model.upset == false) -> (eq(x) && eq(next_x))) &&
-         (last_upset == true -> model.upset == true) &&
+        ((last_upset == true -> model.upset == true) &&
          0 <= upset_index < N<r> &&
-         outer_last_upset == model.upset) {
+         outer_last_upset == model.upset &&
+         ((model.upset == false) -> (eq(x) && eq(next_x)))) {
     // TODO: Try to reduce this again after adding non-relational invariants.
     // BOUND(i) in an unrelational invariant may allow us to infer
     // TBOUNDS(upset_index)
@@ -42,6 +42,7 @@ matrix<real> jacobi(int N,
         ((outer_last_upset == false -> (eq(x) &&
                                         (model.upset == true) -> not_equal_at(next_x, i, N, upset_index) &&
                                         bounded_diff_at(next_x, upset_index))) &&
+         0 <= upset_index < N<r> &&
          (model.upset == false -> (outer_last_upset == false))) {
       last_upset = model.upset;
       real sigma = 0;
