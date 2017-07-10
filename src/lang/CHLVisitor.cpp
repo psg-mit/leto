@@ -1314,7 +1314,7 @@ namespace lang {
     assert(assumption.original);
     assert(!assumption.relaxed);
 
-    solver->add(*assumption.original);
+    add_constraint(*assumption.original);
     return {nullptr, nullptr};
   }
 
