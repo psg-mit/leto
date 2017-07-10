@@ -88,5 +88,9 @@ int main() {
             << chl.constraints_generated
             << std::endl;
 
+  std::cout << "Houdini invariants found: "
+            << chl.all_inferred.size()
+            << std::endl;
+
   return chl.get_errors();
 }

@@ -99,6 +99,7 @@ namespace lang {
       bool unsat_context;
       bool unknown_context;
       size_t constraints_generated;
+      std::unordered_set<std::string> all_inferred;
     private:
       z3::context* context;
       z3::solver* solver;
@@ -212,7 +213,7 @@ namespace lang {
        */
       void parse_z3_model();
 
-      std::string houdini_to_str();
+      std::string houdini_to_str(bool count=false);
 
       z3::expr* build_forall_var(const std::string& name);
       void destroy_forall_var(const std::string& name);

@@ -2266,7 +2266,8 @@ namespace lang {
             node.accept(*this);
           }
         } while (houdini_failed);
-        debug_print("Found Houdini invs: " + houdini_to_str());
+        std::string houdinis = houdini_to_str(true);
+        debug_print("Found Houdini invs: " + houdinis);
 
         in_houdini = false;
         cur_houdini_invs = nullptr;
@@ -2668,20 +2669,22 @@ namespace lang {
     handle_h_removals(assignments, *cur_nonrel_houdini_invs, nonrel_h_tmps);
   }
 
-  std::string CHLVisitor::houdini_to_str() {
+  std::string CHLVisitor::houdini_to_str(bool count) {
     PrintVisitor pv(true);
     std::string ret = "";
 
     for (BoolExp* inv : *cur_nonrel_houdini_invs) {
       pv.output.clear();
       inv->accept(pv);
-        ret += pv.output + ", ";
+      ret += pv.output + ", ";
+      if (count) all_inferred.insert(pv.output);
     }
 
     for (RelationalBoolExp* inv : *cur_houdini_invs) {
       pv.output.clear();
       inv->accept(pv);
       ret += pv.output + ", ";
+      if (count) all_inferred.insert(pv.output);
     }
 
     ret += "\n";
