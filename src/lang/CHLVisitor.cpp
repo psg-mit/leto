@@ -2619,14 +2619,14 @@ namespace lang {
   }
 
   template<typename T>
-  void CHLVisitor::handle_h_removals(const assign_map& assignments,
-                                     std::vector<T>& invs,
-                                     std::vector<std::string>& tmps) {
+  static void handle_h_removals(const assign_map& assignments,
+                                std::vector<T>& invs,
+                                std::vector<std::string>& tmps) {
 
     // Check which var eqs mapped to "false" and remove them
     assert(invs.size() == tmps.size());
     for (unsigned i = 0; i < tmps.size();) {
-      std::string val = assignments.at(h_tmps.at(i));
+      std::string val = assignments.at(tmps.at(i));
       assert(val == "true" || val == "false");
 
       if (val == "false") {

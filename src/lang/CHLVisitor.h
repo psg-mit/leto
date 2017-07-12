@@ -219,10 +219,6 @@ namespace lang {
       void destroy_forall_var(const std::string& name);
 
       template<typename T>
-      void handle_h_removals(const assign_map& assignments,
-                             std::vector<T>& invs,
-                             std::vector<std::string>& tmps);
-      template<typename T>
       void weak_houdini(const std::vector<T>& old_invs,
                         const std::vector<std::string>& old_tmps,
                         std::vector<T>& cur_invs,
