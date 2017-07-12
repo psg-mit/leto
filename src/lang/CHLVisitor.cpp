@@ -1927,18 +1927,16 @@ namespace lang {
     add_constraint(*eqs.assumes);
     add_constraint(*eqs.asserts);
 
-    if (!in_houdini) {
-      z3pair inv = node.inv->accept(*this);
-      assert(inv.original);
-      assert(!inv.relaxed);
-      add_constraint(*inv.original);
+    z3pair inv = node.inv->accept(*this);
+    assert(inv.original);
+    assert(!inv.relaxed);
+    add_constraint(*inv.original);
 
-      z3pair nonrel_inv = node.nonrel_inv->accept(*this);
-      assert(nonrel_inv.original);
-      assert(nonrel_inv.relaxed);
-      if (!ignore_original) add_constraint(*nonrel_inv.original);
-      if (!ignore_relaxed) add_constraint(*nonrel_inv.relaxed);
-    }
+    z3pair nonrel_inv = node.nonrel_inv->accept(*this);
+    assert(nonrel_inv.original);
+    assert(nonrel_inv.relaxed);
+    if (!ignore_original) add_constraint(*nonrel_inv.original);
+    if (!ignore_relaxed) add_constraint(*nonrel_inv.relaxed);
 
     // Add cond to state
     add_constraint(cond);
@@ -1960,8 +1958,8 @@ namespace lang {
       parse_z3_model();
     } else {
       // Get post-body invariant
-      z3pair inv = node.inv->accept(*this);
-      z3pair nonrel_inv = node.nonrel_inv->accept(*this);
+      inv = node.inv->accept(*this);
+      nonrel_inv = node.nonrel_inv->accept(*this);
 
       // Check post-body invariant
       debug_print("Post body invariant: " + std::to_string(while_count));
@@ -2329,13 +2327,11 @@ namespace lang {
     assert(cond.relaxed);
 
     z3::expr path_inv = *eqs.assumes && *eqs.asserts;
-    if (!in_houdini) {
-      inv = node.inv->accept(*this);
-      nonrel_inv = node.nonrel_inv->accept(*this);
-      path_inv = path_inv && *inv.original;
-      if (!ignore_original) path_inv = path_inv && nonrel_inv.original;
-      if (!ignore_relaxed) path_inv = path_inv && nonrel_inv.relaxed;
-    }
+    inv = node.inv->accept(*this);
+    nonrel_inv = node.nonrel_inv->accept(*this);
+    path_inv = path_inv && *inv.original;
+    if (!ignore_original) path_inv = path_inv && nonrel_inv.original;
+    if (!ignore_relaxed) path_inv = path_inv && nonrel_inv.relaxed;
     std::array<z3::check_result, 3> paths;
     legal_path(*cond.original, *cond.relaxed, path_inv, node, paths);
 
@@ -2414,17 +2410,15 @@ namespace lang {
     assert(cond.relaxed);
     add_constraint(!*cond.original);
     add_constraint(!*cond.relaxed);
-    if (!in_houdini) {
-      inv = node.inv->accept(*this);
-      nonrel_inv = node.nonrel_inv->accept(*this);
-      assert(inv.original);
-      assert(!inv.relaxed);
-      assert(nonrel_inv.original);
-      assert(nonrel_inv.relaxed);
-      add_constraint(*inv.original);
-      if (!ignore_original) add_constraint(*nonrel_inv.original);
-      if (!ignore_relaxed) add_constraint(*nonrel_inv.relaxed);
-    }
+    inv = node.inv->accept(*this);
+    nonrel_inv = node.nonrel_inv->accept(*this);
+    assert(inv.original);
+    assert(!inv.relaxed);
+    assert(nonrel_inv.original);
+    assert(nonrel_inv.relaxed);
+    add_constraint(*inv.original);
+    if (!ignore_original) add_constraint(*nonrel_inv.original);
+    if (!ignore_relaxed) add_constraint(*nonrel_inv.relaxed);
     if (!h_unknown) {
       eqs = houdini_to_constraints(node);
       add_constraint(*eqs.assumes);
