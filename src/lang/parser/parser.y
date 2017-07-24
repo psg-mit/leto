@@ -437,6 +437,12 @@ relboolexp:
     $$ = new lang::RelationalPropertyApplication($1, $3);
     lang_ast = $$;
   }
+| '!' relboolexp {
+    $$ = new lang::RelationalBoolExp(lang::bool_t::EQUALS,
+                                     $2,
+                                     new lang::RelationalBool(false));
+    lang_ast = $$;
+  }
 ;
 
 size:
