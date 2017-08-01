@@ -31,6 +31,7 @@
        COPY
        POW
        FORALL
+       EXISTS
        FREAD
        FWRITE
        FOR
@@ -425,6 +426,10 @@ relboolexp:
   }
 | FORALL '(' var ')' '(' relboolexp ')' {
     $$ = new lang::RelationalForall($3, $6);
+    lang_ast = $$;
+  }
+| EXISTS '(' var ')' '(' relboolexp ')' {
+    $$ = new lang::RelationalExists($3, $6);
     lang_ast = $$;
   }
 | EQ '(' var ')' {

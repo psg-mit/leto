@@ -158,6 +158,10 @@ namespace lang {
     return visitor.visit(*this);
   }
 
+  z3pair RelationalExists::accept(ASTVisitor &visitor)  {
+    return visitor.visit(*this);
+  }
+
   z3pair Forall::accept(ASTVisitor &visitor)  {
     return visitor.visit(*this);
   }

@@ -41,6 +41,7 @@ fail                                return lang::LangParser::FAIL;
 copy                                return lang::LangParser::COPY;
 POW                                 return lang::LangParser::POW;
 forall                              return lang::LangParser::FORALL;
+exists                              return lang::LangParser::EXISTS;
 fread                               return lang::LangParser::FREAD;
 fwrite                              return lang::LangParser::FWRITE;
 for                                 return lang::LangParser::FOR;

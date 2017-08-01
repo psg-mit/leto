@@ -26,6 +26,7 @@ namespace lang {
 
       virtual z3pair visit(RelationalBoolExp &node) override;
       virtual z3pair visit(RelationalForall &node) override;
+      virtual z3pair visit(RelationalExists &node) override;
       virtual z3pair visit(BoolExp &node) override;
       virtual z3pair visit(Forall &node) override;
       virtual z3pair visit(PropertyApplication &node) override;

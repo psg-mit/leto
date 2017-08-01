@@ -44,6 +44,7 @@ namespace lang {
       virtual z3pair visit(ExprList &node) = 0;
       virtual z3pair visit(ArrayAssign &node) = 0;
       virtual z3pair visit(RelationalForall &node) = 0;
+      virtual z3pair visit(RelationalExists &node) = 0;
       virtual z3pair visit(Forall &node) = 0;
       virtual z3pair visit(FaultyRead &node) = 0;
       virtual z3pair visit(FaultyWrite &node) = 0;

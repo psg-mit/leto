@@ -148,6 +148,7 @@ namespace lang {
 
   NONREL_NOTHING(Forall)
   REL_NOTHING(RelationalForall)
+  REL_NOTHING(RelationalExists)
   NONREL_NOTHING(PropertyApplication)
   REL_NOTHING(RelationalPropertyApplication)
 }

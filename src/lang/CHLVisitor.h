@@ -76,6 +76,7 @@ namespace lang {
       virtual z3pair visit(ExprList &node) override;
       virtual z3pair visit(ArrayAssign &node) override;
       virtual z3pair visit(RelationalForall &node) override;
+      virtual z3pair visit(RelationalExists &node) override;
       virtual z3pair visit(Forall &node) override;
       virtual z3pair visit(FaultyRead &node) override;
       virtual z3pair visit(FaultyWrite &node) override;
@@ -131,7 +132,7 @@ namespace lang {
       const std::string* last_base_name;
       z3::expr* forall_i;
       z3::expr* forall_j;
-      unsigned forall_ctr;
+      unsigned quantifier_ctr;
       bool in_houdini;
       bool houdini_failed;
       z3::model* z3_model;
@@ -215,8 +216,8 @@ namespace lang {
 
       std::string houdini_to_str(bool count=false);
 
-      z3::expr* build_forall_var(const std::string& name);
-      void destroy_forall_var(const std::string& name);
+      z3::expr* build_quantifier_var(const std::string& name);
+      void destroy_quantifier_var(const std::string& name);
 
       template<typename T>
       void weak_houdini(const std::vector<T>& old_invs,

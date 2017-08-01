@@ -45,6 +45,7 @@ namespace lang {
       virtual z3pair visit(ExprList &node) override;
       virtual z3pair visit(ArrayAssign &node) override;
       virtual z3pair visit(RelationalForall &node) override;
+      virtual z3pair visit(RelationalExists &node) override;
       virtual z3pair visit(Forall &node) override;
       virtual z3pair visit(FaultyRead &node) override;
       virtual z3pair visit(FaultyWrite &node) override;

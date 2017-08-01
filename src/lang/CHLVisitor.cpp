@@ -41,7 +41,7 @@ namespace lang {
     in_houdini = false;
     forall_i = new z3::expr(this->context->int_const("forall_i"));
     forall_j = new z3::expr(this->context->int_const("forall_j"));
-    forall_ctr = 0;
+    quantifier_ctr = 0;
     constraints_generated = 0;
     z3_model = nullptr;
     houdini_failed = false;
@@ -2516,14 +2516,14 @@ namespace lang {
     return {res_o, res_r};
   }
 
-  z3::expr* CHLVisitor::build_forall_var(const std::string& name) {
+  z3::expr* CHLVisitor::build_quantifier_var(const std::string& name) {
     // Generate var names
     std::string oname = name + "<o>";
     std::string rname = name + "<r>";
-    std::string tmp_base = "forall-tmp-" + std::to_string(forall_ctr);
+    std::string tmp_base = "quantifier-tmp-" + std::to_string(quantifier_ctr);
     std::string otmp = tmp_base + "<o>";
     std::string rtmp = tmp_base + "<r>";
-    ++forall_ctr;
+    ++quantifier_ctr;
 
     // Verify that this var does not exist
     assert(!contains_var(oname));
@@ -2546,11 +2546,11 @@ namespace lang {
     return var;
   }
 
-  void CHLVisitor::destroy_forall_var(const std::string& name) {
+  void CHLVisitor::destroy_quantifier_var(const std::string& name) {
     std::string oname = name + "<o>";
     std::string rname = name + "<r>";
 
-    // Remove the forall var
+    // Remove the quantifier var
     size_t res = var_version.erase(rname);
     assert(res);
     res = var_version.erase(oname);
@@ -2570,7 +2570,7 @@ namespace lang {
     assert(node.var);
     assert(node.exp);
 
-    z3::expr* var = build_forall_var(node.var->name);
+    z3::expr* var = build_quantifier_var(node.var->name);
 
     // Eval expression
     z3pair exp = node.exp->accept(*this);
@@ -2581,7 +2581,29 @@ namespace lang {
     z3::expr *ret = new z3::expr(z3::forall(*var, *exp.original));
     assert(ret);
 
-    destroy_forall_var(node.var->name);
+    destroy_quantifier_var(node.var->name);
+
+    expr_type = BOOL;
+
+    return {ret, nullptr};
+  }
+
+  z3pair CHLVisitor::visit(RelationalExists &node) {
+    assert(node.var);
+    assert(node.exp);
+
+    z3::expr* var = build_quantifier_var(node.var->name);
+
+    // Eval expression
+    z3pair exp = node.exp->accept(*this);
+    assert(exp.original);
+    assert(!exp.relaxed);
+
+    // Construct forall
+    z3::expr *ret = new z3::expr(z3::exists(*var, *exp.original));
+    assert(ret);
+
+    destroy_quantifier_var(node.var->name);
 
     expr_type = BOOL;
 
@@ -2592,7 +2614,7 @@ namespace lang {
     assert(node.var);
     assert(node.exp);
 
-    z3::expr* var = build_forall_var(node.var->name);
+    z3::expr* var = build_quantifier_var(node.var->name);
 
     // Eval expression
     z3pair exp = node.exp->accept(*this);
@@ -2605,7 +2627,7 @@ namespace lang {
     z3::expr *relaxed = new z3::expr(z3::forall(*var, *exp.relaxed));
     assert(relaxed);
 
-    destroy_forall_var(node.var->name);
+    destroy_quantifier_var(node.var->name);
 
     expr_type = BOOL;
 

@@ -310,6 +310,16 @@ namespace lang {
       RelationalBoolExp* exp;
   };
 
+  class RelationalExists : public RelationalBoolExp  {
+    public:
+      RelationalExists(Var* var_, RelationalBoolExp* exp_) :
+          var(var_), exp(exp_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      Var* var;
+      RelationalBoolExp* exp;
+  };
+
   class Statement : public LangNode {
     public:
   };
