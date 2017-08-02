@@ -1,8 +1,5 @@
 #define MAX_N 10000
 
-property mat_bound(matrix<real> A, int max) :
-  forall(fi)(forall(fj)(0 <= A[fi][fj] < max));
-
 property vec_bound(matrix<real> V, int to) :
   forall(fi)((0 <= fi < to) -> (0 <= V[fi] <= fi));
 
@@ -128,15 +125,11 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
          eq(N) && eq(CC) && eq(adj) && eq(v)) {
       // Line 8: for each u in adj(v) do:
 
-      // TODO: Try to get rid of this assertion (for some reason removing it
-      // makes the path checking for the if inside hang?)
-      relational_assert(next_CC<o>[v<o>] == CC<o>[v<o>]);
-
 
       // TODO: Path checking gets hung up here in leto, but not with the
       // serialized version.  Try adding a timeout in leto.
       @noinf for (int j = 0; j < N; ++j)
-          (0 <= j <= N && 0 <= v < N && vec_bound(CC, N) && N < MAX_N && mat_bound(adj, N))
+          (0 <= j <= N && 0 <= v < N && vec_bound(CC, N) && N < MAX_N)
           (large_error_r(next_CC, N) &&
            eq(N_s) &&
            vec_bound_o(next_CC, N) &&
@@ -156,8 +149,6 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
 
           // Line 11: P*[v] = &u
           P_star[v] = j;
-
-          relational_assert(large_error_r(next_CC, N));
         }
       }
     }
