@@ -22,12 +22,13 @@ property_r next_CC_spec(int to,
                         matrix<real> next_CC,
                         matrix<real> CC,
                         matrix<real> adj) :
-  forall(fi)(forall(fj)(((0 <= fi < to<o>) && (0 <= fj < adj<o>[fi][N<o>])) ->
-      (next_CC<o>[fi] <= CC<o>[adj<o>[fi][fj]] &&
+  forall(fi)(forall(fj)(((0 <= fi < to<o>) && (0 <= fj < N<o>) && (adj<o>[fi][fj] == 1)) ->
+      (next_CC<o>[fi] <= CC<o>[fj] &&
        next_CC<o>[fi] <= CC<o>[fi]))) &&
   forall(fi)(exists(fj)((0 <= fi < to<o>) ->
-      ((next_CC<o>[fi] == CC<o>[adj<o>[fi][fj]] &&
-        0 <= fj < adj<o>[fi][N<o>]) ||
+      ((next_CC<o>[fi] == CC<o>[fj] &&
+        0 <= fj < N<o> &&
+        adj<o>[fi][fj] == 1) ||
         next_CC<o>[fi] == CC<o>[fi])));
 
 property_r corrected_CC_spec(int to,
@@ -37,13 +38,15 @@ property_r corrected_CC_spec(int to,
                              matrix<real> CC,
                              matrix<real> adj) :
   forall(fi)(forall(fj)(((0 <= fi < to<o>) &&
-                         (0 <= fj < adj<o>[fi][N<o>]) &&
+                         (0 <= fj < N<o>) &&
+                         (adj<o>[fi][fj] == 1) &&
                          (!(0 <= next_CC<r>[fi] <= fi))) ->
-      (corrected_CC<r>[fi] <= CC<o>[adj<o>[fi][fj]] &&
+      (corrected_CC<r>[fi] <= CC<o>[fj] &&
        corrected_CC<r>[fi] <= CC<o>[fi]))) &&
   forall(fi)(exists(fj)(((0 <= fi < to<o>) && (!(0 <= next_CC<r>[fi] <= fi)))->
-      ((corrected_CC<r>[fi] == CC<o>[adj<o>[fi][fj]] &&
-        0 <= fj < adj<o>[fi][N<o>]) ||
+      ((corrected_CC<r>[fi] == CC<o>[fj] &&
+        0 <= fj < N<o> &&
+        adj<o>[fi][fj] == 1) ||
         corrected_CC<r>[fi] == CC<o>[fi])));
 
 property_r inner_next_CC_spec(int to,
@@ -51,10 +54,12 @@ property_r inner_next_CC_spec(int to,
                               matrix<real> next_CC,
                               matrix<real> CC,
                               matrix<real> adj) :
-  forall(fi)((0 <= fi < to<o>) -> (next_CC<o>[v<o>] <= CC<o>[adj<o>[v<o>][fi]] &&
-                                next_CC<o>[v<o>] <= CC<o>[v<o>])) &&
-  exists(ei)((next_CC<o>[v<o>] == CC<o>[adj<o>[v<o>][ei]] &&
-              0 <= ei < adj<o>[v<o>][N<o>]) ||
+  forall(fi)((0 <= fi < to<o> && adj<o>[v<o>][fi] == 1) ->
+      (next_CC<o>[v<o>] <= CC<o>[fi] &&
+       next_CC<o>[v<o>] <= CC<o>[v<o>])) &&
+  exists(ei)((next_CC<o>[v<o>] == CC<o>[ei] &&
+              0 <= ei < N<o> &&
+              adj<o>[v<o>][ei] == 1) ||
               next_CC<o>[v<o>] == CC<o>[v<o>]);
 
 property_r inner_corrected_CC_spec(int g,
@@ -62,15 +67,16 @@ property_r inner_corrected_CC_spec(int g,
                                    matrix<real> corrected_CC,
                                    matrix<real> CC,
                                    matrix<real> adj) :
-  forall(fi)((0 <= fi < g<r>) -> corrected_CC<r>[v<r>] <= CC<o>[adj<o>[v<o>][fi]]) &&
+  forall(fi)((0 <= fi < g<r> && adj<o>[v<o>][fi] == 1) -> corrected_CC<r>[v<r>] <= CC<o>[fi]) &&
   corrected_CC<r>[v<r>] <= CC<o>[v<o>] &&
-  exists(ei)((corrected_CC<r>[v<r>] == CC<o>[adj<o>[v<o>][ei]] &&
-             0 <= ei < adj<o>[v<o>][N<o>]) ||
+  exists(ei)((corrected_CC<r>[v<r>] == CC<o>[ei] &&
+             0 <= ei < N<o> &&
+             adj<o>[v<o>][ei] == 1) ||
             corrected_CC<r>[v<r>] == CC<o>[v<o>]);
 
-requires N < MAX_N && mat_bound(adj, N)
+requires N < MAX_N
 r_requires eq(adj)
-matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
+matrix<int> cc(int N, matrix<int> adj(N, N)) {
   // Helpers
   matrix<int> CC(N);
   @region(unreliable) matrix<int> next_CC(N);
@@ -97,7 +103,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
   //while (0 < N_s) (1 == 1) (1 == 1) {
   // TODO: Get eq(CC) in outer while?
   @noinf while (0 < N_s)
-               (N < MAX_N && mat_bound(adj, N) && vec_bound(CC, N))
+               (N < MAX_N && vec_bound(CC, N))
                (eq(N) && eq(N_s) && eq(adj) && eq(CC)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
     for (int v = 0; v < N; ++v)
@@ -112,7 +118,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
 
     // Line 7: for each v in V do
     @noinf for (int v = 0; v < N; ++v)
-        (0 <= v <= N && vec_bound(CC, N) && mat_bound(adj, N))
+        (0 <= v <= N && vec_bound(CC, N))
         (large_error_r(next_CC, N) &&
          eq(N_s) &&
          vec_bound_o(next_CC, N) &&
@@ -129,7 +135,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
 
       // TODO: Path checking gets hung up here in leto, but not with the
       // serialized version.  Try adding a timeout in leto.
-      @noinf for (int j = 0; j < adj[v][N]; ++j)
+      @noinf for (int j = 0; j < N; ++j)
           (0 <= j <= N && 0 <= v < N && vec_bound(CC, N) && N < MAX_N && mat_bound(adj, N))
           (large_error_r(next_CC, N) &&
            eq(N_s) &&
@@ -140,14 +146,12 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
            forall(fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
            inner_next_CC_spec(j, v, next_CC, CC, adj) &&
            next_CC_spec(v, N, next_CC, CC, adj)) {
-        int u = adj[v][j];
-
         // Line 9: if CC^{i-1}[u] < CC^{i}[v] then
         // At this point next_CC[v] == CC[v], so we use CC[v] for the
         // conditional and track N_s here.
-        if (CC[u] < next_CC[v] && 0 <= next_CC[v] <= v) {
+        if (CC[j] < next_CC[v] && 0 <= next_CC[v] <= v && adj[v][j] == 1) {
           // Line 10: CC^i[v] = CC^{i-1}[u]
-          next_CC[v] = CC[u];
+          next_CC[v] = CC[j];
 
           // Line 11: P*[v] = &u
           P_star[v] = j;
@@ -155,12 +159,11 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
       }
     }
 
-
     // Fault detection and correction (reliable)
 
     // Line 13: for each v in V do
     @noinf for (int v = 0; v < N; ++v)
-               (0 <= v <= N && vec_bound(CC, N) && mat_bound(adj, N))
+               (0 <= v <= N && vec_bound(CC, N))
                (large_error_r(next_CC, N) &&
                 corrected_CC_spec(v, N, next_CC, corrected_next_CC, CC, adj) &&
                 eq(N) && eq(CC) && eq(adj) && eq(v)) {
@@ -168,15 +171,13 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
       corrected_next_CC[v] = CC[v];
 
       // Line 16: for each u in adj(v) do
-      for (int j = 0; j < adj[v][N] && (next_CC[v] < 0 ||  v < next_CC[v]); ++j)
+      for (int j = 0; j < N && (next_CC[v] < 0 ||  v < next_CC[v]); ++j)
           (0 <= v < N && vec_bound(CC, N) && 0 <= j <= N)
           (inner_corrected_CC_spec(j , v, corrected_next_CC, CC, adj)) {
-        int u = adj[v][j];
-
         //  Line 17: if CC^{i-1}[u] < CC^i[v] then
-        if (CC[u] < corrected_next_CC[v]) {
+        if (CC[j] < corrected_next_CC[v] && adj[v][j] == 1) {
           // Line 18: CC^i[v] = CC^{i-1}[u]
-          corrected_next_CC[v] = CC[u];
+          corrected_next_CC[v] = CC[j];
 
           // Line 19: P*[v] = &u
           P_star[v] = j;
@@ -211,7 +212,6 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
 
     CC = merged_CC;
   }
-
 
   return CC;
 }
