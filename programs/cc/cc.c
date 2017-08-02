@@ -12,9 +12,6 @@ property_r vec_bound_r(matrix<real> V, int to) :
 property_r vec_bound_o(matrix<real> V, int to) :
   forall(fi)((0 <= fi < to<o>) -> (0 <= V<o>[fi] <= fi));
 
-property large_error(matrix<real> x, matrix<real> spec_x, int v) :
-  x[v] == spec_x[v] || v < x[v] || x[v] < 0;
-
 property_r large_error_r(matrix<real> x, int v) :
   forall(fi)((0 <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi] || x<r>[fi] < 0));
 
@@ -160,11 +157,6 @@ matrix<int> cc(int N, matrix<int> adj(N, N+1)) {
 
 
     // Fault detection and correction (reliable)
-
-    // Set corrected_next_CC to be full of -1 (an invalid result)
-    @noinf for (int v = 0; v < N; ++v) (1 == 1) (1 == 1) {
-      corrected_next_CC[v] = -1;
-    }
 
     // Line 13: for each v in V do
     @noinf for (int v = 0; v < N; ++v)
