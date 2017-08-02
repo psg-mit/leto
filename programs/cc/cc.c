@@ -125,9 +125,8 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
       // TODO: Path checking gets hung up here in leto, but not with the
       // serialized version.  Try adding a timeout in leto.
       @noinf for (int j = 0; j < N; ++j)
-          (0 <= j <= N && 0 <= v < N && vec_bound(CC, N) && N < MAX_N)
+          (0 <= j <= N && 0 <= v < N && N < MAX_N)
           (large_error_r(next_CC, N) &&
-           eq(N_s) &&
            vec_bound_o(next_CC, N) &&
            next_CC<o>[v<o>] <= CC<o>[v<o>] &&
            eq(j) && eq(N) && eq(CC) && eq(adj) && eq(v) &&
