@@ -78,7 +78,6 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
   matrix<int> CC(N);
   @region(unreliable) matrix<int> next_CC(N);
   matrix<int> corrected_next_CC(N);
-  matrix<int> P_star(N);
 
   // Line 1: for each v in V do
   for (int v = 0; v < N; ++v) (vec_bound(CC, v)) (1 == 1) {
@@ -87,7 +86,6 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
     //         P*[v] = -1;
     next_CC[v] = v;
     CC[v] = v;
-    P_star[v] = -1;
   }
 
   // Line 3: i = 1;
@@ -146,9 +144,6 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
         if (CC[j] < next_CC[v] && 0 <= next_CC[v] <= v && adj[v][j] == 1) {
           // Line 10: CC^i[v] = CC^{i-1}[u]
           fwrite(next_CC[v], CC[j]);
-
-          // Line 11: P*[v] = &u
-          P_star[v] = j;
         }
       }
     }
@@ -172,9 +167,6 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
         if (CC[j] < corrected_next_CC[v] && adj[v][j] == 1) {
           // Line 18: CC^i[v] = CC^{i-1}[u]
           corrected_next_CC[v] = CC[j];
-
-          // Line 19: P*[v] = &u
-          P_star[v] = j;
         }
       }
     }
