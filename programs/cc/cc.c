@@ -145,16 +145,15 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
 
     // Line 13: for each v in V do
     @noinf for (int v = 0; v < N; ++v)
-               (0 <= v <= N && vec_bound(CC, N))
-               (large_error_r(next_CC, N) &&
-                corrected_CC_spec(v, N, next_CC, corrected_next_CC, CC, adj) &&
+               (1 == 1)
+               (corrected_CC_spec(v, N, next_CC, corrected_next_CC, CC, adj) &&
                 eq(N) && eq(CC) && eq(adj) && eq(v)) {
 
       corrected_next_CC[v] = CC[v];
 
       // Line 16: for each u in adj(v) do
       for (int j = 0; j < N && (next_CC[v] < 0 ||  v < next_CC[v]); ++j)
-          (0 <= v < N && vec_bound(CC, N) && 0 <= j <= N)
+          (0 <= v < N && 0 <= j <= N)
           (inner_corrected_CC_spec(j , v, corrected_next_CC, CC, adj)) {
         //  Line 17: if CC^{i-1}[u] < CC^i[v] then
         if (CC[j] < corrected_next_CC[v] && adj[v][j] == 1) {
