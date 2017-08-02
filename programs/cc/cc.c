@@ -13,8 +13,6 @@ property_r large_error_r(matrix<real> x, int v) :
   forall(fi)((0 <= fi < v<r>) ->
       (x<r>[fi] == x<o>[fi] || fi < x<r>[fi] || x<r>[fi] < 0));
 
-  // TODO: Break apart these foralls and exists.
-  // For example, next_CC<o>[fi] == CC<o>[fi] doesn't need to be under exists
 property_r next_CC_spec(int to,
                         int N,
                         matrix<real> next_CC,
@@ -85,7 +83,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
     // Line 2: CC^1[v] = v;
     //         CC^0[v] = v;
     //         P*[v] = -1;
-    next_CC[v] = v;
+		fwrite(next_CC[v], v);
     CC[v] = v;
   }
 
@@ -103,9 +101,8 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
                (eq(N) && eq(N_s) && eq(adj) && eq(CC)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
     for (int v = 0; v < N; ++v)
-        (0 <= v <= N && vec_bound(CC, N))
+        (1 == 1)
         (large_error_r(next_CC, v) &&
-         vec_bound_o(next_CC, v) &&
          forall(fi)((0 <= fi < v<o>) -> next_CC<o>[fi] == CC<o>[fi])) {
       fwrite(next_CC[v], CC[v]);
     }
