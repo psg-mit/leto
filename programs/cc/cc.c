@@ -111,11 +111,9 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
 
     // Line 7: for each v in V do
     @noinf for (int v = 0; v < N; ++v)
-        (0 <= v <= N && vec_bound(CC, N))
+        (1 == 1)
         (large_error_r(next_CC, N) &&
-         eq(N_s) &&
          vec_bound_o(next_CC, N) &&
-         forall(fi)((0 <= fi < N<o>) -> next_CC<o>[fi] <= CC<o>[fi]) &&
          forall(fi)((v<o> <= fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
          next_CC_spec(v, N, next_CC, CC, adj) &&
          eq(N) && eq(CC) && eq(adj) && eq(v)) {
@@ -128,9 +126,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
           (0 <= j <= N && 0 <= v < N && N < MAX_N)
           (large_error_r(next_CC, N) &&
            vec_bound_o(next_CC, N) &&
-           next_CC<o>[v<o>] <= CC<o>[v<o>] &&
            eq(j) && eq(N) && eq(CC) && eq(adj) && eq(v) &&
-           forall(fi)((0 <= fi < N<o>) -> next_CC<o>[fi] <= CC<o>[fi]) &&
            forall(fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
            inner_next_CC_spec(j, v, next_CC, CC, adj) &&
            next_CC_spec(v, N, next_CC, CC, adj)) {
