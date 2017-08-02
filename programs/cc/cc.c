@@ -163,14 +163,9 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
     matrix<int> merged_CC(N);
 
     // Update CC (merge results)
-    @noinf for (int v = 0; v < N; ++v)
+    for (int v = 0; v < N; ++v)
         (0 <= v <= N)
-        (eq(v) &&
-         eq(N) &&
-         eq(merged_CC) &&
-         eq(CC) &&
-         eq(N_s) &&
-         vec_bound_o(next_CC, N) &&
+        (vec_bound_o(next_CC, N) &&
          (forall(fi)(((0 <= fi < N<r>) && (!(0 <= next_CC<r>[fi] <= fi))) -> (corrected_next_CC<r>[fi] == next_CC<o>[fi]))) &&
          large_error_r(next_CC, N)) {
       if (0 <= next_CC[v] <= v) {
