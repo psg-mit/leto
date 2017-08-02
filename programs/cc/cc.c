@@ -10,7 +10,8 @@ property_r vec_bound_o(matrix<real> V, int to) :
   forall(fi)((0 <= fi < to<o>) -> (0 <= V<o>[fi] <= fi));
 
 property_r large_error_r(matrix<real> x, int v) :
-  forall(fi)((0 <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi] || x<r>[fi] < 0));
+  forall(fi)((0 <= fi < v<r>) ->
+      (x<r>[fi] == x<o>[fi] || fi < x<r>[fi] || x<r>[fi] < 0));
 
   // TODO: Break apart these foralls and exists.
   // For example, next_CC<o>[fi] == CC<o>[fi] doesn't need to be under exists
@@ -19,13 +20,13 @@ property_r next_CC_spec(int to,
                         matrix<real> next_CC,
                         matrix<real> CC,
                         matrix<real> adj) :
-  forall(fi)(forall(fj)(((0 <= fi < to<o>) && (0 <= fj < N<o>) && (adj<o>[fi][fj] == 1)) ->
-      (next_CC<o>[fi] <= CC<o>[fj] &&
-       next_CC<o>[fi] <= CC<o>[fi]))) &&
-  forall(fi)(exists(fj)((0 <= fi < to<o>) ->
-      ((next_CC<o>[fi] == CC<o>[fj] &&
-        0 <= fj < N<o> &&
-        adj<o>[fi][fj] == 1) ||
+  forall(fi)((0 <= fi < to<o>) ->
+      (forall(fj)((0 <= fj < N<o> && adj<o>[fi][fj] == 1) ->
+           next_CC<o>[fi] <= CC<o>[fj]) &&
+       next_CC<o>[fi] <= CC<o>[fi] &&
+       (exists(ej)(next_CC<o>[fi] == CC<o>[ej] &&
+                   0 <= ej < N<o> &&
+                   adj<o>[fi][ej] == 1) ||
         next_CC<o>[fi] == CC<o>[fi])));
 
 property_r corrected_CC_spec(int to,
@@ -34,17 +35,15 @@ property_r corrected_CC_spec(int to,
                              matrix<real> corrected_CC,
                              matrix<real> CC,
                              matrix<real> adj) :
-  forall(fi)(forall(fj)(((0 <= fi < to<o>) &&
-                         (0 <= fj < N<o>) &&
-                         (adj<o>[fi][fj] == 1) &&
-                         (!(0 <= next_CC<r>[fi] <= fi))) ->
-      (corrected_CC<r>[fi] <= CC<o>[fj] &&
-       corrected_CC<r>[fi] <= CC<o>[fi]))) &&
-  forall(fi)(exists(fj)(((0 <= fi < to<o>) && (!(0 <= next_CC<r>[fi] <= fi)))->
-      ((corrected_CC<r>[fi] == CC<o>[fj] &&
-        0 <= fj < N<o> &&
-        adj<o>[fi][fj] == 1) ||
+  forall(fi)((0 <= fi < to<o> && (!(0 <= next_CC<r>[fi] <= fi))) ->
+      (forall(fj)((0 <= fj < N<o> && adj<o>[fi][fj] == 1) ->
+           corrected_CC<r>[fi] <= CC<o>[fj]) &&
+       corrected_CC<r>[fi] <= CC<o>[fi] &&
+       (exists(ej)(corrected_CC<r>[fi] == CC<o>[ej] &&
+                   0 <= ej < N<o> &&
+                   adj<o>[fi][ej] == 1) ||
         corrected_CC<r>[fi] == CC<o>[fi])));
+
 
 property_r inner_next_CC_spec(int to,
                               int v,
@@ -52,24 +51,26 @@ property_r inner_next_CC_spec(int to,
                               matrix<real> CC,
                               matrix<real> adj) :
   forall(fi)((0 <= fi < to<o> && adj<o>[v<o>][fi] == 1) ->
-      (next_CC<o>[v<o>] <= CC<o>[fi] &&
-       next_CC<o>[v<o>] <= CC<o>[v<o>])) &&
-  exists(ei)((next_CC<o>[v<o>] == CC<o>[ei] &&
+      next_CC<o>[v<o>] <= CC<o>[fi]) &&
+  next_CC<o>[v<o>] <= CC<o>[v<o>] &&
+  (exists(ei)(next_CC<o>[v<o>] == CC<o>[ei] &&
               0 <= ei < N<o> &&
               adj<o>[v<o>][ei] == 1) ||
-              next_CC<o>[v<o>] == CC<o>[v<o>]);
+   next_CC<o>[v<o>] == CC<o>[v<o>]);
 
 property_r inner_corrected_CC_spec(int g,
                                    int v,
                                    matrix<real> corrected_CC,
                                    matrix<real> CC,
                                    matrix<real> adj) :
-  forall(fi)((0 <= fi < g<r> && adj<o>[v<o>][fi] == 1) -> corrected_CC<r>[v<r>] <= CC<o>[fi]) &&
+  forall(fi)((0 <= fi < g<r> && adj<o>[v<o>][fi] == 1) ->
+      corrected_CC<r>[v<r>] <= CC<o>[fi]) &&
   corrected_CC<r>[v<r>] <= CC<o>[v<o>] &&
-  exists(ei)((corrected_CC<r>[v<r>] == CC<o>[ei] &&
-             0 <= ei < N<o> &&
-             adj<o>[v<o>][ei] == 1) ||
-            corrected_CC<r>[v<r>] == CC<o>[v<o>]);
+  (exists(ei)(corrected_CC<r>[v<r>] == CC<o>[ei] &&
+              0 <= ei < N<o> &&
+              adj<o>[v<o>][ei] == 1) ||
+corrected_CC<r>[v<r>] == CC<o>[v<o>]);
+
 
 requires N < MAX_N
 r_requires eq(adj)
