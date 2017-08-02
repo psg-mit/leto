@@ -111,7 +111,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
         (large_error_r(next_CC, v) &&
          vec_bound_o(next_CC, v) &&
          forall(fi)((0 <= fi < v<o>) -> next_CC<o>[fi] == CC<o>[fi])) {
-      next_CC[v] = CC[v];
+      fwrite(next_CC[v], CC[v]);
     }
 
     N_s = 0;
@@ -146,15 +146,18 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
            forall(fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
            inner_next_CC_spec(j, v, next_CC, CC, adj) &&
            next_CC_spec(v, N, next_CC, CC, adj)) {
+
         // Line 9: if CC^{i-1}[u] < CC^{i}[v] then
         // At this point next_CC[v] == CC[v], so we use CC[v] for the
         // conditional and track N_s here.
         if (CC[j] < next_CC[v] && 0 <= next_CC[v] <= v && adj[v][j] == 1) {
           // Line 10: CC^i[v] = CC^{i-1}[u]
-          next_CC[v] = CC[j];
+          fwrite(next_CC[v], CC[j]);
 
           // Line 11: P*[v] = &u
           P_star[v] = j;
+
+          relational_assert(large_error_r(next_CC, N));
         }
       }
     }

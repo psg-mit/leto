@@ -848,16 +848,22 @@ namespace lang {
     assert(dest.relaxed);
     assert(val.original);
     assert(val.relaxed);
+    assert(old_o);
+    assert(old_r);
 
     if (!ignore_relaxed) {
       model_visitor->prep_op(FWRITE, dest.relaxed, val.relaxed);
       z3::expr* res = model_visitor->replace_op(expr_type, nullptr);
       add_constraint(*res);
+    } else {
+      add_constraint(*dest.relaxed == *old_r);
     }
 
     if (!ignore_original) {
       z3::expr res = (*dest.original == *val.original);
       add_constraint(res);
+    } else {
+      add_constraint(*dest.original = *old_o);
     }
 
     return {nullptr, nullptr};
