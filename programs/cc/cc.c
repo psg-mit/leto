@@ -87,9 +87,6 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
     CC[v] = v;
   }
 
-  // Line 3: i = 1;
-  int i = 1;
-
   // Line 4: N_s = |V|
   int N_s = N;
 
@@ -163,14 +160,11 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
       }
     }
 
-    // Line 22: i = i + 1
-    ++i;
-
     matrix<int> merged_CC(N);
 
     // Update CC (merge results)
     @noinf for (int v = 0; v < N; ++v)
-        (vec_bound(CC, N) && 0 <= v <= N)
+        (0 <= v <= N)
         (eq(v) &&
          eq(N) &&
          eq(merged_CC) &&
