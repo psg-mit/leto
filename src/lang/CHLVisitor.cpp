@@ -863,7 +863,7 @@ namespace lang {
       z3::expr res = (*dest.original == *val.original);
       add_constraint(res);
     } else {
-      add_constraint(*dest.original = *old_o);
+      add_constraint(*dest.original == *old_o);
     }
 
     return {nullptr, nullptr};
