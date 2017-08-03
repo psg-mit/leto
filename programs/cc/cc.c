@@ -3,9 +3,6 @@
 property vec_bound(matrix<real> V, int to) :
   forall(fi)((0 <= fi < to) -> (0 <= V[fi] <= fi));
 
-property_r vec_bound_r(matrix<real> V, int to) :
-  forall(fi)((0 <= fi < to<r>) -> (0 <= V<r>[fi] <= fi));
-
 property_r vec_bound_o(matrix<real> V, int to) :
   forall(fi)((0 <= fi < to<o>) -> (0 <= V<o>[fi] <= fi));
 
@@ -93,9 +90,9 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
   // Line 5: while N_s > 0 do:
   //while (0 < N_s) (1 == 1) (1 == 1) {
   // TODO: Get eq(CC) in outer while?
-  @noinf while (0 < N_s)
-               (N < MAX_N && vec_bound(CC, N))
-               (eq(N) && eq(N_s) && eq(adj) && eq(CC)) {
+  while (0 < N_s)
+        (/*N < MAX_N &&*/ vec_bound(CC, N))
+        (/*eq(N) &&*/ eq(N_s) /*&&*/ /*eq(adj) &&*/ eq(CC)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
     for (int v = 0; v < N; ++v)
         (1 == 1)
