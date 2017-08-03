@@ -141,10 +141,9 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
     // Fault detection and correction (reliable)
 
     // Line 13: for each v in V do
-    @noinf for (int v = 0; v < N; ++v)
-               (1 == 1)
-               (corrected_CC_spec(v, N, next_CC, corrected_next_CC, CC, adj) &&
-                eq(N) && eq(CC) && eq(adj) && eq(v)) {
+    for (int v = 0; v < N; ++v)
+        (1 == 1)
+        (corrected_CC_spec(v, N, next_CC, corrected_next_CC, CC, adj)) {
 
       corrected_next_CC[v] = CC[v];
 
