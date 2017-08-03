@@ -89,10 +89,9 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
 
   // Line 5: while N_s > 0 do:
   //while (0 < N_s) (1 == 1) (1 == 1) {
-  // TODO: Get eq(CC) in outer while?
   while (0 < N_s)
-        (/*N < MAX_N &&*/ vec_bound(CC, N))
-        (/*eq(N) &&*/ eq(N_s) /*&&*/ /*eq(adj) &&*/ eq(CC)) {
+        (vec_bound(CC, N))
+        (eq(N_s) && eq(CC)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
     for (int v = 0; v < N; ++v)
         (1 == 1)
@@ -109,8 +108,7 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
         (large_error_r(next_CC, N) &&
          vec_bound_o(next_CC, N) &&
          forall(fi)((v<o> <= fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
-         next_CC_spec(v, N, next_CC, CC, adj)/* &&
-         eq(N) && eq(CC) && eq(adj) && eq(v)*/) {
+         next_CC_spec(v, N, next_CC, CC, adj)) {
       // Line 8: for each u in adj(v) do:
 
 
@@ -118,12 +116,8 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
       // serialized version.  Try adding a timeout in leto.
       for (int j = 0; j < N; ++j)
           (0 <= j <= N && 0 <= v < N && N < MAX_N)
-          (//large_error_r(next_CC, N) &&
-           //vec_bound_o(next_CC, N) &&
-           //eq(j) && eq(N) && eq(CC) && eq(adj) && eq(v) &&
-           forall(fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
-           inner_next_CC_spec(j, v, next_CC, CC, adj) /*&&
-           next_CC_spec(v, N, next_CC, CC, adj)*/) {
+          (forall(fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
+           inner_next_CC_spec(j, v, next_CC, CC, adj)) {
 
         // Line 9: if CC^{i-1}[u] < CC^{i}[v] then
         // At this point next_CC[v] == CC[v], so we use CC[v] for the
