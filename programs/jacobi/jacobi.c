@@ -40,9 +40,15 @@ matrix<real> jacobi(int N,
 
       last_upset = model.upset;
       real sigma = 0;
-      for (int j = 0; j < N; ++j)
-          (0 <= i < N && 0 <= j <= N)
-          (outer_last_upset == false -> sig(sigma, last_upset) && eq(j)) {
+      @noinf for (int j = 0; j < N; ++j)
+          (0 <= i < N && 0 <= j <= N && nzd(A) && 0 < N)
+          ((outer_last_upset == false -> sig(sigma, last_upset)) && eq(j) &&
+           eq(N) && eq(A) && eq(b) && eq(iters) && eq(i) &&
+           (model.upset == false -> (outer_last_upset == false)) &&
+           (last_upset == true -> (model.upset == true)) &&
+           0 <= upset_index < N<r> &&
+           (outer_last_upset == false -> eq(x)) &&
+           (model.upset == false -> eq(next_x))) {
         if (i != j) {
           real delta = A[i][j] *. x[j];
           sigma = sigma +. delta;

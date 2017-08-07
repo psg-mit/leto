@@ -6,8 +6,10 @@
 #include "PrintVisitor.h"
 
 #define BUF_SIZE 16
-#define Z3_BIN "z3 -smt2 /tmp/constraints.smt2"
 #define Z3_TMP "/tmp/constraints.smt2"
+
+static const int EXIT_RUNTIME_ERROR = 2;
+static const int TIMEOUT = 20000;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
@@ -15,9 +17,9 @@
 static std::vector<z3::expr*> IGNORE_1D = {nullptr};
 static std::vector<z3::expr*> IGNORE_2D = {nullptr, nullptr};
 static const std::string H_TMP_PREFIX = "h-tmp-";
+static const std::string Z3_BIN = "z3 -t:" + std::to_string(TIMEOUT) + " -smt2 " + Z3_TMP;
 #pragma clang diagnostic pop
 
-static const int EXIT_RUNTIME_ERROR = 2;
 
 
 namespace lang {
@@ -29,7 +31,8 @@ namespace lang {
                          std::ofstream& smt2_log_) : context(context_),
                                                      z3_log(z3_log_),
                                                      smt2_log(smt2_log_) {
-    //z3::set_param("verbose", 10);
+    //z3::set_param("timeout", TIMEOUT);
+    z3::set_param("smt.timeout", TIMEOUT);
     solver = solver_;
     model_visitor = model_visitor_;
     in_assign = false;
@@ -66,7 +69,7 @@ namespace lang {
     if (add_check_sat) tmp << "(check-sat)" << std::endl;
 
     // Start Z3 process
-    FILE* stdio = popen(Z3_BIN, "r");
+    FILE* stdio = popen(Z3_BIN.c_str(), "r");
     assert(stdio);
 
     // Read result
@@ -412,14 +415,6 @@ namespace lang {
     for (VarList* head = node.vars; head; head = head->cdr) {
       Var* var = head->car;
 
-      // Declare var<o> and var<r>
-      std::string oname = var->name + "<o>";
-      std::string rname = var->name + "<r>";
-      var_version[oname] = 0;
-      var_version[rname] = 0;
-      oname += "-0";
-      rname += "-0";
-
       // Build dimension vector
       if (head->dimensions.empty()) {
         std::cerr << "ERROR:  Matrix "
@@ -440,10 +435,17 @@ namespace lang {
         add_constraint(*res.original == *res.relaxed);
       }
 
+      // Declare var<o> and var<r>
+      std::string oname = var->name + "<o>";
+      std::string rname = var->name + "<r>";
+      var_version[oname] = 0;
+      var_version[rname] = 0;
+      dim_map[var->name] = dim_map[oname] = dim_map[rname] = dimensions;
+      oname += "-0";
+      rname += "-0";
       vec_pair res = add_vector(node.type, oname, rname, *dimensions);
 
       types[var->name] = node.type;
-      dim_map[var->name] = dimensions;
 
       if (node.specvar) specvars.insert(var->name);
 
@@ -1816,29 +1818,49 @@ namespace lang {
     return arac.accept(*this);
   }
 
-  void
-  CHLVisitor::if_same(z3::expr original, z3::expr relaxed, Statement* body) {
-    assert(body);
-    z3::expr* prefix = nullptr;
-
+  void CHLVisitor::legal_if_paths(z3::expr& original,
+                                  z3::expr& relaxed,
+                                  std::array<z3::check_result, 4>& results) {
+    // Case 1: cond<o> && cond<r>
     solver->push();
     add_constraint(original);
     add_constraint(relaxed);
-    z3::check_result res = check(false);
+    debug_print("check if path cond<o> && cond<r>");
+    results.at(0) = check(false);
     solver->pop();
-    switch (res) {
-      case z3::sat:
-      case z3::unknown:
-        // Check if_body in lockstep
-        prefix = new z3::expr(original && relaxed);
-        push_prefix(prefix);
-        body->accept(*this);
-        pop_prefix();
-        break;
-      case z3::unsat:
-        // Do nothing
-        break;
-    }
+
+    // Case 2: cond<o> && !cond<r>
+    solver->push();
+    add_constraint(original);
+    add_constraint(!relaxed);
+    debug_print("check if path cond<o> && !cond<r>");
+    results.at(1) = check(false);
+    solver->pop();
+
+    // Case 3: !cond<o> && cond<r>
+    solver->push();
+    add_constraint(!original);
+    add_constraint(relaxed);
+    debug_print("check if path !cond<o> && cond<r>");
+    results.at(2) = check(false);
+    solver->pop();
+
+    // Case 4: !cond<o> && !cond<r>
+    solver->push();
+    add_constraint(!original);
+    add_constraint(!relaxed);
+    debug_print("check if path !cond<o> && !cond<r>");
+    results.at(3) = check(false);
+    solver->pop();
+  }
+
+  void
+  CHLVisitor::if_same(z3::expr original, z3::expr relaxed, Statement* body) {
+    assert(body);
+    z3::expr* prefix = new z3::expr(original && relaxed);
+    push_prefix(prefix);
+    body->accept(*this);
+    pop_prefix();
   }
 
   void CHLVisitor::if_diff(z3::expr original,
@@ -1847,43 +1869,20 @@ namespace lang {
                            Statement* rbody) {
     assert(obody);
     assert(rbody);
-    z3::expr* prefix = nullptr;
+    z3::expr* prefix = new z3::expr(original && relaxed);
+    push_prefix(prefix);
 
-    solver->push();
-    add_constraint(original);
-    add_constraint(relaxed);
-    z3::check_result res = check(false);
-    solver->pop();
-    switch (res) {
-      case z3::sat:
-        prefix = new z3::expr(original && relaxed);
-        push_prefix(prefix);
+    // Check body<o>
+    ++ignore_relaxed;
+    obody->accept(*this);
+    --ignore_relaxed;
 
-        // Check body<o>
-        ++ignore_relaxed;
-        obody->accept(*this);
-        --ignore_relaxed;
+    // Check body<r>
+    ++ignore_original;
+    rbody->accept(*this);
+    --ignore_original;
 
-        // Check body<r>
-        ++ignore_original;
-        rbody->accept(*this);
-        --ignore_original;
-
-        pop_prefix();
-        break;
-      case z3::unsat:
-        // Do nothing
-        break;
-      case z3::unknown:
-        if (in_houdini) {
-          // Give up on this run
-          inner_h_unknown = true;
-          break;
-        } else {
-          // This hopefully never happens
-          assert(false);
-        }
-    }
+    pop_prefix();
   }
 
   z3pair CHLVisitor::visit(If &node) {
@@ -1892,26 +1891,57 @@ namespace lang {
     assert(cond.original);
     assert(cond.relaxed);
 
+    std::array<z3::check_result, 4> paths;
+    legal_if_paths(*cond.original, *cond.relaxed, paths);
+
     // Case 1: cond<o> && cond<r>
-    star_line();
-    debug_print("if cond<o> && cond<r>:");
-    if_same(*cond.original, *cond.relaxed, node.if_body);
+    switch (paths.at(0)) {
+      case z3::sat:
+      case z3::unknown:
+        star_line();
+        debug_print("if cond<o> && cond<r>:");
+        if_same(*cond.original, *cond.relaxed, node.if_body);
+        break;
+      case z3::unsat:
+        break;
+    }
 
     // Case 2: cond<o> && !cond<r>
-    star_line();
-    debug_print("if cond<o> && !cond<r>:");
-    if_diff(*cond.original, !*cond.relaxed, node.if_body, node.else_body);
+    switch (paths.at(1)) {
+      case z3::sat:
+      case z3::unknown:
+        star_line();
+        debug_print("if cond<o> && !cond<r>:");
+        if_diff(*cond.original, !*cond.relaxed, node.if_body, node.else_body);
+        break;
+      case z3::unsat:
+        break;
+    }
 
     // Case 3: !cond<o> && cond<r>
-    star_line();
-    debug_print("if !cond<o> && cond<r>:");
-    if_diff(!*cond.original, *cond.relaxed, node.else_body, node.if_body);
+    switch (paths.at(2)) {
+      case z3::sat:
+      case z3::unknown:
+        star_line();
+        debug_print("if !cond<o> && cond<r>:");
+        if_diff(!*cond.original, *cond.relaxed, node.else_body, node.if_body);
+        break;
+      case z3::unsat:
+        break;
+    }
 
     // Case 4: !cond<o> && !cond<r>
-    star_line();
-    debug_print("if !cond<o> && !cond<r>:");
-    if_same(!*cond.original, !*cond.relaxed, node.else_body);
-    star_line();
+    switch (paths.at(3)) {
+      case z3::sat:
+      case z3::unknown:
+        star_line();
+        debug_print("if !cond<o> && !cond<r>:");
+        if_same(!*cond.original, !*cond.relaxed, node.else_body);
+        star_line();
+        break;
+      case z3::unsat:
+        break;
+    }
 
     return {nullptr, nullptr};
   }
@@ -2013,28 +2043,34 @@ namespace lang {
     path_solver.add(*houdini.asserts);
 
     // Case 1: cond<o> && cond<r>
-    path_solver.push();
-    path_solver.add(original);
-    path_solver.add(relaxed);
-    debug_print(std::to_string(while_count) + " : check path cond<o> && cond<r>");
-    results.at(0) = check(false);
-    path_solver.pop();
+    if (!ignore_original && !ignore_relaxed) {
+      path_solver.push();
+      path_solver.add(original);
+      path_solver.add(relaxed);
+      debug_print(std::to_string(while_count) + " : check path cond<o> && cond<r>");
+      results.at(0) = check(false);
+      path_solver.pop();
+    } else results.at(0) = z3::unsat;
 
     // Case 2: cond<o> && !cond<r>
-    path_solver.push();
-    path_solver.add(original);
-    path_solver.add(!relaxed);
-    debug_print(std::to_string(while_count) + " : check path cond<o> && !cond<r>");
-    results.at(1) = check(false);
-    path_solver.pop();
+    if (!ignore_original) {
+      path_solver.push();
+      path_solver.add(original);
+      path_solver.add(!relaxed);
+      debug_print(std::to_string(while_count) + " : check path cond<o> && !cond<r>");
+      results.at(1) = check(false);
+      path_solver.pop();
+    } else results.at(1) = z3::unsat;
 
     // Case 3: !cond<o> && cond<r>
-    path_solver.push();
-    path_solver.add(!original);
-    path_solver.add(relaxed);
-    debug_print(std::to_string(while_count) + " : check path !cond<o> && cond<r>");
-    results.at(2) = check(false);
-    path_solver.pop();
+    if (!ignore_relaxed) {
+      path_solver.push();
+      path_solver.add(!original);
+      path_solver.add(relaxed);
+      debug_print(std::to_string(while_count) + " : check path !cond<o> && cond<r>");
+      results.at(2) = check(false);
+      path_solver.pop();
+    } else results.at(2) = z3::unsat;
 
     // Case 4: !cond<o> && !cond<r>
     // Loop doesn't run, do nothing.
@@ -2167,6 +2203,8 @@ namespace lang {
     assert((!cur_nonrel_houdini_invs && !in_houdini) || in_houdini);
 
     ++while_count;
+
+    version_map old_versions(var_version);
 
     z3pair inv = {nullptr, nullptr};
     z3pair nonrel_inv = {nullptr, nullptr};
@@ -2423,8 +2461,21 @@ namespace lang {
     assert(nonrel_inv.original);
     assert(nonrel_inv.relaxed);
     add_constraint(*inv.original);
-    if (!ignore_original) add_constraint(*nonrel_inv.original);
-    if (!ignore_relaxed) add_constraint(*nonrel_inv.relaxed);
+
+
+
+    // TODO: Set vars in unrun vars to be equal to their old selves
+    if (!prefixes.empty()) restore_unused_vars(old_versions, 0);
+
+    if (ignore_original) restore_unused_vars(old_versions, 'r');
+    else add_constraint(*nonrel_inv.original);
+
+    if (ignore_relaxed) restore_unused_vars(old_versions, 'o');
+    else add_constraint(*nonrel_inv.relaxed);
+
+
+
+
     if (!h_unknown) {
       eqs = houdini_to_constraints(node);
       add_constraint(*eqs.assumes);
@@ -2439,6 +2490,51 @@ namespace lang {
       node.nonrel_houdini_invs.clear();
     }
     return {nullptr, nullptr};
+  }
+
+  void CHLVisitor::restore_unused_vars(const version_map& old_versions,
+                                       char ignore_type) {
+    for (const std::pair<std::string, unsigned>& oldv : old_versions) {
+      const std::string& name = oldv.first;
+      const char& type = name.at(name.size() - 2);
+      assert(type == 'r' || type == 'o' || type == 0);
+      if (type == ignore_type) continue;
+
+      const unsigned old_version = oldv.second;
+      unsigned new_version = var_version.at(name);
+
+      assert(old_version <= new_version);
+
+      if (old_version < new_version) {
+        std::string qname = name + "-" + std::to_string(old_version);
+        if (vars.count(qname)) {
+          // Dealing with a scalar
+          z3::expr* old_var = vars.at(qname);
+          z3::expr* new_var = get_current_var(name);
+          assert(old_var);
+          assert(new_var);
+          assert(old_var != new_var);
+          add_constraint(*old_var == *new_var, !ignore_type);
+        } else {
+          // Dealing with a vector
+          z3::func_decl* old_vec = vectors.at(qname);
+          z3::func_decl* new_vec = get_current_vec(name);
+          assert(old_vec);
+          assert(new_vec);
+          assert(old_vec != new_vec);
+
+          const dim_vec* dimensions = dim_map.at(name);
+          assert(dimensions);
+          assert(dimensions->size() == 1 || dimensions->size() == 2);
+
+          z3::expr* constraint = vector_equals(*old_vec,
+                                               *new_vec,
+                                               *dimensions,
+                                               dimensions->size() == 1 ?  IGNORE_1D : IGNORE_2D);
+          add_constraint(*constraint, !ignore_type);
+        }
+      }
+    }
   }
 
   z3pair CHLVisitor::visit(ModelDeref &node) {

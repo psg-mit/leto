@@ -73,7 +73,6 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
   // Helpers
   matrix<int> CC(N);
   @region(unreliable) matrix<int> next_CC(N);
-  matrix<int> corrected_next_CC(N);
 
   // Line 1: for each v in V do
   for (int v = 0; v < N; ++v) (vec_bound(CC, v)) (1 == 1) {
@@ -89,9 +88,9 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
 
   // Line 5: while N_s > 0 do:
   //while (0 < N_s) (1 == 1) (1 == 1) {
-  while (0 < N_s)
-        (vec_bound(CC, N))
-        (eq(N_s) && eq(CC)) {
+  @noinf while (0 < N_s)
+        (N < MAX_N && vec_bound(CC, N))
+        (eq(N) && eq(adj) && eq(N_s) && eq(CC)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
     for (int v = 0; v < N; ++v)
         (1 == 1)
@@ -114,10 +113,14 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
 
       // TODO: Path checking gets hung up here in leto, but not with the
       // serialized version.  Try adding a timeout in leto.
-      for (int j = 0; j < N; ++j)
+      @noinf for (int j = 0; j < N; ++j)
           (0 <= j <= N && 0 <= v < N && N < MAX_N)
           (forall(fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
-           inner_next_CC_spec(j, v, next_CC, CC, adj)) {
+           inner_next_CC_spec(j, v, next_CC, CC, adj) &&
+           large_error_r(next_CC, N) &&
+           vec_bound_o(next_CC, N) &&
+           eq(j) && eq(N) && eq(CC) && eq(adj) && eq(v) &&
+           next_CC_spec(v, N, next_CC, CC, adj)) {
 
         // Line 9: if CC^{i-1}[u] < CC^{i}[v] then
         // At this point next_CC[v] == CC[v], so we use CC[v] for the
@@ -132,42 +135,41 @@ matrix<int> cc(int N, matrix<int> adj(N, N)) {
     // Fault detection and correction (reliable)
 
     // Line 13: for each v in V do
-    for (int v = 0; v < N; ++v)
-        (1 == 1)
-        (corrected_CC_spec(v, N, next_CC, corrected_next_CC, CC, adj)) {
+    matrix<int> corrected_next_CC(N);
+    @noinf for (int v = 0; v < N; ++v)
+        (0 <= v <= N)
+        (corrected_CC_spec(v, N, next_CC, corrected_next_CC, CC, adj) &&
+         eq(N) && eq(CC) && eq(adj) && eq(v) &&
+         forall(fi)(((0 <= fi < v<r>) -> (corrected_next_CC<r>[fi] == corrected_next_CC<o>[fi]))) &&
+         eq(N_s) &&
+         vec_bound_o(next_CC, N) &&
+         large_error_r(next_CC, N) &&
+         next_CC_spec(N, N, next_CC, CC, adj)) {
 
-      corrected_next_CC[v] = CC[v];
-
-      // Line 16: for each u in adj(v) do
-      for (int j = 0; j < N && (next_CC[v] < 0 ||  v < next_CC[v]); ++j)
-          (0 <= v < N && 0 <= j <= N)
-          (inner_corrected_CC_spec(j , v, corrected_next_CC, CC, adj)) {
-        //  Line 17: if CC^{i-1}[u] < CC^i[v] then
-        if (CC[j] < corrected_next_CC[v] && adj[v][j] == 1) {
-          // Line 18: CC^i[v] = CC^{i-1}[u]
-          corrected_next_CC[v] = CC[j];
+      if (0 <= next_CC[v] <= v) {
+        corrected_next_CC[v] = next_CC[v];
+      } else {
+        corrected_next_CC[v] = CC[v];
+        // Line 16: for each u in adj(v) do
+        @noinf for (int j = 0; j < N /*&& (next_CC[v] < 0 ||  v < next_CC[v])*/; ++j)
+            (0 <= v < N && 0 <= j <= N && (next_CC[v] < 0 || v < next_CC[v]))
+            (inner_corrected_CC_spec(j , v, corrected_next_CC, CC, adj) &&
+             vec_bound_o(next_CC, N) &&
+             corrected_CC_spec(v, N, next_CC, corrected_next_CC, CC, adj) &&
+             eq(N) && eq(CC) && eq(adj) && eq(v) &&
+             forall(fi)(((0 <= fi < v<r>) -> (corrected_next_CC<r>[fi] == corrected_next_CC<o>[fi])))) {
+          //  Line 17: if CC^{i-1}[u] < CC^i[v] then
+          if (CC[j] < corrected_next_CC[v] && adj[v][j] == 1) {
+            // Line 18: CC^i[v] = CC^{i-1}[u]
+            corrected_next_CC[v] = CC[j];
+          }
         }
       }
+
+      if (corrected_next_CC[v] < CC[v]) { ++N_s; }
     }
 
-    matrix<int> merged_CC(N);
-
-    // Update CC (merge results)
-    for (int v = 0; v < N; ++v)
-        (0 <= v <= N)
-        (vec_bound_o(next_CC, N) &&
-         (forall(fi)(((0 <= fi < N<r>) && (!(0 <= next_CC<r>[fi] <= fi))) -> (corrected_next_CC<r>[fi] == next_CC<o>[fi]))) &&
-         large_error_r(next_CC, N)) {
-      if (0 <= next_CC[v] <= v) {
-        merged_CC[v] = next_CC[v];
-      } else {
-        merged_CC[v] = corrected_next_CC[v];
-      }
-
-      if (merged_CC[v] < CC[v]) { ++N_s; }
-    }
-
-    CC = merged_CC;
+    CC = corrected_next_CC;
   }
 
   return CC;

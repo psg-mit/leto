@@ -190,6 +190,9 @@ namespace lang {
                       z3::expr& inv,
                       const While& node,
                       std::array<z3::check_result, 3>& results);
+      void legal_if_paths(z3::expr& original,
+                          z3::expr& relaxed,
+                          std::array<z3::check_result, 4>& results);
 
       /**
        * Sets two vectors equal (except at ignore_index) without the use of
@@ -233,5 +236,8 @@ namespace lang {
       template<typename T, typename U>
       z3pair visit_property_application(T& node,
                                         std::unordered_map<std::string, U*>& props);
+
+      void restore_unused_vars(const version_map& old_versions,
+                               char ignore_type);
   };
 }
