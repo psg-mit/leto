@@ -83,6 +83,7 @@ namespace model {
         var = new z3::expr(this->context->real_const(name.c_str()));
         break;
       case FLOAT:
+      case UINT:
         assert(false);
     }
     vars[name] = var;

@@ -21,7 +21,7 @@ enum operator_t {RPLUS,
                  ODIV,
                  FREAD,
                  FWRITE};
-enum type_t {INT, FLOAT, BOOL, REAL};
+enum type_t {INT, FLOAT, BOOL, REAL, UINT};
 
 z3::expr* binop(z3::context* context,
                 operator_t op,

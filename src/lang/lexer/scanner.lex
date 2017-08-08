@@ -10,6 +10,7 @@ while                               return lang::LangParser::WHILE;
 if                                  return lang::LangParser::IF;
 else                                return lang::LangParser::ELSE;
 int                                 return lang::LangParser::INT;
+uint                                return lang::LangParser::UINT;
 float                               return lang::LangParser::FLOAT;
 real                                return lang::LangParser::REAL;
 bool                                return lang::LangParser::BOOL;

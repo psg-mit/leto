@@ -10,6 +10,7 @@
        IF
        ELSE
        INT
+       UINT
        FLOAT
        REAL
        BOOL
@@ -96,6 +97,7 @@ type:
 | REAL  { $$ = type_t::REAL;  }
 | BOOL  { $$ = type_t::BOOL;  }
 | INT   { $$ = type_t::INT;   }
+| UINT  { $$ = type_t::UINT;  }
 ;
 
 expression:

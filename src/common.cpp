@@ -13,6 +13,7 @@ z3::expr* binop(z3::context* context,
       switch (type) {
         case INT:
         case REAL:
+        case UINT:
           res = new z3::expr(*lhs + *rhs);
           break;
         case FLOAT:
@@ -31,6 +32,7 @@ z3::expr* binop(z3::context* context,
       switch (type) {
         case INT:
         case REAL:
+        case UINT:
           res = new z3::expr(*lhs - *rhs);
           break;
         case FLOAT:
@@ -49,6 +51,7 @@ z3::expr* binop(z3::context* context,
       switch (type) {
         case INT:
         case REAL:
+        case UINT:
           res = new z3::expr(*lhs * *rhs);
           break;
         case FLOAT:
@@ -67,6 +70,7 @@ z3::expr* binop(z3::context* context,
       switch(type) {
         case INT:
         case REAL:
+        case UINT:
           res = new z3::expr(*lhs / *rhs);
           break;
         case FLOAT:

@@ -9,6 +9,9 @@ static void print_type(type_t type) {
     case INT:
       printf("int\n");
       break;
+    case UINT:
+      printf("uint\n");
+      break;
     case REAL:
       printf("real\n");
       break;

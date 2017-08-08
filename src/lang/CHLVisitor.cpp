@@ -218,6 +218,7 @@ namespace lang {
     z3::expr *rexpr = nullptr;
     switch (type) {
       case INT:
+      case UINT:
         oexpr = new z3::expr(this->context->int_const(oname.c_str()));
         rexpr = new z3::expr(this->context->int_const(rname.c_str()));
         break;
@@ -309,6 +310,7 @@ namespace lang {
       case 1:
         switch (type) {
           case INT:
+          case UINT:
             ofun = new z3::func_decl(this->context->function(oname.c_str(),
                                                              is,
                                                              is));
@@ -340,6 +342,7 @@ namespace lang {
       case 2:
         switch (type) {
           case INT:
+          case UINT:
             ofun = new z3::func_decl(this->context->function(oname.c_str(),
                                                              is,
                                                              is,
@@ -465,6 +468,8 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(DeclareLMat &node) {
+    assert(node.type != UINT);
+
     // Record that this is a light matrix
     light_mats.insert(node.var->name);
 
@@ -528,6 +533,9 @@ namespace lang {
     node.lhs->accept(*this);
     assert((last_dim != nullptr) ^ (last_light_dim != nullptr));
     assert(last_base_name);
+
+    // TODO: Support uints
+    assert(expr_type != UINT);
 
     if (light_mats.count(*last_base_name)) {
       // Construct normal assign nodes
@@ -638,6 +646,7 @@ namespace lang {
   z3pair CHLVisitor::visit(Assign &node) {
     last_base_name = nullptr;
     z3pair lhs = node.lhs->accept(*this);
+    type_t lhs_type = expr_type;
     assert(last_base_name);
     if (regions.count(*last_base_name)) {
       FaultyWrite fwrite(node.lhs, node.rhs);
@@ -675,7 +684,10 @@ namespace lang {
     z3::expr *ores = nullptr;
     if (!ignore_original) {
       // Set LHS<o> == RHS<o>
-      ores = new z3::expr(*lhs.original == *rhs.original);
+      if (lhs_type == UINT) {
+        ores = new z3::expr(z3::implies(0 <= *rhs.original,
+                                        *lhs.original == *rhs.original));
+      } else ores = new z3::expr(*lhs.original == *rhs.original);
     } else {
       // Set LHS<o> == LHS<o>-prev
       ores = new z3::expr(*lhs.original == *old_o);
@@ -688,7 +700,13 @@ namespace lang {
     z3::expr *rres = nullptr;
     if (!ignore_relaxed) {
       if (model_visitor->prepped()) {
-        rres = model_visitor->replace_op(expr_type, lhs.relaxed);
+        if (lhs_type == UINT) {
+          std::string tname = H_TMP_PREFIX + std::to_string(h_tmp++);
+          z3::expr tmp = context->int_const(tname.c_str());
+          z3::expr* replacement = model_visitor->replace_op(lhs_type, &tmp);
+          add_constraint(*replacement);
+          rres = new z3::expr(z3::implies(0 <= tmp, *lhs.relaxed == tmp));
+        } else rres = model_visitor->replace_op(lhs_type, lhs.relaxed);
         if (!prefixes.empty()) {
           for (const std::string& var : *model_visitor->updated) {
             z3::expr* cur = model_visitor->get_current_var(var);
@@ -696,9 +714,10 @@ namespace lang {
             add_constraint(*cur == *prev, true);
           }
         }
-      } else {
-        rres = new z3::expr(*lhs.relaxed == *rhs.relaxed);
-      }
+      } else if (lhs_type == UINT) {
+        rres = new z3::expr(z3::implies(0 <= *rhs.relaxed,
+                                        *lhs.relaxed == *rhs.relaxed));
+      } else rres = new z3::expr(*lhs.relaxed == *rhs.relaxed);
     } else {
       rres = new z3::expr(*lhs.relaxed == *old_r);
     }
@@ -739,6 +758,7 @@ namespace lang {
       rname += "-" + std::to_string(version);
       switch (expr_type) {
         case INT:
+        case UINT:
           oexpr = new z3::expr(this->context->int_const(oname.c_str()));
           rexpr = new z3::expr(this->context->int_const(rname.c_str()));
           break;
@@ -766,10 +786,32 @@ namespace lang {
       if (is_light_mat || !contains_var(oname)) {
         // Working with undereferenced array, do backchannel return
         if (is_light_mat) {
+          assert(expr_type != UINT);
           last_light_dim = light_dim_map.at(name);
         } else {
-          last_array = {get_current_vec(oname), get_current_vec(rname)};
+          z3::func_decl* ovec = get_current_vec(oname);
+          z3::func_decl* rvec = get_current_vec(rname);
+          last_array = {ovec, rvec};
           last_dim = dim_map.at(name);
+
+          if (expr_type == UINT) {
+            switch (last_dim->size()) {
+              case 1:
+                add_constraint(z3::forall(*forall_i, 0 <= (*ovec)(*forall_i)));
+                add_constraint(z3::forall(*forall_i, 0 <= (*rvec)(*forall_i)));
+                break;
+              case 2:
+                add_constraint(z3::forall(*forall_i,
+                                          *forall_j,
+                                          0 <= (*ovec)(*forall_i, *forall_j)));
+                add_constraint(z3::forall(*forall_i,
+                                          *forall_j,
+                                          0 <= (*rvec)(*forall_i, *forall_j)));
+                break;
+              default:
+                assert(false);
+            }
+          }
         }
         return {nullptr, nullptr};
       }
@@ -779,6 +821,11 @@ namespace lang {
 
       oexpr = vars.at(oname + "-" + std::to_string(version));
       rexpr = vars.at(rname + "-" + std::to_string(version));
+
+      if (expr_type == UINT) {
+        add_constraint(0 <= *oexpr);
+        add_constraint(0 <= *rexpr);
+      }
     }
 
     assert(oexpr);
@@ -806,8 +853,8 @@ namespace lang {
     z3pair lhs = node.lhs->accept(*this);
     type_t lhs_type = expr_type;
     z3pair rhs = node.rhs->accept(*this);
-    assert (lhs_type == REAL || lhs_type == INT);
-    assert (expr_type == REAL || expr_type == INT);
+    assert (lhs_type == REAL || lhs_type == INT || lhs_type == UINT);
+    assert (expr_type == REAL || expr_type == INT || expr_type == UINT);
     // TODO: can't mix ints and reals in division (Z3 sometimes casts things to
     // ints and messes it all up)
     assert ((node.op != RDIV && node.op != ODIV) || expr_type == lhs_type);
@@ -843,6 +890,7 @@ namespace lang {
     assert(!in_assign);
     in_assign = true;
     z3pair dest = node.dest->accept(*this);
+    type_t dest_type = expr_type;
     in_assign = false;
     z3pair val = node.val->accept(*this);
 
@@ -854,16 +902,30 @@ namespace lang {
     assert(old_r);
 
     if (!ignore_relaxed) {
-      model_visitor->prep_op(FWRITE, dest.relaxed, val.relaxed);
-      z3::expr* res = model_visitor->replace_op(expr_type, nullptr);
-      add_constraint(*res);
+      if (dest_type == UINT) {
+        std::string tname = H_TMP_PREFIX + std::to_string(h_tmp++);
+        z3::expr tmp = context->int_const(tname.c_str());
+        model_visitor->prep_op(FWRITE, &tmp, val.relaxed);
+        z3::expr* replacement = model_visitor->replace_op(dest_type, nullptr);
+        add_constraint(*replacement);
+        add_constraint(z3::implies(0 <= tmp, (tmp == *dest.relaxed)));
+      } else {
+        model_visitor->prep_op(FWRITE, dest.relaxed, val.relaxed);
+        z3::expr* res = model_visitor->replace_op(dest_type, nullptr);
+        add_constraint(*res);
+      }
     } else {
       add_constraint(*dest.relaxed == *old_r);
     }
 
     if (!ignore_original) {
-      z3::expr res = (*dest.original == *val.original);
-      add_constraint(res);
+      if (dest_type == UINT) {
+        add_constraint(z3::implies(0 <= *val.original,
+                                   *dest.original == *val.original));
+      } else {
+        z3::expr res = (*dest.original == *val.original);
+        add_constraint(res);
+      }
     } else {
       add_constraint(*dest.original == *old_o);
     }
@@ -999,6 +1061,7 @@ namespace lang {
       case LT:
         switch (lhs_type) {
           case INT:
+          case UINT:
           case REAL:
             ores = new z3::expr(*lhs.original < *rhs.original);
             rres = new z3::expr(*lhs.relaxed < *rhs.relaxed);
@@ -1021,6 +1084,7 @@ namespace lang {
       case LTEQ:
         switch (lhs_type) {
           case INT:
+          case UINT:
           case REAL:
             ores = new z3::expr(*lhs.original <= *rhs.original);
             rres = new z3::expr(*lhs.relaxed <= *rhs.relaxed);
@@ -1084,7 +1148,11 @@ namespace lang {
 
     bool is_light_mat = light_mats.count(name);
     if (!is_light_mat && contains_var(qname)) {
-      return {get_current_var(qname), nullptr};
+      z3::expr* ret = get_current_var(qname);
+
+      if (expr_type == UINT) add_constraint(0 <= *ret);
+
+      return {ret, nullptr};
     }
 
     // Working with an undereferenced array, need to do backchannel return
@@ -1092,9 +1160,25 @@ namespace lang {
     qname += "-" + std::to_string(version);
     if (is_light_mat) last_light_dim = light_dim_map.at(name);
     else {
-      last_array = {vectors.at(qname), nullptr};
+      z3::func_decl* arr = vectors.at(qname);
+      last_array = {arr, nullptr};
       assert(last_array.original);
       last_dim = dim_map.at(name);
+
+      if (expr_type == UINT) {
+        switch (last_dim->size()) {
+          case 1:
+            add_constraint(z3::forall(*forall_i, 0 <= (*arr)(*forall_i)));
+            break;
+          case 2:
+            add_constraint(z3::forall(*forall_i,
+                                      *forall_j,
+                                      0 <= (*arr)(*forall_i, *forall_j)));
+            break;
+          default:
+            assert(false);
+        }
+      }
     }
     return {nullptr, nullptr};
   }
@@ -1263,6 +1347,7 @@ namespace lang {
         case LT:
           switch (lhs_type) {
             case INT:
+            case UINT:
             case REAL:
               res = new z3::expr(*lhs.original < *rhs.original);
               break;
@@ -1282,6 +1367,7 @@ namespace lang {
         case LTEQ:
           switch (lhs_type) {
             case INT:
+            case UINT:
             case REAL:
               res = new z3::expr(*lhs.original <= *rhs.original);
               break;
@@ -1470,8 +1556,8 @@ namespace lang {
     z3pair lhs = node.lhs->accept(*this);
     type_t lhs_type = expr_type;
     z3pair rhs = node.rhs->accept(*this);
-    assert (lhs_type == REAL || lhs_type == INT);
-    assert (expr_type == REAL || expr_type == INT);
+    assert (lhs_type == REAL || lhs_type == INT || lhs_type == UINT);
+    assert (expr_type == REAL || expr_type == INT || expr_type == UINT);
     // TODO: Can't mix ints and reals in division
     assert ((node.op != RDIV  && node.op != ODIV) || expr_type == lhs_type);
     expr_type = lhs_type == REAL || expr_type == REAL ? REAL : INT;
@@ -1695,10 +1781,17 @@ namespace lang {
 
     z3::expr* oexpr = nullptr;
     z3::expr* rexpr = nullptr;
+    type_t array_type = types.at(name);
     switch (node.rhs.size()) {
       case 1:
         oexpr = new z3::expr((*oarray)(*i1.original));
         rexpr = new z3::expr((*rarray)(*i1.relaxed));
+        if (array_type == UINT) {
+          add_constraint(z3::forall(*forall_i,
+                                    0 <= (*oarray)(*forall_i)));
+          add_constraint(z3::forall(*forall_i,
+                                    0 <= (*rarray)(*forall_i)));
+        }
         break;
       case 2:
         {
@@ -1707,6 +1800,14 @@ namespace lang {
           assert(i2.relaxed);
           oexpr = new z3::expr((*oarray)(*i1.original, *i2.original));
           rexpr = new z3::expr((*rarray)(*i1.relaxed, *i2.relaxed));
+          if (array_type == UINT) {
+            add_constraint(z3::forall(*forall_i,
+                                      *forall_j,
+                                      0 <= (*oarray)(*forall_i, *forall_j)));
+            add_constraint(z3::forall(*forall_i,
+                                      *forall_j,
+                                      0 <= (*rarray)(*forall_i, *forall_j)));
+          }
         }
         break;
       default:
@@ -1717,7 +1818,7 @@ namespace lang {
     assert(oexpr);
     assert(rexpr);
 
-    expr_type = types.at(name);
+    expr_type = array_type;
 
     return {oexpr, rexpr};
   }
@@ -1773,9 +1874,14 @@ namespace lang {
     assert(!i1.relaxed);
 
     z3::expr* expr = nullptr;
+    expr_type = types.at(name);
     switch (node.rhs.size()) {
       case 1:
         expr = new z3::expr((*array)(*i1.original));
+        if (expr_type == UINT) {
+          add_constraint(z3::forall(*forall_i,
+                                    0 <= (*array)(*forall_i)));
+        }
         break;
       case 2:
         {
@@ -1783,6 +1889,11 @@ namespace lang {
           assert(i2.original);
           assert(!i2.relaxed);
           expr = new z3::expr((*array)(*i1.original, *i2.original));
+          if (expr_type == UINT) {
+            add_constraint(z3::forall(*forall_i,
+                                      *forall_j,
+                                      0 <= (*array)(*forall_i, *forall_j)));
+          }
         }
         break;
       default:
@@ -1791,8 +1902,6 @@ namespace lang {
         break;
     }
     assert(expr);
-
-    expr_type = types.at(name);
 
     return {expr, nullptr};
   }
@@ -2588,14 +2697,31 @@ namespace lang {
     // TODO: Support 2d arrays here
     dim_vec* dimensions = dim_map.at(node.dest->name);
     assert(dimensions->size() == 1);
-    add_constraint(*(vector_equals(*dest.original,
-                                   *src.original,
-                                   *dimensions,
-                                   IGNORE_1D)));
-    add_constraint(*(vector_equals(*dest.relaxed,
-                                   *src.relaxed,
-                                   *dimensions,
-                                   IGNORE_1D)));
+
+    z3::expr oforall = z3::forall(*forall_i, 0 <= (*src.original)(*forall_i));
+    z3::expr rforall = z3::forall(*forall_i, 0 <= (*src.relaxed)(*forall_i));
+    if (types.at(node.src->name) == UINT) {
+      add_constraint(oforall);
+      add_constraint(rforall);
+    }
+
+    z3::expr* oeq = vector_equals(*dest.original,
+                                  *src.original,
+                                  *dimensions,
+                                  IGNORE_1D);
+
+
+    z3::expr* req = vector_equals(*dest.relaxed,
+                                  *src.relaxed,
+                                  *dimensions,
+                                  IGNORE_1D);
+    if (types.at(node.dest->name) == UINT) {
+      add_constraint(z3::implies(oforall, *oeq));
+      add_constraint(z3::implies(rforall, *req));
+    } else {
+      add_constraint(*oeq);
+      add_constraint(*req);
+    }
 
     return {nullptr, nullptr};
   }

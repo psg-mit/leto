@@ -34,6 +34,7 @@ namespace model {
           var = new z3::expr(context->bool_const(new_name.c_str()));
           break;
         case INT:
+        case UINT:
           var = new z3::expr(context->int_const(new_name.c_str()));
           break;
         case REAL:
