@@ -60,6 +60,7 @@ namespace lang {
       virtual z3pair visit(RelationalPropertyApplication &node) override;
       virtual z3pair visit(SpecPropertyApplication &node) override;
 
+
       std::string output;
     private:
       const bool compress;

@@ -59,6 +59,7 @@ return                              return lang::LangParser::RETURN;
 property                            return lang::LangParser::PROPERTY;
 property_r                          return lang::LangParser::PROPERTY_R;
 @region                             return lang::LangParser::REGION;
+@label                              return lang::LangParser::LABEL;
 [[:alpha:]_][[:alpha:][:digit:]_]*  return lang::LangParser::ID;
 .                                   return matched()[0];
 

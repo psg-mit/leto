@@ -44,7 +44,6 @@ namespace lang {
     model_visitor = model_visitor_;
     in_assign = false;
     errors = 0;
-    while_count = 0;
     ignore_original = ignore_relaxed = 0;
     unsat_context = false;
     unknown_context = false;
@@ -1674,9 +1673,16 @@ namespace lang {
 
 
   z3pair CHLVisitor::visit(ArrayAccess &node) {
-    std::string name = substitutions.count(node.lhs->name) ?
-                       substitutions.at(node.lhs->name) :
-                       node.lhs->name;
+    const std::string& node_name = node.lhs->name;
+    if (labels.count(node_name)) {
+      assert(node.rhs.size() == 1);
+      model_visitor->frame = node_name;
+      return node.rhs.at(0)->accept(*this);
+    }
+
+    const std::string& name = substitutions.count(node_name) ?
+                              substitutions.at(node_name) :
+                              node_name;
 
     last_base_name = new std::string(name);
 
@@ -1921,9 +1927,16 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(SpecArrayAccess &node) {
-    std::string name = substitutions.count(node.lhs->name) ?
-                       substitutions.at(node.lhs->name) :
-                       node.lhs->name;
+    const std::string& node_name = node.lhs->name;
+    if (labels.count(node_name)) {
+      assert(node.rhs.size() == 1);
+      model_visitor->frame = node_name;
+      return node.rhs.at(0)->accept(*this);
+    }
+
+    const std::string& name = substitutions.count(node_name) ?
+                              substitutions.at(node_name) :
+                              node_name;
 
     // TODO: Allow for spec array accesses for light mats
     assert(!light_mats.count(name));
@@ -2075,10 +2088,13 @@ namespace lang {
     }
     inner_h_unknown = false;
 
+    const std::string& label = node.label->name;
+
     // New solver state for loop
     z3::solver* old_solver = solver;
     solver = new z3::solver(*context);
     cached_uints.clear();
+    model_visitor->add_frame(node.label->name);
 
     // Get modern inv and add it to the solver state
     h_z3pair eqs = houdini_to_constraints(node);
@@ -2106,7 +2122,7 @@ namespace lang {
     node.body->accept(*this);
 
     // Check houdini constraints
-    debug_print("Houdini invariant: " + std::to_string(while_count));
+    debug_print("Houdini invariant: " + label);
     eqs = houdini_to_constraints(node);
     solver->push();
     add_constraint(*eqs.assumes);
@@ -2122,7 +2138,7 @@ namespace lang {
       nonrel_inv = node.nonrel_inv->accept(*this);
 
       // Check post-body invariant
-      debug_print("Post body invariant: " + std::to_string(while_count));
+      debug_print("Post body invariant: " + label);
       solver->push();
       if (!ignore_original) add_constraint(*nonrel_inv.original);
       if (ignore_relaxed) add_checked_constraint(*inv.original);
@@ -2152,6 +2168,8 @@ namespace lang {
                               z3::expr& inv,
                               const While& node,
                               std::array<z3::check_result, 3>& results) {
+    const std::string& label = node.label->name;
+
     // New solver for evaluating legal paths
     z3::solver* old_solver = solver;
     z3::solver path_solver(*context);
@@ -2175,7 +2193,7 @@ namespace lang {
       path_solver.push();
       path_solver.add(original);
       path_solver.add(relaxed);
-      debug_print(std::to_string(while_count) + " : check path cond<o> && cond<r>");
+      debug_print(label + " : check path cond<o> && cond<r>");
       results.at(0) = check(false);
       path_solver.pop();
     } else results.at(0) = z3::unsat;
@@ -2185,7 +2203,7 @@ namespace lang {
       path_solver.push();
       path_solver.add(original);
       path_solver.add(!relaxed);
-      debug_print(std::to_string(while_count) + " : check path cond<o> && !cond<r>");
+      debug_print(label + " : check path cond<o> && !cond<r>");
       results.at(1) = check(false);
       path_solver.pop();
     } else results.at(1) = z3::unsat;
@@ -2195,7 +2213,7 @@ namespace lang {
       path_solver.push();
       path_solver.add(!original);
       path_solver.add(relaxed);
-      debug_print(std::to_string(while_count) + " : check path !cond<o> && cond<r>");
+      debug_print(label + " : check path !cond<o> && cond<r>");
       results.at(2) = check(false);
       path_solver.pop();
     } else results.at(2) = z3::unsat;
@@ -2352,7 +2370,8 @@ namespace lang {
     assert((!cur_houdini_invs && !in_houdini) || in_houdini);
     assert((!cur_nonrel_houdini_invs && !in_houdini) || in_houdini);
 
-    ++while_count;
+    const std::string& label = node.label->name;
+    labels.insert(label);
 
     version_map old_versions(var_version);
 
@@ -2366,7 +2385,7 @@ namespace lang {
       nonrel_inv = node.nonrel_inv->accept(*this);
       assert(nonrel_inv.original);
       assert(nonrel_inv.relaxed);
-      debug_print("Pre body invariant: " + std::to_string(while_count));
+      debug_print("Pre body invariant: " + label);
       solver->push();
       if (!ignore_original) add_constraint(*nonrel_inv.original);
       if (ignore_relaxed) add_checked_constraint(*inv.original);
@@ -2471,7 +2490,7 @@ namespace lang {
     parent_while = &node;
 
     star_line();
-    debug_print("While: " + std::to_string(while_count));
+    debug_print("While: " + label);
 
     // Verify houdini invariant
     bool h_unknown = false;
@@ -2491,7 +2510,7 @@ namespace lang {
       h_var_version = nullptr;
     }
     if (!passed_houdini_pre || &node.houdini_invs != cur_houdini_invs) {
-      debug_print("Pre body houdini: " + std::to_string(while_count));
+      debug_print("Pre body houdini: " + label);
       solver->push();
       add_constraint(*eqs.assumes);
       add_checked_constraint(*eqs.asserts);
@@ -2508,7 +2527,6 @@ namespace lang {
             outer_h_unknown = true;
             houdini_failed = true;
           }
-          --while_count;
           parent_while = old_parent_while;
           return {nullptr, nullptr};
         }
@@ -2540,7 +2558,7 @@ namespace lang {
       case z3::unknown:
       case z3::sat:
         // Check both in lockstep
-        debug_print(std::to_string(while_count) + " : body cond<o> && cond<r>");
+        debug_print(label + " : body cond<o> && cond<r>");
         h_unknown = check_loop(node, *cond.original && *cond.relaxed) || h_unknown;
         break;
       case z3::unsat:
@@ -2557,7 +2575,7 @@ namespace lang {
           solver->push();
           z3pair cond_new = node.cond->accept(*this);
           ++ignore_relaxed;
-          debug_print(std::to_string(while_count) + " : body cond<o> && !cond<r>");
+          debug_print(label + " : body cond<o> && !cond<r>");
           h_unknown = check_loop(node, *cond_new.original && !(*cond_new.relaxed)) || h_unknown;
           --ignore_relaxed;
           solver->pop();
@@ -2577,7 +2595,7 @@ namespace lang {
           solver->push();
           z3pair cond_new = node.cond->accept(*this);
           ++ignore_original;
-          debug_print(std::to_string(while_count) + " : body !cond<o> && cond<r>");
+          debug_print(label + " : body !cond<o> && cond<r>");
           h_unknown = check_loop(node, !(*cond_new.original) && *cond_new.relaxed) || h_unknown;
           --ignore_original;
           solver->pop();
@@ -2591,7 +2609,6 @@ namespace lang {
     if (h_unknown && in_houdini && &node.houdini_invs == cur_houdini_invs) {
       outer_h_unknown = h_unknown;
       houdini_failed = true;
-      --while_count;
       parent_while = old_parent_while;
       return {nullptr, nullptr};
     }
@@ -2634,7 +2651,6 @@ namespace lang {
       add_constraint(*eqs.assumes);
       add_constraint(*eqs.asserts);
     }
-    --while_count;
     parent_while = old_parent_while;
 
     node.seen = true;

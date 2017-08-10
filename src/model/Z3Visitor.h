@@ -52,6 +52,8 @@ namespace model {
 
       void snapshot_vars();
 
+      void add_frame(const std::string& name);
+      std::string frame;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -72,6 +74,7 @@ namespace model {
       version_map snapshot;
       std::map<operator_t, std::vector<const Operator*>> ops;
       std::map<operator_t, std::unordered_set<std::string>*> op_mods;
+      std::map<std::string, version_map> frames;
 
       operator_t op;
       z3::expr* arg1;

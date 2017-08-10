@@ -38,7 +38,8 @@ matrix<real> correct_sd(int N,
   // TODO: r == r2 -> (old_upset == model.upset)?  Then I could take this upset
   // thing out of the loop condition
   // TODO: Inference runs out of memory on this loop
-  @noinf while (r != r2) (1 == 1) (OUTER2 && IMPL2 && trans(old_upset)) {
+  @noinf @label(outer)
+  while (r != r2) (1 == 1) (OUTER2 && IMPL2 && trans(old_upset)) {
     old_upset = model.upset;
 
     Ax = zeros;
@@ -49,17 +50,19 @@ matrix<real> correct_sd(int N,
     spec_r = zeros;
 
     // TODO: Inference runs out of memory on this loop
-    @noinf for (int i = N - 1; 0 <= i; --i)
-               (1 == 1)
-               (INV && trans(old_upset)) {
+    @noinf @label(middle)
+    for (int i = N - 1; 0 <= i; --i)
+        (1 == 1)
+        (INV && trans(old_upset)) {
       // recompute Ax[i]
       Ax[i] = 0;
       spec_Ax[i] = 0;
       Ax2[i] = 0;
       // TODO: Inference runs out of memory on this loop
-      @noinf for (int j = N - 1; 0 <= j; --j)
-                 (1 == 1)
-                 (UPSET2 && trans(old_upset)) {
+      @noinf @label(inner)
+      for (int j = N - 1; 0 <= j; --j)
+          (1 == 1)
+          (UPSET2 && trans(old_upset)) {
         tmp = A[i][j] *. x[j];
         tmp2 = A[i][j] *. x[j];
         spec_tmp = A[i][j] * x[j];

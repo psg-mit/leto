@@ -49,6 +49,7 @@
        PROPERTY
        PROPERTY_R
        REGION
+       LABEL
 
 
 %left ';'
@@ -72,6 +73,7 @@
              DECLARELIST: lang::DeclareList*;
              TYPE: type_t;
              RELVAR: lang::RelationalVar*;
+             RELMODELDEREF: lang::RelationalModelDeref*;
 
 %type <EXP>  expression
 %type <STMT> statement cflow statementlist
@@ -88,6 +90,7 @@
 %type <RELVARLIST> relvarlist
 %type <DECLARELIST> declarelist
 %type <TYPE> type
+%type <RELMODELDEREF> relmodelderef;
 
 %%
 
@@ -289,6 +292,13 @@ relvar:
   }
 ;
 
+relmodelderef:
+  MODEL var {
+    $$ = new lang::RelationalModelDeref($2);
+    lang_ast = $$;
+  }
+;
+
 relexpression:
   relvar
 | var {
@@ -299,10 +309,7 @@ relexpression:
     $$ = new lang::RelationalBinOp(operator_t::OMINUS, &REL_ZERO, $2);
     lang_ast = $$;
   }
-| MODEL var {
-    $$ = new lang::RelationalModelDeref($2);
-    lang_ast = $$;
-  }
+| relmodelderef
 | '(' relexpression ')' {
     $$ = $2;
     lang_ast = $$;
@@ -516,36 +523,40 @@ singledeclaremat:
 ;
 
 cflow:
+  LABEL '(' var ')'
   WHILE '(' boolexp ')'
         '(' boolexp ')'
         '(' relboolexp ')'
         '{' statementlist '}' {
-    $$ = new lang::While($3, $6, $9, $12, true);
+    $$ = new lang::While($3, $7, $10, $13, $16, true);
     lang_ast = $$;
   }
-| FOR '(' statement ';' boolexp ';' statement ')'
+| LABEL '(' var ')'
+  FOR   '(' statement ';' boolexp ';' statement ')'
+        '(' boolexp ')'
+        '(' relboolexp ')'
+        '{' statementlist '}' {
+    lang::Statement* body = new StatementList($20, $11);
+    lang::While* desugar_while = new lang::While($3, $9, $14, $17, body, true);
+    $$ = new lang::StatementList($7, desugar_while);
+    lang_ast = $$;
+  }
+| NOINF LABEL '(' var ')'
+  WHILE '(' boolexp ')'
+        '(' boolexp ')'
+        '(' relboolexp ')'
+        '{' statementlist '}' {
+    $$ = new lang::While($4, $8, $11, $14, $17, false);
+    lang_ast = $$;
+  }
+| NOINF LABEL '(' var ')'
+  FOR '(' statement ';' boolexp ';' statement ')'
       '(' boolexp ')'
       '(' relboolexp ')'
       '{' statementlist '}' {
-    lang::Statement* body = new StatementList($16, $7);
-    lang::While* desugar_while = new lang::While($5, $10, $13, body, true);
-    $$ = new lang::StatementList($3, desugar_while);
-    lang_ast = $$;
-  }
-| NOINF WHILE '(' boolexp ')'
-              '(' boolexp ')'
-              '(' relboolexp ')'
-              '{' statementlist '}' {
-    $$ = new lang::While($4, $7, $10, $13, false);
-    lang_ast = $$;
-  }
-| NOINF FOR '(' statement ';' boolexp ';' statement ')'
-            '(' boolexp ')'
-            '(' relboolexp ')'
-            '{' statementlist '}' {
-    lang::Statement* body = new StatementList($17, $8);
-    lang::While* desugar_while = new lang::While($6, $11, $14, body, false);
-    $$ = new lang::StatementList($4, desugar_while);
+    lang::Statement* body = new StatementList($21, $12);
+    lang::While* desugar_while = new lang::While($4, $10, $15, $18, body, false);
+    $$ = new lang::StatementList($8, desugar_while);
     lang_ast = $$;
   }
 | IF '(' boolexp ')' '{' statementlist '}' ELSE '{' statementlist '}' {

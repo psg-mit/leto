@@ -36,7 +36,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
   @region(unreliable) matrix<uint> next_CC(N);
 
   // Line 1: for each v in V do
-  for (uint v = 0; v < N; ++v) (1 == 1) (vec_bound(CC, v)) {
+  @label(init) for (uint v = 0; v < N; ++v) (1 == 1) (vec_bound(CC, v)) {
     // Line 2: CC^1[v] = v;
     //         CC^0[v] = v;
     //         P*[v] = -1;
@@ -48,7 +48,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
 
   // Line 5: while N_s > 0 do:
   //while (0 < N_s) (1 == 1) (1 == 1) {
-  @noinf while (0 < N_s)
+  @noinf @label(outer_while) while (0 < N_s)
         (N < MAX_N)
         (eq(N) && eq(adj) && eq(N_s) && eq(CC) && vec_bound(CC, N)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
@@ -57,6 +57,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
     N_s = 0;
 
     // Line 7: for each v in V do
+    @label(outer_faulty)
     for (uint v = 0; v < N; ++v)
         (1 == 1)
         (vec_bound(next_CC, N) &&
@@ -65,6 +66,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
          large_error_r(next_CC, N)) {
       // Line 8: for each u in adj(v) do:
 
+      @label(inner_faulty)
       for (uint j = 0; j < N; ++j)
           (v < N && N < MAX_N)
           (forall(fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
@@ -83,7 +85,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
 
     // Line 13: for each v in V do
     matrix<uint> corrected_next_CC(N);
-    @noinf for (uint v = 0; v < N; ++v)
+    @noinf @label(outer_correction) for (uint v = 0; v < N; ++v)
         (1 == 1)
         (outer_spec(v<r>, N<r>, corrected_next_CC<r>, CC<r>, adj<r>) &&
          eq(N) && eq(CC) && eq(adj) && eq(v) &&
@@ -98,7 +100,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
       } else {
         corrected_next_CC[v] = CC[v];
         // Line 16: for each u in adj(v) do
-        for (uint j = 0; j < N; ++j)
+        @label(inner_correction) for (uint j = 0; j < N; ++j)
             (v < N && v < next_CC[v])
             (inner_spec(j<r>, v<r>, N<r>, corrected_next_CC<r>, CC<r>, adj<r>)) {
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then

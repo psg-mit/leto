@@ -433,11 +433,13 @@ namespace lang {
 
   class While : public Statement {
     public:
-      While(BoolExp *cond_,
+      While(Var* label_,
+            BoolExp *cond_,
             BoolExp* nonrel_inv_,
             RelationalBoolExp* inv_,
             Statement *body_,
             bool inf_) :
+          label(label_),
           cond(cond_),
           nonrel_inv(nonrel_inv_),
           inv(inv_),
@@ -446,6 +448,7 @@ namespace lang {
           inf(inf_) {}
       virtual z3pair accept(ASTVisitor &visitor)  override;
 
+      Var* label;
       BoolExp* cond;
       BoolExp* nonrel_inv;
       RelationalBoolExp* inv;

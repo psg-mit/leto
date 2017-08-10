@@ -97,6 +97,8 @@ namespace lang {
 
   z3pair PrintVisitor::visit(While &node) {
     printf("While:\n");
+    printf("  label:\n");
+    node.label->accept(*this);
     printf("  inf: %i\n", node.inf);
     printf("  Condition:\n");
     node.cond->accept(*this);
@@ -668,5 +670,4 @@ namespace lang {
     print_property_application(node, "SpecPropertyApplication");
     RETURN_VOID;
   }
-
 }
