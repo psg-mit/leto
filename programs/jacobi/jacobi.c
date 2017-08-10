@@ -38,15 +38,10 @@ matrix<real> jacobi(int N,
 
       specvar bool last_upset = model.upset;
       real sigma = 0;
-      @noinf for (int j = 0; j < N; ++j)
-          (0 <= i < N && 0 <= j <= N && nzd(A) && 0 < N)
+      for (int j = 0; j < N; ++j)
+          (0 <= i < N && 0 <= j <= N)
           ((outer_last_upset == false -> sig(sigma, last_upset)) && eq(j) &&
-           eq(N) && eq(A) && eq(b) && eq(iters) && eq(i) &&
-           (model.upset == false -> (outer_last_upset == false)) &&
-           (last_upset == true -> (model.upset == true)) &&
-           0 <= upset_index < N<r> &&
-           (outer_last_upset == false -> eq(x)) &&
-           (model.upset == false -> eq(next_x))) {
+           (last_upset == true -> (model.upset == true))) {
         if (i != j) {
           real delta = A[i][j] *. x[j];
           sigma = sigma +. delta;
