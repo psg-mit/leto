@@ -22,19 +22,19 @@ matrix<real> jacobi(int N,
                     matrix<real> A(N,N),
                     matrix<real> b(N),
                     matrix<real> x(N)) {
-  matrix<real> next_x(N);
-  specvar int upset_index = 0;
   specvar bool outer_last_upset = model.upset;
   while (0 <= iters)
         (1 == 1)
         (outer_last_upset == model.upset &&
-         0 <= upset_index < N<r> &&
-         (outer_last_upset == false -> eq(x)) &&
-         ((model.upset == false) -> (eq(next_x)))) {
+         (outer_last_upset == false -> eq(x))) {
+    specvar int upset_index = 0;
+    matrix<real> next_x(N);
     for (int i = 0; i < N; ++i)
         (1 == 1)
         (((outer_last_upset == false && model.upset == true) -> bounded_diff_at(next_x, upset_index, i, N)) &&
-         (model.upset == false -> (outer_last_upset == false))) {
+         (model.upset == false -> (outer_last_upset == false)) &&
+         (model.upset == false) -> eq(next_x) &&
+         0 <= upset_index < N<r>) {
 
       specvar bool last_upset = model.upset;
       real sigma = 0;

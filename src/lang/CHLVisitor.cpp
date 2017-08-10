@@ -54,6 +54,7 @@ namespace lang {
     forall_j = new z3::expr(this->context->int_const("forall_j"));
     quantifier_ctr = 0;
     constraints_generated = 0;
+    num_inferred = 0;
     z3_model = nullptr;
     houdini_failed = false;
     h_tmp = 0;
@@ -2977,6 +2978,7 @@ namespace lang {
   std::string CHLVisitor::houdini_to_str(bool count) {
     PrintVisitor pv(true);
     std::string ret = "";
+    std::unordered_set<std::string> all_inferred;
 
     for (BoolExp* inv : *cur_nonrel_houdini_invs) {
       pv.output.clear();
@@ -2991,6 +2993,8 @@ namespace lang {
       ret += pv.output + ", ";
       if (count) all_inferred.insert(pv.output);
     }
+
+    if (count) num_inferred += all_inferred.size();
 
     ret += "\n";
 

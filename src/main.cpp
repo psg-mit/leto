@@ -89,7 +89,7 @@ int main() {
             << std::endl;
 
   std::cout << "Houdini invariants found: "
-            << chl.all_inferred.size()
+            << chl.num_inferred
             << std::endl;
 
   return chl.get_errors();

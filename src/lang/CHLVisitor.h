@@ -102,7 +102,7 @@ namespace lang {
       bool unsat_context;
       bool unknown_context;
       size_t constraints_generated;
-      std::unordered_set<std::string> all_inferred;
+      size_t num_inferred;
     private:
       z3::context* context;
       z3::solver* solver;
