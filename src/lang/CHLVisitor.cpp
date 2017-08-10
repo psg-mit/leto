@@ -702,10 +702,12 @@ namespace lang {
     z3pair lhs = node.lhs->accept(*this);
     type_t lhs_type = expr_type;
     assert(last_base_name);
+    /*
     if (regions.count(*last_base_name)) {
       FaultyWrite fwrite(node.lhs, node.rhs);
       return fwrite.accept(*this);
     }
+    */
 
     // Check for <array> = <array>
     Var* vlhs = dynamic_cast<Var*>(node.lhs);
@@ -2717,6 +2719,7 @@ namespace lang {
 #pragma clang diagnostic pop
 
   z3pair CHLVisitor::visit(Copy &node) {
+    // TODO: Allow bad reads in copy nodes as well
     vec_pair src = {get_current_vec(node.src->name + "<o>"),
                     get_current_vec(node.src->name + "<r>")};
     std::string odest = node.dest->name + "<o>";
@@ -2752,11 +2755,28 @@ namespace lang {
                                   IGNORE_1D);
 
 
-    z3::expr* req = vector_equals(*dest.relaxed,
-                                  *src.relaxed,
-                                  *dimensions,
-                                  IGNORE_1D);
-    if (types.at(node.dest->name) == UINT) {
+    z3::expr* req = nullptr;
+    type_t dest_type = types.at(node.dest->name);
+    if (regions.count(node.dest->name)) {
+      // Generate a faulty write with the forall var
+      z3::expr forall_src = (*src.relaxed)(*forall_i);
+      z3::expr forall_dest = (*dest.relaxed)(*forall_i);
+      model_visitor->prep_op(FWRITE, &forall_dest, &forall_src);
+      z3::expr* inner = model_visitor->replace_op(dest_type, nullptr);
+
+      // Use inner in a vec equals
+      z3::expr bounds = (*forall_i >= context->int_val(0)) &&
+                        (*forall_i < *dimensions->at(0).original);
+      z3::expr eq = z3::implies(bounds, *inner);
+      req = new z3::expr(z3::forall(*forall_i, eq));
+    } else {
+      req = vector_equals(*dest.relaxed,
+                          *src.relaxed,
+                          *dimensions,
+                          IGNORE_1D);
+    }
+    assert(req);
+    if (dest_type == UINT) {
       add_constraint(z3::implies(oforall, *oeq));
       add_constraint(z3::implies(rforall, *req));
     } else {

@@ -52,12 +52,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
         (N < MAX_N)
         (eq(N) && eq(adj) && eq(N_s) && eq(CC) && vec_bound(CC, N)) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
-    for (uint v = 0; v < N; ++v)
-        (1 == 1)
-        (large_error_r(next_CC, v) &&
-         forall(fi)((0 <= fi < v<o>) -> next_CC<o>[fi] == CC<o>[fi])) {
-      fwrite(next_CC[v], CC[v]);
-    }
+    next_CC = CC;
 
     N_s = 0;
 
