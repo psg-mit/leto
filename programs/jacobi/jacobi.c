@@ -24,12 +24,10 @@ matrix<real> jacobi(int N,
                     matrix<real> x(N)) {
   matrix<real> next_x(N);
   specvar int upset_index = 0;
-  specvar bool last_upset = false;
   specvar bool outer_last_upset = model.upset;
   while (0 <= iters)
         (1 == 1)
-        ((last_upset == true -> model.upset == true) &&
-         outer_last_upset == model.upset &&
+        (outer_last_upset == model.upset &&
          0 <= upset_index < N<r> &&
          (outer_last_upset == false -> eq(x)) &&
          ((model.upset == false) -> (eq(next_x)))) {
@@ -38,7 +36,7 @@ matrix<real> jacobi(int N,
         (((outer_last_upset == false && model.upset == true) -> bounded_diff_at(next_x, upset_index, i, N)) &&
          (model.upset == false -> (outer_last_upset == false))) {
 
-      last_upset = model.upset;
+      specvar bool last_upset = model.upset;
       real sigma = 0;
       @noinf for (int j = 0; j < N; ++j)
           (0 <= i < N && 0 <= j <= N && nzd(A) && 0 < N)
