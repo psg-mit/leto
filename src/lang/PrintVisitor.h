@@ -50,6 +50,7 @@ namespace lang {
       virtual z3pair visit(FaultyRead &node) override;
       virtual z3pair visit(FaultyWrite &node) override;
       virtual z3pair visit(VarList &node) override;
+      virtual z3pair visit(RelationalVarList &node) override;
       virtual z3pair visit(DeclareList &node) override;
       virtual z3pair visit(Function &node) override;
       virtual z3pair visit(Return &node) override;
@@ -57,6 +58,7 @@ namespace lang {
       virtual z3pair visit(RelationalProperty &node) override;
       virtual z3pair visit(PropertyApplication &node) override;
       virtual z3pair visit(RelationalPropertyApplication &node) override;
+      virtual z3pair visit(SpecPropertyApplication &node) override;
 
       std::string output;
     private:

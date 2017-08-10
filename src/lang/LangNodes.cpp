@@ -66,6 +66,10 @@ namespace lang {
     return visitor.visit(*this);
   }
 
+  z3pair RelationalVarList::accept(ASTVisitor &visitor)  {
+    return visitor.visit(*this);
+  }
+
   z3pair SpecVar::accept(ASTVisitor &visitor)  {
     return visitor.visit(*this);
   }
@@ -203,6 +207,10 @@ namespace lang {
   }
 
   z3pair RelationalPropertyApplication::accept(ASTVisitor& visitor) {
+    return visitor.visit(*this);
+  }
+
+  z3pair SpecPropertyApplication::accept(ASTVisitor& visitor) {
     return visitor.visit(*this);
   }
 }

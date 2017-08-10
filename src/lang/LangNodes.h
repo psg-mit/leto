@@ -132,6 +132,17 @@ namespace lang {
       bool check_spec;
   };
 
+  class RelationalVarList : public RelationalExp {
+    public:
+      RelationalVarList(RelationalVar *car_, RelationalVarList *cdr_) :
+          car(car_), cdr(cdr_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      RelationalVar* car;
+      RelationalVarList* cdr;
+  };
+
+
   class SpecVar : public RelationalExp {
     public:
       SpecVar(Var *var_) : var(var_) {}
@@ -290,6 +301,16 @@ namespace lang {
 
       Var* name;
       VarList* args;
+  };
+
+  class SpecPropertyApplication : public RelationalBoolExp {
+    public:
+      SpecPropertyApplication(Var* name_, RelationalVarList* args_) :
+        name(name_), args(args_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      Var* name;
+      RelationalVarList* args;
   };
 
   class RelationalNormal : public RelationalBoolExp {

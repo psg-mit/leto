@@ -559,6 +559,22 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
+  z3pair PrintVisitor::visit(RelationalVarList &node) {
+    if (!compress) printf("RelationalVarList: ");
+    if (node.car) {
+      if (!compress) printf("\n");
+      node.car->accept(*this);
+
+      if (node.cdr) {
+        if (compress) output += ", ";
+        node.cdr->accept(*this);
+      }
+    }
+    else printf("nil\n");
+
+    return {nullptr, nullptr};
+  }
+
   z3pair PrintVisitor::visit(DeclareList &node) {
     printf("DeclareList: ");
     if (node.car) {
@@ -645,6 +661,11 @@ namespace lang {
 
   z3pair PrintVisitor::visit(RelationalPropertyApplication& node) {
     print_property_application(node, "RelationalPropertyApplication");
+    RETURN_VOID;
+  }
+
+  z3pair PrintVisitor::visit(SpecPropertyApplication& node) {
+    print_property_application(node, "SpecPropertyApplication");
     RETURN_VOID;
   }
 

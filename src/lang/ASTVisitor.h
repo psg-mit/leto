@@ -17,6 +17,7 @@ namespace lang {
       virtual z3pair visit(Declare &node) = 0;
       virtual z3pair visit(BoolExp &node) = 0;
       virtual z3pair visit(RelationalVar &node) = 0;
+      virtual z3pair visit(RelationalVarList &node) = 0;
       virtual z3pair visit(SpecVar &node) = 0;
       virtual z3pair visit(RelationalBoolExp &node) = 0;
       virtual z3pair visit(RelationalBinOp &node) = 0;
@@ -56,6 +57,7 @@ namespace lang {
       virtual z3pair visit(RelationalProperty &node) = 0;
       virtual z3pair visit(PropertyApplication &node) = 0;
       virtual z3pair visit(RelationalPropertyApplication &node) = 0;
+      virtual z3pair visit(SpecPropertyApplication &node) = 0;
 
       virtual ~ASTVisitor() {}
   };

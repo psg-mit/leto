@@ -87,6 +87,7 @@ namespace lang {
       virtual z3pair visit(PropertyApplication& node) override;
       virtual z3pair visit(RelationalProperty& node) override;
       virtual z3pair visit(RelationalPropertyApplication& node) override;
+      virtual z3pair visit(SpecPropertyApplication& node) override;
 
       z3::check_result check(bool exit_on_sat=true);
       int get_errors() { return errors; }
@@ -95,6 +96,7 @@ namespace lang {
 #pragma clang diagnostic ignored "-Wunused-parameter"
       virtual z3pair visit(Block &node) override {assert(false);}
       virtual z3pair visit(VarList &node) override {assert(false);}
+      virtual z3pair visit(RelationalVarList &node) override {assert(false);}
 #pragma clang diagnostic pop
 
       bool unsat_context;

@@ -68,12 +68,15 @@
              DECL: lang::Declare*;
              DECLMAT: lang::DeclareMat*;
              VARLIST: lang::VarList*;
+             RELVARLIST: lang::RelationalVarList*;
              DECLARELIST: lang::DeclareList*;
              TYPE: type_t;
+             RELVAR: lang::RelationalVar*;
 
 %type <EXP>  expression
 %type <STMT> statement cflow statementlist
 %type <VAR>  var
+%type <RELVAR> relvar
 %type <BOOL> boolexp
 %type <RELEXP> relexpression
 %type <RELBOOL> relboolexp
@@ -82,6 +85,7 @@
 %type <DECL> declare singledeclare
 %type <DECLMAT> declaremat singledeclaremat
 %type <VARLIST> varlist matvarlist
+%type <RELVARLIST> relvarlist
 %type <DECLARELIST> declarelist
 %type <TYPE> type
 
@@ -274,7 +278,7 @@ boolexp:
   }
 ;
 
-relexpression:
+relvar:
   var ORIGINAL {
     $$ = new lang::RelationalVar(lang::relation_t::ORIGINAL, $1);
     lang_ast = $$;
@@ -283,6 +287,10 @@ relexpression:
     $$ = new lang::RelationalVar(lang::relation_t::RELAXED, $1);
     lang_ast = $$;
   }
+;
+
+relexpression:
+  relvar
 | var {
     $$ = new lang::SpecVar($1);
     lang_ast = $$;
@@ -442,6 +450,10 @@ relboolexp:
   }
 | var '(' varlist ')' {
     $$ = new lang::RelationalPropertyApplication($1, $3);
+    lang_ast = $$;
+  }
+| var '(' relvarlist ')' {
+    $$ = new lang::SpecPropertyApplication($1, $3);
     lang_ast = $$;
   }
 | '!' relboolexp {
@@ -740,6 +752,17 @@ varlist:
   }
 | var {
     $$ = new lang::VarList($1, nullptr);
+    lang_ast = $$;
+  }
+;
+
+relvarlist:
+  relvar ',' relvarlist {
+    $$ = new lang::RelationalVarList($1, $3);
+    lang_ast = $$;
+  }
+| relvar {
+    $$ = new lang::RelationalVarList($1, nullptr);
     lang_ast = $$;
   }
 ;

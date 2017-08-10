@@ -3118,6 +3118,64 @@ namespace lang {
   z3pair CHLVisitor::visit(RelationalPropertyApplication& node) {
     return visit_property_application(node, rel_properties);
   }
+
+  z3pair CHLVisitor::visit(SpecPropertyApplication& node) {
+    // Snapshot vars and spec var map
+    std::unordered_map<std::string, z3::expr*> old_vars(vars);
+    std::unordered_map<std::string, z3::func_decl*> old_vectors(vectors);
+    std::unordered_set<std::string> old_specvars(specvars);
+
+    VarList* vl_head = nullptr;
+    VarList* vl_tail = nullptr;
+    for (RelationalVarList* head = node.args; head; head = head->cdr) {
+      const RelationalVar& v = *head->car;
+      const std::string& name = v.var->name;
+
+      if (!vl_head) {
+        vl_head = new VarList(v.var, nullptr);
+        vl_tail = vl_head;
+      } else {
+        vl_tail->cdr = new VarList(v.var, nullptr);
+        vl_tail = vl_tail->cdr;
+      }
+
+      // Mark as a specvar
+      specvars.insert(name);
+
+      // Duplicate both executions to match var<relation>
+      std::string oname = name + "<o>";
+      std::string rname = name + "<r>";
+
+      oname = get_current_var_name(oname);
+      rname = get_current_var_name(rname);
+      assert(!oname.empty());
+      assert(!rname.empty());
+
+      if (vars.count(oname)) {
+        z3::expr* ovar = vars.at(oname);
+        z3::expr* rvar = vars.at(rname);
+
+        if (v.relation == ORIGINAL) vars[rname] = ovar;
+        else vars[oname] = rvar;
+      } else {
+        z3::func_decl* ovec = vectors.at(oname);
+        z3::func_decl* rvec = vectors.at(rname);
+
+        if (v.relation == ORIGINAL) vectors[rname] = ovec;
+        else vectors[oname] = rvec;
+      }
+    }
+
+    RelationalPropertyApplication prop(node.name, vl_head);
+    z3pair ret = prop.accept(*this);
+
+    // Restore
+    vars = old_vars;
+    vectors = old_vectors;
+    specvars = old_specvars;
+
+    return ret;
+  }
 }
 
 

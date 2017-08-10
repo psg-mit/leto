@@ -31,11 +31,13 @@ namespace lang {
       virtual z3pair visit(Forall &node) override;
       virtual z3pair visit(PropertyApplication &node) override;
       virtual z3pair visit(RelationalPropertyApplication &node) override;
+      virtual z3pair visit(SpecPropertyApplication &node) override;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
       virtual z3pair visit(Block &node) override {assert(false);}
       virtual z3pair visit(VarList &node) override {assert(false);}
+      virtual z3pair visit(RelationalVarList &node) override {assert(false);}
       virtual z3pair visit(StatementList &node) override {assert(false);}
       virtual z3pair visit(Var &node) override {assert(false);}
       virtual z3pair visit(Assign &node) override {assert(false);}
