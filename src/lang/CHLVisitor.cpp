@@ -9,7 +9,10 @@
 #define Z3_TMP "/tmp/constraints.smt2"
 
 static const int EXIT_RUNTIME_ERROR = 2;
-static const int TIMEOUT = 20000;
+// timeout in milliseconds
+static const int TIMEOUT = 10000;
+// Unstoppable timeout in seconds
+static const int SUPER_TIMEOUT = (TIMEOUT / 1000) * 2;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
@@ -17,7 +20,11 @@ static const int TIMEOUT = 20000;
 static std::vector<z3::expr*> IGNORE_1D = {nullptr};
 static std::vector<z3::expr*> IGNORE_2D = {nullptr, nullptr};
 static const std::string H_TMP_PREFIX = "h-tmp-";
-static const std::string Z3_BIN = "z3 -t:" + std::to_string(TIMEOUT) + " -smt2 " + Z3_TMP;
+static const std::string Z3_BIN = "timeout -s 9 " +
+                                  std::to_string(SUPER_TIMEOUT) +
+                                  "s z3 -t:" +
+                                  std::to_string(TIMEOUT) +
+                                  " -smt2 " + Z3_TMP;
 #pragma clang diagnostic pop
 
 
@@ -31,7 +38,7 @@ namespace lang {
                          std::ofstream& smt2_log_) : context(context_),
                                                      z3_log(z3_log_),
                                                      smt2_log(smt2_log_) {
-    //z3::set_param("timeout", TIMEOUT);
+    //z3::set_param(":timeout", TIMEOUT);
     z3::set_param("smt.timeout", TIMEOUT);
     solver = solver_;
     model_visitor = model_visitor_;
@@ -42,6 +49,7 @@ namespace lang {
     unsat_context = false;
     unknown_context = false;
     in_houdini = false;
+    in_weak_houdini = false;
     forall_i = new z3::expr(this->context->int_const("forall_i"));
     forall_j = new z3::expr(this->context->int_const("forall_j"));
     quantifier_ctr = 0;
@@ -59,6 +67,13 @@ namespace lang {
     assume_eq = true;
   }
 
+  static void debug_print(const std::string &str) {
+#ifndef NDEBUG
+    std::cout << str << std::endl;
+#endif
+  }
+
+
   static z3::check_result z3_bin(const std::string& constraints,
                                  bool add_check_sat) {
     int res;
@@ -75,7 +90,6 @@ namespace lang {
     // Read result
     char buf[BUF_SIZE] = {0};
     size_t read = fread(buf, 1, BUF_SIZE, stdio);
-    assert(read);
     assert(feof(stdio));
 
     // End Z3 process
@@ -88,14 +102,12 @@ namespace lang {
     if (strncmp(buf, "sat\n", BUF_SIZE) == 0) return z3::sat;
     else if (strncmp(buf, "unsat\n", BUF_SIZE) == 0) return z3::unsat;
     else if (strncmp(buf, "unknown\n", BUF_SIZE) == 0) return z3::unknown;
+    else if (!read) {
+      debug_print("killed");
+      return z3::unknown;
+    }
 
     assert(false);
-  }
-
-  static void debug_print(const std::string &str) {
-#ifndef NDEBUG
-    std::cout << str << std::endl;
-#endif
   }
 
   static void star_line() {
@@ -111,22 +123,32 @@ namespace lang {
     prefixes.pop_back();
   }
 
-  z3::expr* CHLVisitor::get_current_var(std::string name) {
-    unsigned version = var_version.at(name);
-    name += "-" + std::to_string(version);
-    return vars.at(name);
-  }
-
-  z3::func_decl* CHLVisitor::get_current_vec(std::string name) {
+  std::string CHLVisitor::get_current_var_name(std::string name) {
     unsigned version;
     try {
       version = var_version.at(name);
     } catch (const std::out_of_range&) {
+      return "";
+    }
+    return name + "-" + std::to_string(version);
+  }
+
+  z3::expr* CHLVisitor::get_current_var(std::string name) {
+    std::string vname = get_current_var_name(name);
+    if (name.empty()) {
+      std::cerr << "No such var: " << name << std::endl;
+      exit(1);
+    }
+    return vars.at(vname);
+  }
+
+  z3::func_decl* CHLVisitor::get_current_vec(std::string name) {
+    std::string vname = get_current_var_name(name);
+    if (name.empty()) {
       std::cerr << "No such matrix: " << name << std::endl;
       exit(1);
     }
-    name += "-" + std::to_string(version);
-    return vectors.at(name);
+    return vectors.at(vname);
   }
 
   z3::expr* CHLVisitor::get_previous_var(std::string name) {
@@ -142,6 +164,38 @@ namespace lang {
     unsigned version = var_version.at(name);
     name += "-" + std::to_string(version);
     return vars.count(name);
+  }
+
+  void CHLVisitor::handle_uint_read(std::string name, bool is_vec) {
+    std::string vname = get_current_var_name(name);
+    if (vname.empty()) {
+      std::cerr << "No such var: " << name << std::endl;
+      exit(1);
+    }
+    if (cached_uints.count(vname)) return;
+    cached_uints.insert(vname);
+
+    if (is_vec) {
+      const dim_vec* dim = dim_map.at(name);
+      z3::func_decl* vec = get_current_vec(name);
+      switch (dim->size()) {
+        case 1:
+          solver->add(z3::forall(*forall_i, 0 <= (*vec)(*forall_i)));
+          break;
+        case 2:
+          solver->add(z3::forall(*forall_i,
+                                 *forall_j,
+                                 0 <= (*vec)(*forall_i, *forall_j)));
+          break;
+        default:
+          assert(false);
+      }
+    } else {
+      z3::expr* var = get_current_var(name);
+      solver->add(0 <= *var);
+    }
+
+    ++constraints_generated;
   }
 
   z3::expr CHLVisitor::get_constraint(const z3::expr& constraint,
@@ -795,22 +849,8 @@ namespace lang {
           last_dim = dim_map.at(name);
 
           if (expr_type == UINT) {
-            switch (last_dim->size()) {
-              case 1:
-                add_constraint(z3::forall(*forall_i, 0 <= (*ovec)(*forall_i)));
-                add_constraint(z3::forall(*forall_i, 0 <= (*rvec)(*forall_i)));
-                break;
-              case 2:
-                add_constraint(z3::forall(*forall_i,
-                                          *forall_j,
-                                          0 <= (*ovec)(*forall_i, *forall_j)));
-                add_constraint(z3::forall(*forall_i,
-                                          *forall_j,
-                                          0 <= (*rvec)(*forall_i, *forall_j)));
-                break;
-              default:
-                assert(false);
-            }
+            handle_uint_read(oname, true);
+            handle_uint_read(rname, true);
           }
         }
         return {nullptr, nullptr};
@@ -823,8 +863,8 @@ namespace lang {
       rexpr = vars.at(rname + "-" + std::to_string(version));
 
       if (expr_type == UINT) {
-        add_constraint(0 <= *oexpr);
-        add_constraint(0 <= *rexpr);
+        handle_uint_read(oname, false);
+        handle_uint_read(rname, false);
       }
     }
 
@@ -1150,35 +1190,20 @@ namespace lang {
     if (!is_light_mat && contains_var(qname)) {
       z3::expr* ret = get_current_var(qname);
 
-      if (expr_type == UINT) add_constraint(0 <= *ret);
+      if (expr_type == UINT) handle_uint_read(qname, false);
 
       return {ret, nullptr};
     }
 
     // Working with an undereferenced array, need to do backchannel return
-    unsigned version = var_version.at(qname);
-    qname += "-" + std::to_string(version);
     if (is_light_mat) last_light_dim = light_dim_map.at(name);
     else {
-      z3::func_decl* arr = vectors.at(qname);
+      z3::func_decl* arr = get_current_vec(qname);
       last_array = {arr, nullptr};
       assert(last_array.original);
       last_dim = dim_map.at(name);
 
-      if (expr_type == UINT) {
-        switch (last_dim->size()) {
-          case 1:
-            add_constraint(z3::forall(*forall_i, 0 <= (*arr)(*forall_i)));
-            break;
-          case 2:
-            add_constraint(z3::forall(*forall_i,
-                                      *forall_j,
-                                      0 <= (*arr)(*forall_i, *forall_j)));
-            break;
-          default:
-            assert(false);
-        }
-      }
+      if (expr_type == UINT) handle_uint_read(qname, true);
     }
     return {nullptr, nullptr};
   }
@@ -1481,7 +1506,7 @@ namespace lang {
     z3_log << *solver << std::endl << std::endl;
     smt2_log << solver->to_smt2() << std::endl << std::endl;
 
-    z3::check_result res = solver->check();
+    z3::check_result res = in_weak_houdini ? z3::unknown : solver->check();
     std::cout << res << std::endl;
 
     // Clear Z3 model
@@ -1502,9 +1527,12 @@ namespace lang {
         break;
       case z3::unknown:
         {
-          std::cout << "reason: " << solver->reason_unknown() << std::endl;
+          std::cout << "reason: ";
+          if (in_weak_houdini) std::cout << "in weak houdini";
+          else std::cout << solver->reason_unknown();
+          std::cout << std::endl;
 
-          if (in_houdini) return z3::unknown;
+          if (in_houdini && !in_weak_houdini) return z3::unknown;
 
           // Try again with *solver output
           std::cout << "Trying again with *solver output...";
@@ -1672,10 +1700,8 @@ namespace lang {
     std::string rname = name + "<r>";
     unsigned version = var_version.at(oname);
     assert(version == var_version.at(rname));
-    oname += "-" + std::to_string(version);
-    rname += "-" + std::to_string(version);
-    z3::func_decl* oarray = vectors.at(oname);
-    z3::func_decl* rarray = vectors.at(rname);
+    z3::func_decl* oarray = get_current_vec(oname);
+    z3::func_decl* rarray = get_current_vec(rname);
 
     // Examine index, but be careful to remove assign flag
     bool old_in_assign = in_assign;
@@ -1787,10 +1813,8 @@ namespace lang {
         oexpr = new z3::expr((*oarray)(*i1.original));
         rexpr = new z3::expr((*rarray)(*i1.relaxed));
         if (array_type == UINT) {
-          add_constraint(z3::forall(*forall_i,
-                                    0 <= (*oarray)(*forall_i)));
-          add_constraint(z3::forall(*forall_i,
-                                    0 <= (*rarray)(*forall_i)));
+          handle_uint_read(oname, true);
+          handle_uint_read(rname, true);
         }
         break;
       case 2:
@@ -1801,12 +1825,8 @@ namespace lang {
           oexpr = new z3::expr((*oarray)(*i1.original, *i2.original));
           rexpr = new z3::expr((*rarray)(*i1.relaxed, *i2.relaxed));
           if (array_type == UINT) {
-            add_constraint(z3::forall(*forall_i,
-                                      *forall_j,
-                                      0 <= (*oarray)(*forall_i, *forall_j)));
-            add_constraint(z3::forall(*forall_i,
-                                      *forall_j,
-                                      0 <= (*rarray)(*forall_i, *forall_j)));
+            handle_uint_read(oname, true);
+            handle_uint_read(rname, true);
           }
         }
         break;
@@ -1865,9 +1885,7 @@ namespace lang {
         break;
     }
 
-    unsigned version = var_version.at(qname);
-    qname += "-" + std::to_string(version);
-    z3::func_decl* array = vectors.at(qname);
+    z3::func_decl* array = get_current_vec(qname);
     z3pair i1 = node.rhs.at(0)->accept(*this);
     assert(array);
     assert(i1.original);
@@ -1878,10 +1896,7 @@ namespace lang {
     switch (node.rhs.size()) {
       case 1:
         expr = new z3::expr((*array)(*i1.original));
-        if (expr_type == UINT) {
-          add_constraint(z3::forall(*forall_i,
-                                    0 <= (*array)(*forall_i)));
-        }
+        if (expr_type == UINT) handle_uint_read(qname, true);
         break;
       case 2:
         {
@@ -1889,11 +1904,7 @@ namespace lang {
           assert(i2.original);
           assert(!i2.relaxed);
           expr = new z3::expr((*array)(*i1.original, *i2.original));
-          if (expr_type == UINT) {
-            add_constraint(z3::forall(*forall_i,
-                                      *forall_j,
-                                      0 <= (*array)(*forall_i, *forall_j)));
-          }
+          if (expr_type == UINT) handle_uint_read(qname, true);
         }
         break;
       default:
@@ -2064,6 +2075,7 @@ namespace lang {
     // New solver state for loop
     z3::solver* old_solver = solver;
     solver = new z3::solver(*context);
+    cached_uints.clear();
 
     // Get modern inv and add it to the solver state
     h_z3pair eqs = houdini_to_constraints(node);
@@ -2121,10 +2133,13 @@ namespace lang {
     // Restore old solver
     delete solver;
     solver = old_solver;
+    cached_uints.clear();
 
     bool ret = h_res == z3::unknown || inner_h_unknown;
 
     inner_h_unknown = false;
+
+    weak_houdini_failed = weak_houdini_failed || h_res != z3::unsat;
 
     return ret;
   }
@@ -2138,6 +2153,7 @@ namespace lang {
     z3::solver* old_solver = solver;
     z3::solver path_solver(*context);
     solver = &path_solver;
+    cached_uints.clear();
 
     // Ignore  ignores
     unsigned old_ignore_original = ignore_original;
@@ -2188,6 +2204,7 @@ namespace lang {
     solver = old_solver;
     ignore_original = old_ignore_original;
     ignore_relaxed = old_ignore_relaxed;
+    cached_uints.clear();
   }
 
   h_z3pair CHLVisitor::houdini_to_constraints(const While& node) {
@@ -2252,15 +2269,34 @@ namespace lang {
                                 std::vector<T>& new_invs,
                                 std::vector<std::string>& new_tmps,
                                 While& node) {
+    PrintVisitor pv(true);
+    in_weak_houdini = true;
     for (size_t i = 0; i < old_invs.size(); ++i) {
-      size_t num_invs = cur_invs.size();
       T h_inv = old_invs.at(i);
+
+      // Detect whether we already have this invariant
+      pv.output.clear();
+      h_inv->accept(pv);
+      std::string rep = pv.output;
+      bool seen = false;
+      for (const T& inv : new_invs) {
+        pv.output.clear();
+        inv->accept(pv);
+        if (rep == pv.output) {
+          seen = true;
+          break;
+        }
+      }
+
+      if (seen) continue;
+
       std::string tmp = old_tmps.at(i);
       cur_invs.push_back(h_inv);
       tmps.push_back(tmp);
       houdini_failed = false;
       outer_h_unknown = false;
       passed_houdini_pre = false;
+      weak_houdini_failed = false;
 
       std::string str_rep = houdini_to_str();
       debug_print("Trying weak Houdini inv: " + str_rep);
@@ -2268,15 +2304,17 @@ namespace lang {
 
       node.accept(*this);
 
-      if (cur_invs.size() == num_invs + 1 && !outer_h_unknown) {
+      if (weak_houdini_failed || outer_h_unknown) {
+        cur_invs.pop_back();
+        tmps.pop_back();
+        debug_print("Rejecting weak Houdini inv: " + str_rep);
+      } else {
         new_invs.push_back(h_inv);
         new_tmps.push_back(tmp);
-
         debug_print("Saving weak Houdini inv: " + str_rep);
-      } else {
-        debug_print("Rejecting weak Houdini inv: " + str_rep);
       }
     }
+    in_weak_houdini = false;
   }
 
   void CHLVisitor::parent_inf(BoolExp* nonrel_inv, RelationalBoolExp* rel_inv) {
@@ -2458,9 +2496,15 @@ namespace lang {
       h_unknown = h_res == z3::unknown || h_unknown;
       solver->pop();
 
+      weak_houdini_failed = weak_houdini_failed || h_res != z3::unsat;
+
       if (in_houdini) {
         parse_z3_model();
-        if (houdini_failed) {
+        if (houdini_failed || h_unknown) {
+          if (h_unknown && &node.houdini_invs == cur_houdini_invs) {
+            outer_h_unknown = true;
+            houdini_failed = true;
+          }
           --while_count;
           parent_while = old_parent_while;
           return {nullptr, nullptr};
@@ -2490,6 +2534,7 @@ namespace lang {
 
     // Case 1: cond<o> && cond<r>
     switch (paths.at(0)) {
+      case z3::unknown:
       case z3::sat:
         // Check both in lockstep
         debug_print(std::to_string(while_count) + " : body cond<o> && cond<r>");
@@ -2498,12 +2543,11 @@ namespace lang {
       case z3::unsat:
         // All constraints implicitly true
         break;
-      case z3::unknown:
-        assert(false);
     }
 
     // Case 2: cond<o> && !cond<r>
     switch (paths.at(1)) {
+      case z3::unknown:
       case z3::sat:
         {
           // Recheck cond
@@ -2519,12 +2563,11 @@ namespace lang {
       case z3::unsat:
         // Do nothing
         break;
-      case z3::unknown:
-        assert(false);
     }
 
     // Case 3: !cond<o> && cond<r>
     switch (paths.at(2)) {
+      case z3::unknown:
       case z3::sat:
         {
           // Recheck cond
@@ -2540,8 +2583,6 @@ namespace lang {
       case z3::unsat:
         // Do nothing
         break;
-      case z3::unknown:
-        assert(false);
     }
 
     if (h_unknown && in_houdini && &node.houdini_invs == cur_houdini_invs) {
@@ -2885,7 +2926,7 @@ namespace lang {
   }
 
   void CHLVisitor::parse_z3_model() {
-    if (houdini_failed || !z3_model) return;
+    if (houdini_failed || !z3_model || in_weak_houdini) return;
 
     houdini_failed = true;
 

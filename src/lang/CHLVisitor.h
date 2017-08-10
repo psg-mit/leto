@@ -116,6 +116,7 @@ namespace lang {
       std::unordered_map<std::string, dim_vec*> dim_map;
       std::unordered_map<std::string, std::vector<int>*> light_dim_map;
       std::unordered_set<std::string> light_mats;
+      std::unordered_set<std::string> cached_uints;
       type_t expr_type;
       vec_pair last_array;
       std::vector<Expression*> virtual_vec;
@@ -134,7 +135,9 @@ namespace lang {
       z3::expr* forall_j;
       unsigned quantifier_ctr;
       bool in_houdini;
+      bool in_weak_houdini;
       bool houdini_failed;
+      bool weak_houdini_failed;
       z3::model* z3_model;
       size_t h_tmp;
       bool passed_houdini_pre;
@@ -239,5 +242,8 @@ namespace lang {
 
       void restore_unused_vars(const version_map& old_versions,
                                char ignore_type);
+
+      std::string get_current_var_name(std::string name);
+      void handle_uint_read(std::string name, bool is_vec);
   };
 }
