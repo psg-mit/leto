@@ -10,9 +10,9 @@ property_r sig(real sigma) :
     (sigma<r> - E < sigma<o> < sigma<r> + E)) &&
   ((mid[model.upset] == true && model.upset == true) -> eq(sigma));
 
-property_r bounded_diff_at(matrix<real> x, int index, int i, int N) :
+property_r bounded_diff_at(matrix<real> x, int index, int i) :
   -EPSILON < x<o>[index] - x<r>[index] < EPSILON &&
-  forall(fi)(((i<r> < fi < N<r>) && (fi != index)) -> x<o>[fi] == x<r>[fi]);
+  forall(fi)(((0 <= fi < i<r>) && (fi != index)) -> x<o>[fi] == x<r>[fi]);
 
 // TODO: Non_relational NZD in requires
 requires 0 < N && nzd(A)
@@ -31,7 +31,7 @@ matrix<real> jacobi(int N,
     @label(mid)
     for (int i = 0; i < N; ++i)
         (1 == 1)
-        (((out[model.upset] == false && model.upset == true) -> bounded_diff_at(next_x, upset_index, i, N)) &&
+        (((out[model.upset] == false && model.upset == true) -> bounded_diff_at(next_x, upset_index, i)) &&
          (model.upset == false -> (out[model.upset] == false)) &&
          (model.upset == false) -> eq(next_x) &&
          out[model.upset] == false -> eq(x) &&
@@ -58,7 +58,7 @@ matrix<real> jacobi(int N,
     --iters;
     x = next_x;
     relational_assert((out[model.upset] == false && model.upset == true) ->
-                        bounded_diff_at(next_x, upset_index, i, N));
+                        bounded_diff_at(next_x, upset_index, i));
   }
 
   return x;
