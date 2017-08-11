@@ -1504,12 +1504,16 @@ namespace lang {
 
   z3::check_result CHLVisitor::check(bool exit_on_sat) {
     // Log constraints
+#ifndef NDEBUG
     std::cout << *solver << std::endl;
     z3_log << *solver << std::endl << std::endl;
     smt2_log << solver->to_smt2() << std::endl << std::endl;
+#endif
 
     z3::check_result res = in_weak_houdini ? z3::unknown : solver->check();
+#ifndef NDEBUG
     std::cout << res << std::endl;
+#endif
 
     // Clear Z3 model
     delete z3_model;
@@ -1520,7 +1524,9 @@ namespace lang {
         break;
       case z3::sat:
         z3_model = new z3::model(solver->get_model());
+#ifndef NDEBUG
         std::cout << *z3_model << std::endl;
+#endif
         if(exit_on_sat) {
           ++errors;
           // TODO: Remove this
@@ -1529,20 +1535,26 @@ namespace lang {
         break;
       case z3::unknown:
         {
+#ifndef NDEBUG
           std::cout << "reason: ";
           if (in_weak_houdini) std::cout << "in weak houdini";
           else std::cout << solver->reason_unknown();
           std::cout << std::endl;
+#endif
 
           if (in_houdini && !in_weak_houdini) return z3::unknown;
 
           // Try again with *solver output
+#ifndef NDEBUG
           std::cout << "Trying again with *solver output...";
           std::cout.flush();
+#endif
           std::ostringstream constraints;
           constraints << *solver;
           res = z3_bin(constraints.str(), true);
+#ifndef NDEBUG
           std::cout << res << std::endl;
+#endif
           switch (res) {
             case z3::unsat:
               break;
@@ -1554,10 +1566,14 @@ namespace lang {
               break;
             case z3::unknown:
               // Try again with smt2 output
+#ifndef NDEBUG
               std::cout << "Trying again with smt2 output...";
               std::cout.flush();
+#endif
               res = z3_bin(solver->to_smt2(), false);
+#ifndef NDEBUG
               std::cout << res << std::endl;
+#endif
               switch (res) {
                 case z3::unsat:
                   break;
