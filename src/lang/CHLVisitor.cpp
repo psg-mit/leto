@@ -2493,7 +2493,7 @@ namespace lang {
             node.accept(*this);
           }
         } while (houdini_failed);
-        std::string houdinis = houdini_to_str(true);
+        std::string houdinis = houdini_to_str(!node.seen);
         debug_print("Found Houdini invs: " + houdinis);
 
         in_houdini = false;
@@ -2669,10 +2669,10 @@ namespace lang {
     }
     parent_while = old_parent_while;
 
-    node.seen = true;
     if (!in_houdini) {
       node.houdini_invs.clear();
       node.nonrel_houdini_invs.clear();
+      node.seen = true;
     }
     return {nullptr, nullptr};
   }
