@@ -13,6 +13,10 @@
 
 property_r trans(bool b) : (b == true) -> (model.upset == true);
 
+property_r upset2(int x) : UPSET2;
+
+property_r outer2(int x) : OUTER2;
+
 
 // TODO: Get working with pseudo-seu-range
 
@@ -39,7 +43,7 @@ matrix<real> correct_sd(int N,
   // thing out of the loop condition
   // TODO: Inference runs out of memory on this loop
   @noinf @label(outer)
-  while (r != r2) (1 == 1) (OUTER2 && IMPL2 && trans(old_upset)) {
+  while (r != r2) (1 == 1) (outer2(r) && IMPL2 && trans(old_upset)) {
     old_upset = model.upset;
 
     Ax = zeros;
@@ -53,7 +57,7 @@ matrix<real> correct_sd(int N,
     @noinf @label(middle)
     for (int i = N - 1; 0 <= i; --i)
         (1 == 1)
-        (INV && trans(old_upset)) {
+        (upset2(i) && outer2(r) && trans(old_upset)) {
       // recompute Ax[i]
       Ax[i] = 0;
       spec_Ax[i] = 0;
@@ -62,7 +66,7 @@ matrix<real> correct_sd(int N,
       @noinf @label(inner)
       for (int j = N - 1; 0 <= j; --j)
           (1 == 1)
-          (UPSET2 && trans(old_upset)) {
+          (upset2(i) && trans(old_upset)) {
         tmp = A[i][j] *. x[j];
         tmp2 = A[i][j] *. x[j];
         spec_tmp = A[i][j] * x[j];
