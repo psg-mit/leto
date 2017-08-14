@@ -262,10 +262,11 @@ namespace lang {
 
   class Forall : public BoolExp {
     public:
-      Forall(Var* var_, BoolExp* exp_) :
-          var(var_), exp(exp_) {}
+      Forall(type_t type_, Var* var_, BoolExp* exp_) :
+          type(type_), var(var_), exp(exp_) {}
       virtual z3pair accept(ASTVisitor &visitor) override;
 
+      type_t type;
       Var* var;
       BoolExp* exp;
   };
@@ -323,20 +324,22 @@ namespace lang {
 
   class RelationalForall : public RelationalBoolExp  {
     public:
-      RelationalForall(Var* var_, RelationalBoolExp* exp_) :
-          var(var_), exp(exp_) {}
+      RelationalForall(type_t type_, Var* var_, RelationalBoolExp* exp_) :
+          type(type_), var(var_), exp(exp_) {}
       virtual z3pair accept(ASTVisitor &visitor) override;
 
+      type_t type;
       Var* var;
       RelationalBoolExp* exp;
   };
 
   class RelationalExists : public RelationalBoolExp  {
     public:
-      RelationalExists(Var* var_, RelationalBoolExp* exp_) :
-          var(var_), exp(exp_) {}
+      RelationalExists(type_t type_, Var* var_, RelationalBoolExp* exp_) :
+          type(type_), var(var_), exp(exp_) {}
       virtual z3pair accept(ASTVisitor &visitor) override;
 
+      type_t type;
       Var* var;
       RelationalBoolExp* exp;
   };

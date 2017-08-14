@@ -2,7 +2,7 @@
 #define EPSILON real(10000, 1)
 
 property nzd(matrix<real> A) :
-  forall(fi)((E / EPSILON) < A[fi][fi] || A[fi][fi] < (-(E / EPSILON)));
+  forall(uint fi)((E / EPSILON) < A[fi][fi] || A[fi][fi] < (-(E / EPSILON)));
 
 property_r sig(real sigma) :
   ((model.upset == false) -> eq(sigma)) &&
@@ -12,7 +12,7 @@ property_r sig(real sigma) :
 
 property_r bounded_diff_at(matrix<real> x, int index, int i) :
   -EPSILON < x<o>[index] - x<r>[index] < EPSILON &&
-  forall(fi)(((0 <= fi < i<r>) && (fi != index)) -> x<o>[fi] == x<r>[fi]);
+  forall(uint fi)((fi < i<r> && fi != index) -> x<o>[fi] == x<r>[fi]);
 
 // TODO: Non_relational NZD in requires
 requires 0 < N && nzd(A)

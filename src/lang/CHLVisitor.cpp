@@ -2838,7 +2838,8 @@ namespace lang {
     return {res_o, res_r};
   }
 
-  z3::expr* CHLVisitor::build_quantifier_var(const std::string& name) {
+  z3::expr* CHLVisitor::build_quantifier_var(const std::string& name,
+                                             type_t type) {
     // Generate var names
     std::string oname = name + "<o>";
     std::string rname = name + "<r>";
@@ -2853,8 +2854,8 @@ namespace lang {
 
     // Add var
     // TODO: Support more than just ints
-    add_var(type_t::INT, otmp, rtmp);
-    types[name] = type_t::INT;
+    add_var(type, otmp, rtmp);
+    types[name] = type;
     specvars.insert(name);
     z3::expr* var = get_current_var(rtmp);
     assert(var);
@@ -2892,7 +2893,9 @@ namespace lang {
     assert(node.var);
     assert(node.exp);
 
-    z3::expr* var = build_quantifier_var(node.var->name);
+    type_t type = node.type;
+    z3::expr* var = build_quantifier_var(node.var->name,
+                                         type == UINT ? INT : type);
 
     // Eval expression
     z3pair exp = node.exp->accept(*this);
@@ -2900,7 +2903,20 @@ namespace lang {
     assert(!exp.relaxed);
 
     // Construct forall
-    z3::expr *ret = new z3::expr(z3::forall(*var, *exp.original));
+    z3::expr* ret;
+    switch (type) {
+      case UINT:
+        ret = new z3::expr(z3::forall(*var,
+                                      z3::implies(0 <= *var, *exp.original)));
+        break;
+      case INT:
+      case REAL:
+        ret = new z3::expr(z3::forall(*var, *exp.original));
+        break;
+      case FLOAT:
+      case BOOL:
+        assert(false);
+    }
     assert(ret);
 
     destroy_quantifier_var(node.var->name);
@@ -2914,7 +2930,9 @@ namespace lang {
     assert(node.var);
     assert(node.exp);
 
-    z3::expr* var = build_quantifier_var(node.var->name);
+    type_t type = node.type;
+    z3::expr* var = build_quantifier_var(node.var->name,
+                                         type == UINT ? INT : type);
 
     // Eval expression
     z3pair exp = node.exp->accept(*this);
@@ -2922,7 +2940,19 @@ namespace lang {
     assert(!exp.relaxed);
 
     // Construct forall
-    z3::expr *ret = new z3::expr(z3::exists(*var, *exp.original));
+    z3::expr* ret;
+    switch (type) {
+      case UINT:
+        ret = new z3::expr(z3::exists(*var, *exp.original && 0 <= *var));
+        break;
+      case INT:
+      case REAL:
+        ret = new z3::expr(z3::exists(*var, *exp.original));
+        break;
+      case FLOAT:
+      case BOOL:
+        assert(false);
+    }
     assert(ret);
 
     destroy_quantifier_var(node.var->name);
@@ -2936,7 +2966,9 @@ namespace lang {
     assert(node.var);
     assert(node.exp);
 
-    z3::expr* var = build_quantifier_var(node.var->name);
+    type_t type = node.type;
+    z3::expr* var = build_quantifier_var(node.var->name,
+                                         type == UINT ? INT : type);
 
     // Eval expression
     z3pair exp = node.exp->accept(*this);
@@ -2944,9 +2976,26 @@ namespace lang {
     assert(exp.relaxed);
 
     // Construct forall
-    z3::expr *original = new z3::expr(z3::forall(*var, *exp.original));
+    z3::expr *original = nullptr;
+    z3::expr *relaxed = nullptr;
+    switch (type) {
+      case UINT:
+        original = new z3::expr(z3::forall(*var, z3::implies(0 <= *var,
+                                                             *exp.original)));
+        relaxed = new z3::expr(z3::forall(*var, z3::implies(0 <= *var,
+                                                            *exp.relaxed)));
+        break;
+      case INT:
+      case REAL:
+        original = new z3::expr(z3::forall(*var, *exp.original));
+        relaxed = new z3::expr(z3::forall(*var, *exp.relaxed));
+        break;
+      case FLOAT:
+      case BOOL:
+        assert(false);
+    }
+
     assert(original);
-    z3::expr *relaxed = new z3::expr(z3::forall(*var, *exp.relaxed));
     assert(relaxed);
 
     destroy_quantifier_var(node.var->name);

@@ -484,12 +484,15 @@ namespace lang {
 
   template<typename T>
   void PrintVisitor::print_forall(T& node, std::string type) {
-    if (compress) {
-      output += "forall(";
-    } else {
-      printf("%s:\n", type.c_str());
-      printf("  var:\n");
-    }
+    if (compress) output += "forall(";
+    else printf("%s:\n", type.c_str());
+
+
+    if (!compress) printf("  type: ");
+    print_type(node.type);
+
+    if (!compress) printf("  var:\n");
+
     node.var->accept(*this);
     if (compress) output += ")(";
     else printf("  exp:\n");
@@ -508,12 +511,13 @@ namespace lang {
   }
 
   z3pair PrintVisitor::visit(RelationalExists &node) {
-    if (compress) {
-      output += "exists(";
-    } else {
-      printf("RelationalExists:\n");
-      printf("  var:\n");
-    }
+    if (compress) output += "exists(";
+    else printf("RelationalExists:\n");
+
+    if (!compress) printf("  type:");
+    print_type(node.type);
+
+    if (!compress) printf("  var:\n");
     node.var->accept(*this);
     if (compress) output += ")(";
     else printf("  exp:\n");

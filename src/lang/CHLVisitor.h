@@ -224,7 +224,8 @@ namespace lang {
 
       std::string houdini_to_str(bool count=false);
 
-      z3::expr* build_quantifier_var(const std::string& name);
+      z3::expr* build_quantifier_var(const std::string& name,
+                                     type_t type);
       void destroy_quantifier_var(const std::string& name);
 
       template<typename T>

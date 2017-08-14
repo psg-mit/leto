@@ -1,20 +1,20 @@
 #define MAX_N 10000
 
 property_r vec_bound(matrix<uint> V, uint to) :
-  forall(fi)((0 <= fi < to<o>) -> (V<o>[fi] <= fi));
+  forall(uint fi)(fi < to<o> -> (V<o>[fi] <= fi));
 
 property_r large_error_r(matrix<uint> x, uint v) :
-  forall(fi)((0 <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
+  forall(uint fi)(fi < v<r> -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
 
 property_r outer_spec(uint to,
                       uint N,
                       matrix<uint> next_CC,
                       matrix<uint> CC,
                       matrix<uint> adj) :
-  forall(fi)((0 <= fi < to) ->
-      (forall(fj)((0 <= fj < N && adj[fi][fj] == 1) -> next_CC[fi] <= CC[fj]) &&
+  forall(uint fi)(fi < to ->
+      (forall(uint fj)((fj < N && adj[fi][fj] == 1) -> next_CC[fi] <= CC[fj]) &&
        next_CC[fi] <= CC[fi] &&
-       (exists(ej)(next_CC[fi] == CC[ej] && 0 <= ej < N && adj[fi][ej] == 1) ||
+       (exists(uint ej)(next_CC[fi] == CC[ej] && ej < N && adj[fi][ej] == 1) ||
         next_CC[fi] == CC[fi])));
 
 property_r inner_spec(uint to,
@@ -23,9 +23,9 @@ property_r inner_spec(uint to,
                       matrix<uint> next_CC,
                       matrix<uint> CC,
                       matrix<uint> adj) :
-  forall(fi)((0 <= fi < to && adj[v][fi] == 1) -> next_CC[v] <= CC[fi]) &&
+  forall(uint fi)((fi < to && adj[v][fi] == 1) -> next_CC[v] <= CC[fi]) &&
   next_CC[v] <= CC[v] &&
-  (exists(ei)(next_CC[v] == CC[ei] && 0 <= ei < N && adj[v][ei] == 1) ||
+  (exists(uint ei)(next_CC[v] == CC[ei] && ei < N && adj[v][ei] == 1) ||
    next_CC[v] == CC[v]);
 
 requires N < MAX_N
@@ -61,7 +61,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
     for (uint v = 0; v < N; ++v)
         (1 == 1)
         (vec_bound(next_CC, N) &&
-         forall(fi)((v<o> <= fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
+         forall(uint fi)((v<o> <= fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
          outer_spec(v<o>, N<o>, next_CC<o>, CC<o>, adj<o>) &&
          large_error_r(next_CC, N)) {
       // Line 8: for each u in adj(v) do:
@@ -69,7 +69,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
       @label(inner_faulty)
       for (uint j = 0; j < N; ++j)
           (v < N && N < MAX_N)
-          (forall(fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
+          (forall(uint fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
            inner_spec(j<o>, v<o>, N<o>, next_CC<o>, CC<o>, adj<o>) && eq(j)) {
 
         // Line 9: if CC^{i-1}[u] < CC^{i}[v] then
@@ -89,7 +89,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
         (1 == 1)
         (outer_spec(v<r>, N<r>, corrected_next_CC<r>, CC<r>, adj<r>) &&
          eq(N) && eq(CC) && eq(adj) && eq(v) &&
-         forall(fi)(((0 <= fi < v<r>) -> (corrected_next_CC<r>[fi] == corrected_next_CC<o>[fi]))) &&
+         forall(uint fi)((fi < v<r> -> (corrected_next_CC<r>[fi] == corrected_next_CC<o>[fi]))) &&
          eq(N_s) &&
          vec_bound(next_CC, N) &&
          large_error_r(next_CC, N) &&

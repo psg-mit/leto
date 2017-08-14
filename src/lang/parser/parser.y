@@ -271,8 +271,8 @@ boolexp:
   $$ = $2;
   lang_ast = $2;
 }
-| FORALL '(' var ')' '(' boolexp ')' {
-    $$ = new lang::Forall($3, $6);
+| FORALL '(' type var ')' '(' boolexp ')' {
+    $$ = new lang::Forall($3, $4, $7);
     lang_ast = $$;
   }
 | var '(' varlist ')' {
@@ -441,12 +441,12 @@ relboolexp:
     $$ = $2;
     lang_ast = $$;
   }
-| FORALL '(' var ')' '(' relboolexp ')' {
-    $$ = new lang::RelationalForall($3, $6);
+| FORALL '(' type var ')' '(' relboolexp ')' {
+    $$ = new lang::RelationalForall($3, $4, $7);
     lang_ast = $$;
   }
-| EXISTS '(' var ')' '(' relboolexp ')' {
-    $$ = new lang::RelationalExists($3, $6);
+| EXISTS '(' type var ')' '(' relboolexp ')' {
+    $$ = new lang::RelationalExists($3, $4, $7);
     lang_ast = $$;
   }
 | EQ '(' var ')' {
