@@ -95,9 +95,8 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
          large_error_r(next_CC, N) &&
          outer_spec(N<o>, N<o>, next_CC<o>, CC<o>, adj<o>)) {
 
-      if (next_CC[v] <= v) {
-        corrected_next_CC[v] = next_CC[v];
-      } else {
+      corrected_next_CC[v] = next_CC[v];
+      if (v < corrected_next_CC[v]) {
         corrected_next_CC[v] = CC[v];
         // Line 16: for each u in adj(v) do
         @label(inner_correction) for (uint j = 0; j < N; ++j)
