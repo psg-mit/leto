@@ -85,12 +85,12 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
 
     // Line 13: for each v in V do
     matrix<uint> corrected_next_CC(N);
-    @noinf @label(outer_correction) for (uint v = 0; v < N; ++v)
+    @label(outer_correction) for (uint v = 0; v < N; ++v)
         (1 == 1)
         (outer_spec(v<r>, N<r>, corrected_next_CC<r>, CC<r>, adj<r>) &&
-         eq(N) && eq(CC) && eq(adj) && eq(v) &&
+         //eq(N) && eq(CC) && eq(adj)
          forall(uint fi)((fi < v<r> -> (corrected_next_CC<r>[fi] == corrected_next_CC<o>[fi]))) &&
-         eq(N_s) &&
+         eq(N_s) && eq(v) &&
          vec_bound(next_CC, N) &&
          large_error_r(next_CC, N) &&
          outer_spec(N<o>, N<o>, next_CC<o>, CC<o>, adj<o>)) {
