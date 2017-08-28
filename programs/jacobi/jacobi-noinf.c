@@ -48,7 +48,7 @@ matrix<real> jacobi(int N,
            eq(A) && eq(N) && eq(i) &&
            (out[model.upset] == false -> eq(x))) {
         if (i != j) {
-          real delta = A[i][j] *. x[j];
+          real delta = A[i][j] * x[j];
           sigma = sigma +. delta;
         }
       }

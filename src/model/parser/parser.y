@@ -33,6 +33,7 @@
              BOOLEXP: model::BoolExp*;
              VARLIST: model::VarList*;
              OP:      operator_t;
+             SIZE:    int;
 
 %type <OP>      op
 %type <EXP>     expression
@@ -40,6 +41,7 @@
 %type <STMT>    statement
 %type <BOOLEXP> boolexp
 %type <VARLIST> varlist
+%type <SIZE> size
 
 %%
 
@@ -50,6 +52,12 @@ op:
 | '-' { $$ = RMINUS; }
 | '*' { $$ = RTIMES; }
 | '/' { $$ = RDIV; }
+;
+
+size:
+  NUMBER {
+    $$ = stoi(d_scanner.matched());
+  }
 ;
 
 expression:
@@ -92,6 +100,14 @@ expression:
   }
 | OLD '(' var ')' {
     $$ = new model::Old($3);
+    model_ast = $$;
+  }
+| '(' expression ')' {
+    $$ = $2;
+    model_ast = $$;
+  }
+| REAL '(' size ',' size ')' {
+    $$ = new model::Real($3, $5);
     model_ast = $$;
   }
 ;
@@ -139,6 +155,10 @@ boolexp:
     model::BoolBinOp* lhs = new model::BoolBinOp(model::bool_t::LTEQ, $1, $3);
     model::BoolBinOp* rhs = new model::BoolBinOp(model::bool_t::LTEQ, $3, $5);
     $$ = new model::BoolBinOp(model::bool_t::AND, lhs, rhs);
+    model_ast = $$;
+  }
+| '(' boolexp ')' {
+    $$ = $2;
     model_ast = $$;
   }
 ;

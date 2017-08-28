@@ -139,6 +139,15 @@ namespace model {
     return res;
   }
 
+  z3::expr* Z3Visitor::visit(const Real &node) {
+    assert(node.denominator);
+    z3::expr* res = new z3::expr(context->real_val(node.numerator,
+                                                   node.denominator));
+
+    assert(res);
+    return res;
+  }
+
   z3::expr* Z3Visitor::visit(const Float &node) {
     z3::expr* res = float_val(context, node.value);
     expr_type = FLOAT;

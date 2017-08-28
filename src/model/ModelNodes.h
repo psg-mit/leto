@@ -30,6 +30,16 @@ namespace model {
       const int value;
   };
 
+  class Real : public Expression {
+    public:
+      Real(int numerator_, int denominator_) :
+          numerator(numerator_), denominator(denominator_) {}
+      virtual z3::expr* accept(ASTVisitor &visitor) const override;
+
+      int numerator;
+      int denominator;
+  };
+
   class Float : public Expression {
     public:
       Float(float value_) : value(value_) {}

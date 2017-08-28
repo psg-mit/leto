@@ -38,6 +38,7 @@ namespace model {
       virtual z3::expr* visit(const Operator &node);
       virtual z3::expr* visit(const VarList &node);
       virtual z3::expr* visit(const Old &node);
+      virtual z3::expr* visit(const Real &node);
 
       void prep_op(operator_t op, z3::expr* arg1_, z3::expr* arg2_);
       bool prepped();

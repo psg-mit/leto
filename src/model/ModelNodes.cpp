@@ -53,4 +53,8 @@ namespace model {
   z3::expr* Old::accept(ASTVisitor &visitor) const {
     return visitor.visit(*this);
   }
+
+  z3::expr* Real::accept(ASTVisitor &visitor) const {
+    return visitor.visit(*this);
+  }
 }
