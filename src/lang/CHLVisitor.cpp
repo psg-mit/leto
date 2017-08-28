@@ -2394,6 +2394,8 @@ namespace lang {
     z3pair inv = {nullptr, nullptr};
     z3pair nonrel_inv = {nullptr, nullptr};
     if (!in_houdini) {
+      model_visitor->add_frame(node.label->name);
+
       // Verify invariant at top of loop
       inv = node.inv->accept(*this);
       assert(inv.original);
