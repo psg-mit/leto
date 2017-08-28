@@ -54,9 +54,6 @@ matrix<real> correct_sd(int N,
         (1 == 1)
         (upset2(i) && outer2(r) && trans(r)) {
       // recompute Ax[i]
-      Ax[i] = 0;
-      spec_Ax[i] = 0;
-      Ax2[i] = 0;
       // TODO: Inference runs out of memory on this loop
       @noinf @label(inner)
       for (int j = 0; j < N; ++j)
