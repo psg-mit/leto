@@ -50,7 +50,7 @@ matrix<real> correct_sd(int N,
 
     // TODO: Inference runs out of memory on this loop
     @noinf @label(middle)
-    for (int i = N - 1; 0 <= i; --i)
+    for (int i = 0; i < N; ++i)
         (1 == 1)
         (upset2(i) && outer2(r) && trans(r)) {
       // recompute Ax[i]
@@ -59,7 +59,7 @@ matrix<real> correct_sd(int N,
       Ax2[i] = 0;
       // TODO: Inference runs out of memory on this loop
       @noinf @label(inner)
-      for (int j = N - 1; 0 <= j; --j)
+      for (int j = 0; j < N; ++j)
           (1 == 1)
           (upset2(i) && trans(r)) {
         tmp = A[i][j] *. x[j];
