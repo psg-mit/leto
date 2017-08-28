@@ -21,7 +21,7 @@ property_r outer2(int x) : OUTER2;
 // TODO: Get working with pseudo-seu-range
 
 requires 1 == 1
-r_requires 1 == 1
+r_requires model.upset == false
 matrix<real> correct_sd(int N,
                         matrix<real> A(N, N),
                         matrix<real> b(N),
@@ -82,7 +82,7 @@ matrix<real> correct_sd(int N,
     }
   }
 
-  relational_assert ((init_upset == false) -> SPEQR(r));
+  relational_assert (SPEQR(r));
 
   return r;
 }
