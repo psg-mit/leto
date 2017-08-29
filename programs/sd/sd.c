@@ -4,19 +4,18 @@ property_r upset2(matrix<real> r, matrix<real> r2, matrix<real> spec_r,
                   matrix<real> Ax, matrix<real> Ax2, matrix<real> spec_Ax) :
   ((outer[model.upset] == false && model.upset == true) ->
     ((r<r> == spec_r && Ax<r> == spec_Ax) || (r2<r> == spec_r && Ax2<r> == spec_Ax))) &&
-  ((model.upset == false) -> (r<r> == spec_r && r2<r> == spec_r && Ax<r> == spec_Ax && Ax2<r> == spec_Ax)) &&
-  ((model.upset == true && outer[model.upset] == true) ->
+  ((model.upset == false || outer[model.upset] == true) ->
     (r<r> == spec_r && r2<r> == spec_r && Ax<r> == spec_Ax && Ax2<r> == spec_Ax));
 
 property_r outer(matrix<real> r, matrix<real> spec_r) :
   ((model.upset == false) -> r<r> == spec_r) &&
-  ((model.upset == true && outer[model.upset] == true) -> r<r> == spec_r);
+  ((outer[model.upset] == true) -> r<r> == spec_r);
 
 
 // TODO: Get working with pseudo-seu-range
 
 requires 1 == 1
-r_requires model.upset == false
+r_requires 1 == 1
 matrix<real> correct_sd(int N,
                         matrix<real> A(N, N),
                         matrix<real> b(N),
