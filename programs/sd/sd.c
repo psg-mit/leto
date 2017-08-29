@@ -1,21 +1,16 @@
-#define SPEQR(x) x<r> == spec_r
-#define SPEQAX(Ax) Ax<r> == spec_Ax
+property_r trans(bool nil) : (outer[model.upset] == true) -> (model.upset == true);
 
-#define OUTER2 ((model.upset == false) -> SPEQR(r)) && \
-               ((model.upset == true && outer[model.upset] == true) -> SPEQR(r))
+property_r upset2(matrix<real> r, matrix<real> r2, matrix<real> spec_r,
+                  matrix<real> Ax, matrix<real> Ax2, matrix<real> spec_Ax) :
+  ((outer[model.upset] == false && model.upset == true) ->
+    ((r<r> == spec_r && Ax<r> == spec_Ax) || (r2<r> == spec_r && Ax2<r> == spec_Ax))) &&
+  ((model.upset == false) -> (r<r> == spec_r && r2<r> == spec_r && Ax<r> == spec_Ax && Ax2<r> == spec_Ax)) &&
+  ((model.upset == true && outer[model.upset] == true) ->
+    (r<r> == spec_r && r2<r> == spec_r && Ax<r> == spec_Ax && Ax2<r> == spec_Ax));
 
-#define UPSET2 ((outer[model.upset] == false && model.upset == true) -> ((SPEQR(r) && SPEQAX(Ax)) || (SPEQR(r2) && SPEQAX(Ax2)))) && \
-               ((model.upset == false) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2))) && \
-               ((model.upset == true && outer[model.upset] == true) -> (SPEQR(r) && SPEQR(r2) && SPEQAX(Ax) && SPEQAX(Ax2)))
-#define INV UPSET2 && OUTER2
-
-#define IMPL2 ((r<r> == r2<r>) -> SPEQR(r))
-
-property_r trans(bool b) : (outer[model.upset] == true) -> (model.upset == true);
-
-property_r upset2(int x) : UPSET2;
-
-property_r outer2(int x) : OUTER2;
+property_r outer(matrix<real> r, matrix<real> spec_r) :
+  ((model.upset == false) -> r<r> == spec_r) &&
+  ((model.upset == true && outer[model.upset] == true) -> r<r> == spec_r);
 
 
 // TODO: Get working with pseudo-seu-range
@@ -27,20 +22,28 @@ matrix<real> correct_sd(int N,
                         matrix<real> b(N),
                         matrix<real> x(N)) {
   matrix<real> zeros(N);
+  @noinf @label(zero_init) for (int i = 0; i < N; ++i) (1 == 1) (1 == 1) {
+    zeros[i] = 0;
+  }
 
-  matrix<real> Ax(N), r(N), Ax2(N), r2(N);
-  real tmp, tmp2;
+  matrix<real> r(N), r2(N);
 
   // Specvars
-  specvar real spec_tmp;
-  specvar matrix<real> spec_Ax(N), spec_r(N);
+  specvar matrix<real> spec_r(N);
   spec_r = r;
 
-  // TODO: r == r2 -> (old_upset == model.upset)?  Then I could take this upset
-  // thing out of the loop condition
+  bool run = false;
+
   // TODO: Inference runs out of memory on this loop
   @noinf @label(outer)
-  while (r != r2) (1 == 1) (outer2(r) && IMPL2 && trans(r)) {
+  while (run == false || r != r2)
+        (1 == 1)
+        (outer(r, spec_r) && ((r<r> == r2<r>) -> r<r> == spec_r) && trans(r)) {
+    run = true;
+
+    matrix<real> Ax(N), Ax2(N);
+    specvar matrix<real> spec_Ax(N);
+
     Ax = zeros;
     Ax2 = zeros;
     spec_Ax = zeros;
@@ -52,16 +55,16 @@ matrix<real> correct_sd(int N,
     @noinf @label(middle)
     for (int i = 0; i < N; ++i)
         (1 == 1)
-        (upset2(i) && outer2(r) && trans(r)) {
+        (upset2(r, r2, spec_r, Ax, Ax2, spec_Ax) && outer(r, spec_r) && trans(r)) {
       // recompute Ax[i]
       // TODO: Inference runs out of memory on this loop
       @noinf @label(inner)
       for (int j = 0; j < N; ++j)
           (1 == 1)
-          (upset2(i) && trans(r)) {
-        tmp = A[i][j] *. x[j];
-        tmp2 = A[i][j] *. x[j];
-        spec_tmp = A[i][j] * x[j];
+          (upset2(r, r2, spec_r, Ax, Ax2, spec_Ax) && trans(r)) {
+        real tmp = A[i][j] *. x[j];
+        real tmp2 = A[i][j] *. x[j];
+        specvar real spec_tmp = A[i][j] * x[j];
 
         Ax[i] = Ax[i] +. tmp;
         Ax2[i] = Ax2[i] +. tmp2;
@@ -74,7 +77,7 @@ matrix<real> correct_sd(int N,
     }
   }
 
-  relational_assert (SPEQR(r));
+  relational_assert (r<r> == spec_r);
 
   return r;
 }
