@@ -8,8 +8,7 @@ property_r upset2(matrix<real> r, matrix<real> r2, matrix<real> spec_r,
     (r<r> == spec_r && r2<r> == spec_r && Ax<r> == spec_Ax && Ax2<r> == spec_Ax));
 
 property_r outer(matrix<real> r, matrix<real> spec_r) :
-  ((model.upset == false) -> r<r> == spec_r) &&
-  ((outer[model.upset] == true) -> r<r> == spec_r);
+  ((model.upset == false || outer[model.upset] == true) -> r<r> == spec_r);
 
 
 // TODO: Get working with pseudo-seu-range

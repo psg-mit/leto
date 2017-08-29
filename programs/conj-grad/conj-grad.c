@@ -1,19 +1,5 @@
 #define SQR_MIN_MAX_AIJ 2
 
-#define COMPUTE_X_R \
-  @noinf @label(xr) for (i = N - 1; 0 <= i; --i) (5 == 5) (5 == 5) { \
-    tmp = alpha * p[i]; \
-    next_x[i] = x[i] + tmp; \
-    tmp = alpha * q[i]; \
-    next_r[i] = r[i] - tmp; \
-  }
-
-#define COMPUTE_P \
-  @noinf @label(p) for (i = N - 1; 0 <= i; --i) (7 == 7) (7 == 7) { \
-    tmp = beta * p[i]; \
-    next_p[i] = next_r[i] + tmp; \
-  }
-
 property_r sqr_lt(matrix<real> v, int i) :
   ((q<r>[i<r>] - q<o>[i<o>]) * (q<r>[i<r>] - q<o>[i<o>])) < SQR_MIN_MAX_AIJ;
 
@@ -61,7 +47,6 @@ matrix<real> ss_cg(int N,
   // Spec vars
   specvar matrix<real> spec_r(N), spec_q(N);
   specvar real spec_tmp;
-  specvar bool old_upset;
 
   int it = 0;
 
@@ -91,8 +76,6 @@ matrix<real> ss_cg(int N,
     if (man_mod == F) {
       // Line 4: [r, q] = A * [x, p]
       // DMR to compute r and q
-      old_upset = model.upset;
-
       r2 = r;
       spec_r = r;
       q2 = q;
@@ -107,22 +90,11 @@ matrix<real> ss_cg(int N,
              dmr_imp(q, q2, spec_q)) {
         not_run = false;
 
-        // Zero out sum destinations
-        r = zeros;
-        r2 = zeros;
-        spec_r = zeros;
-        q = zeros;
-        q2 = zeros;
-        spec_q = zeros;
-
         // TODO: Inference runs out of memory.
-        @noinf @label(middle_dmr)
+        @label(middle_dmr)
         for (int i = N - 1; 0 <= i; --i)
             (2 == 2)
-            (((model.upset == false) -> (dmr_eq(r, r2, spec_r) &&
-                                        dmr_eq(q, q2, spec_q))) &&
-             dmr_imp(r, r2, spec_r) &&
-             dmr_imp(q, q2, spec_q)) {
+            (2 == 2) {
 
           @label(inner_dmr) for (int j = N - 1; 0 <= j; --j) (1 == 1) (1 == 1) {
             // Compute r
@@ -144,8 +116,8 @@ matrix<real> ss_cg(int N,
         }
       }
 
-      relational_assert (old_upset == false -> (r<r> == spec_r));
-      relational_assert (old_upset == false -> (q<r> == spec_q));
+      relational_assert (outer_while[model.upset] == false -> (r<r> == spec_r));
+      relational_assert (outer_while[model.upset] == false -> (q<r> == spec_q));
 
       // Line 5: r = b - r
       @noinf @label(l5)
@@ -163,7 +135,12 @@ matrix<real> ss_cg(int N,
 
       // Line 7: next_x = x + alpha * p
       // Line 8: next_r = r - alpha * q
-      COMPUTE_X_R
+      @noinf @label(xra) for (i = 0; i  < N; ++i) (5 == 5) (5 == 5) {
+        tmp = alpha * p[i];
+        next_x[i] = x[i] + tmp;
+        tmp = alpha * q[i];
+        next_r[i] = r[i] - tmp;
+      }
 
       // Line 9: beta = (-next_r^T * q) / (p^t * q)
       num = 0;
@@ -181,7 +158,10 @@ matrix<real> ss_cg(int N,
       beta = num / denom;
 
       // Line 10: next_p = next_r + beta * p
-      COMPUTE_P
+      @noinf @label(pa) for (i = 0; i < N; ++i) (7 == 7) (7 == 7) {
+        tmp = beta * p[i];
+        next_p[i] = next_r[i] + tmp;
+      }
     } else {
       // Line 12: q = A * p;
       @label(outer_err)
@@ -191,15 +171,13 @@ matrix<real> ss_cg(int N,
         for (int j = N - 1; 0 <= j; --j)
             (-1 <= j < N && 0 <= i < N)
             ((model.upset == false && eq(p)) -> q<r>[i<r>] == q<o>[i<o>]) {
-          old_upset = model.upset;
-
           // Compute q
           tmp = A[i][j] *. p[j];
           q[i] = q[i] +. tmp;
 
           // For verification that error is sufficiently small
           // TODO: This needs to be adjusted for non SEU models
-          relational_assert((old_upset == false && eq(p)) -> sqr_lt(q, i));
+          relational_assert((inner_err[model.upset] == false && eq(p)) -> sqr_lt(q, i));
         }
       }
 
@@ -216,7 +194,12 @@ matrix<real> ss_cg(int N,
 
       // Line 14: next_x = x + alpha * p
       // Line 15: next_r = r - alpha * q
-      COMPUTE_X_R
+      @noinf @label(xrb) for (i = 0; i  < N; ++i) (5 == 5) (5 == 5) {
+        tmp = alpha * p[i];
+        next_x[i] = x[i] + tmp;
+        tmp = alpha * q[i];
+        next_r[i] = r[i] - tmp;
+      }
 
       // Line 16: beta = ||next_r||^2 / ||r||^2
       num = 0;
@@ -232,7 +215,10 @@ matrix<real> ss_cg(int N,
       beta = num / denom;
 
       // Line 17: next_p = next_r + beta * p
-      COMPUTE_P
+      @noinf @label(pb) for (i = 0; i < N; ++i) (7 == 7) (7 == 7) {
+        tmp = beta * p[i];
+        next_p[i] = next_r[i] + tmp;
+      }
     }
     ++it;
 
