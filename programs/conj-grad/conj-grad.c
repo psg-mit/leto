@@ -96,11 +96,11 @@ matrix<real> ss_cg(int N,
 
         // TODO: Inference runs out of memory.
         @label(middle_dmr)
-        for (int i = N - 1; 0 <= i; --i)
+        for (int i = 0; i < N; ++i)
             (2 == 2)
             (2 == 2) {
 
-          @label(inner_dmr) for (int j = N - 1; 0 <= j; --j) (1 == 1) (1 == 1) {
+          @label(inner_dmr) for (int j = 0; j < N; ++j) (1 == 1) (1 == 1) {
             // Compute r
             tmp = A[i][j] *. x[j];
             tmp2 = A[i][j] *. x[j];
@@ -125,12 +125,12 @@ matrix<real> ss_cg(int N,
 
       // Line 5: r = b - r
       @noinf @label(l5)
-      for (int i = N - 1; 0 <= i; --i) (1 == 1) (3 == 3) { r[i] = b[i] - r[i]; }
+      for (int i = 0; i < N; ++i) (1 == 1) (3 == 3) { r[i] = b[i] - r[i]; }
 
       // Line 6: alpha = (r^T * p) / (p^T * q)
       num = 0;
       denom = 0;
-      @noinf @label(l6) for (int i = N - 1; 0 <= i; --i) (1 == 1) (4 == 4) {
+      @noinf @label(l6) for (int i = 0; i < N; ++i) (1 == 1) (4 == 4) {
         tmp = r[i] * p[i];
         num = num + tmp;
         denom = p[i] * q[i];
@@ -149,7 +149,7 @@ matrix<real> ss_cg(int N,
       // Line 9: beta = (-next_r^T * q) / (p^t * q)
       num = 0;
       denom = 0;
-      @noinf @label(l9) for (int i = N - 1; 0 <= i; --i) (1 == 1) (6 == 6) {
+      @noinf @label(l9) for (int i = 0; i < N; ++i) (1 == 1) (6 == 6) {
         // Compute num
         tmp = -next_r[i];
         tmp = tmp * q[i];
@@ -169,11 +169,11 @@ matrix<real> ss_cg(int N,
     } else {
       // Line 12: q = A * p;
       @label(outer_err)
-      for (int i = N - 1; 0 <= i; --i) (-1 <= i < N) (eq(i)) {
+      for (int i = 0; i < N; ++i) (0 <= i <= N) (eq(i)) {
         q[i] = 0;
         @label(inner_err)
-        for (int j = N - 1; 0 <= j; --j)
-            (-1 <= j < N && 0 <= i < N)
+        for (int j = 0; j < N; ++j)
+            (0 <= j <= N && 0 <= i < N)
             ((model.upset == false && eq(p)) -> q<r>[i<r>] == q<o>[i<o>]) {
           // Compute q
           tmp = A[i][j] *. p[j];
@@ -189,7 +189,7 @@ matrix<real> ss_cg(int N,
       num = 0;
       denom = 0;
       @noinf @label(l13)
-      for (int i = N - 1; 0 <= i; --i) (10 == 10) (10 == 10) {
+      for (int i = 0; i < N; ++i) (10 == 10) (10 == 10) {
         tmp = r[i] * r[i];
         num = num + tmp;
         denom = p[i] * q[i];
@@ -209,7 +209,7 @@ matrix<real> ss_cg(int N,
       num = 0;
       denom = 0;
       @noinf @label(l16)
-      for (int i = N - 1; 0 <= i; --i) (12 == 12) (12 == 12) {
+      for (int i = 0; i < N; ++i) (12 == 12) (12 == 12) {
         // Compute num
         num = next_r[i] * next_r[i];
 
