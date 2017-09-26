@@ -22,7 +22,7 @@ matrix<real> ss_cg(int N,
   matrix<real> r(N), p(N);
 
   // Introduced line 4
-  matrix<real> r2(N), q(N), q2(N);
+  matrix<real> q(N);
 
   // Introduced line 6
   real alpha;
@@ -45,7 +45,6 @@ matrix<real> ss_cg(int N,
   matrix<real> zeros(N);
 
   // Spec vars
-  specvar matrix<real> spec_r(N), spec_q(N);
   specvar real spec_tmp;
 
   int it = 0;
@@ -76,16 +75,21 @@ matrix<real> ss_cg(int N,
     if (man_mod == F) {
       // Line 4: [r, q] = A * [x, p]
       // DMR to compute r and q
-      r2 = r;
-      spec_r = r;
-      q2 = q;
-      spec_q = q;
+      matrix<real> r2(N), q2(N);
+      specvar matrix<real> spec_r(N), spec_q(N);
+
+      r = zeros;
+      r2 = zeros;
+      spec_r = zeros;
+      q = zeros;
+      q2 = zeros;
+      spec_q = zeros;
       bool not_run = true;
       @noinf @label(outer_dmr)
       while (not_run == true || r != r2 || q != q2)
             (2 == 2)
             (((model.upset == false) -> (dmr_eq(r, r2, spec_r) &&
-                                        dmr_eq(q, q2, spec_q))) &&
+                                         dmr_eq(q, q2, spec_q))) &&
              dmr_imp(r, r2, spec_r) &&
              dmr_imp(q, q2, spec_q)) {
         not_run = false;
