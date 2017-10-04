@@ -2101,6 +2101,8 @@ namespace lang {
   }
 
   bool CHLVisitor::check_loop(While &node, z3::expr cond) {
+    assert(!ignore_relaxed);
+
     if (inner_h_unknown) {
       return true;
     }
@@ -2130,7 +2132,7 @@ namespace lang {
     assert(nonrel_inv.original);
     assert(nonrel_inv.relaxed);
     if (!ignore_original) add_constraint(*nonrel_inv.original);
-    if (!ignore_relaxed) add_constraint(*nonrel_inv.relaxed);
+    add_constraint(*nonrel_inv.relaxed);
 
     // Add cond to state
     add_constraint(cond);
@@ -2159,12 +2161,9 @@ namespace lang {
       debug_print("Post body invariant: " + label);
       solver->push();
       if (!ignore_original) add_constraint(*nonrel_inv.original);
-      if (ignore_relaxed) add_checked_constraint(*inv.original);
-      else add_checked_constraint(*inv.original && *nonrel_inv.relaxed);
+      add_checked_constraint(*inv.original && *nonrel_inv.relaxed);
       check();
       solver->pop();
-
-
     }
 
     // Restore old solver
@@ -2186,6 +2185,7 @@ namespace lang {
                               z3::expr& inv,
                               const While& node,
                               std::array<z3::check_result, 3>& results) {
+    assert(!ignore_relaxed);
     const std::string& label = node.label->name;
 
     // New solver for evaluating legal paths
@@ -2196,7 +2196,6 @@ namespace lang {
 
     // Ignore  ignores
     unsigned old_ignore_original = ignore_original;
-    unsigned old_ignore_relaxed = ignore_relaxed;
 
     // Add inv to virgin solver
     path_solver.add(inv);
@@ -2206,35 +2205,34 @@ namespace lang {
     path_solver.add(*houdini.assumes);
     path_solver.add(*houdini.asserts);
 
-    // Case 1: cond<o> && cond<r>
-    if (!ignore_original && !ignore_relaxed) {
+    if (!ignore_original) {
+      // Case 1: cond<o> && cond<r>
       path_solver.push();
       path_solver.add(original);
       path_solver.add(relaxed);
       debug_print(label + " : check path cond<o> && cond<r>");
       results.at(0) = check(false);
       path_solver.pop();
-    } else results.at(0) = z3::unsat;
 
-    // Case 2: cond<o> && !cond<r>
-    if (!ignore_original) {
+      // Case 2: cond<o> && !cond<r>
       path_solver.push();
       path_solver.add(original);
       path_solver.add(!relaxed);
       debug_print(label + " : check path cond<o> && !cond<r>");
       results.at(1) = check(false);
       path_solver.pop();
-    } else results.at(1) = z3::unsat;
+    } else {
+      results.at(0) = z3::unsat;
+      results.at(1) = z3::unsat;
+    }
 
     // Case 3: !cond<o> && cond<r>
-    if (!ignore_relaxed) {
-      path_solver.push();
-      path_solver.add(!original);
-      path_solver.add(relaxed);
-      debug_print(label + " : check path !cond<o> && cond<r>");
-      results.at(2) = check(false);
-      path_solver.pop();
-    } else results.at(2) = z3::unsat;
+    path_solver.push();
+    path_solver.add(!original);
+    path_solver.add(relaxed);
+    debug_print(label + " : check path !cond<o> && cond<r>");
+    results.at(2) = check(false);
+    path_solver.pop();
 
     // Case 4: !cond<o> && !cond<r>
     // Loop doesn't run, do nothing.
@@ -2242,11 +2240,13 @@ namespace lang {
     // Restore old solver and ignore state
     solver = old_solver;
     ignore_original = old_ignore_original;
-    ignore_relaxed = old_ignore_relaxed;
+    ignore_relaxed = false;
     cached_uints.clear();
   }
 
   h_z3pair CHLVisitor::houdini_to_constraints(const While& node) {
+    assert(!ignore_relaxed);
+
     const std::vector<RelationalBoolExp*>& houdini_invs = in_houdini ? *cur_houdini_invs :
                                                                        node.houdini_invs;
     const std::vector<BoolExp*>& nonrel_houdini_invs = in_houdini ? *cur_nonrel_houdini_invs :
@@ -2286,11 +2286,7 @@ namespace lang {
 
       z3::expr tmp = context->bool_const(tmp_name.c_str());
 
-      if (ignore_relaxed) {
-        add_constraint(tmp == context->bool_val(true));
-      } else {
-        add_constraint(tmp == *res.relaxed);
-      }
+      add_constraint(tmp == *res.relaxed);
 
       if (!ignore_original) assumes = assumes && res.original;
 
@@ -2308,6 +2304,7 @@ namespace lang {
                                 std::vector<T>& new_invs,
                                 std::vector<std::string>& new_tmps,
                                 While& node) {
+    assert(!ignore_relaxed);
     PrintVisitor pv(true);
     in_weak_houdini = true;
     for (size_t i = 0; i < old_invs.size(); ++i) {
@@ -2385,6 +2382,14 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(While &node) {
+    if (ignore_relaxed) {
+      // Assume oringinal non-relational invariant
+      // (but no need to check the loop)
+      z3pair post = node.nonrel_inv->accept(*this);
+      add_constraint(*post.original);
+      RETURN_VOID;
+    }
+
     assert((!cur_houdini_invs && !in_houdini) || in_houdini);
     assert((!cur_nonrel_houdini_invs && !in_houdini) || in_houdini);
 
@@ -2408,8 +2413,7 @@ namespace lang {
       debug_print("Pre body invariant: " + label);
       solver->push();
       if (!ignore_original) add_constraint(*nonrel_inv.original);
-      if (ignore_relaxed) add_checked_constraint(*inv.original);
-      else  add_checked_constraint(*inv.original && *nonrel_inv.relaxed);
+      add_checked_constraint(*inv.original && *nonrel_inv.relaxed);
       check();
       solver->pop();
 
@@ -2569,7 +2573,7 @@ namespace lang {
     nonrel_inv = node.nonrel_inv->accept(*this);
     path_inv = path_inv && *inv.original;
     if (!ignore_original) path_inv = path_inv && nonrel_inv.original;
-    if (!ignore_relaxed) path_inv = path_inv && nonrel_inv.relaxed;
+    path_inv = path_inv && nonrel_inv.relaxed;
     std::array<z3::check_result, 3> paths;
     legal_path(*cond.original, *cond.relaxed, path_inv, node, paths);
 
@@ -2587,6 +2591,8 @@ namespace lang {
     }
 
     // Case 2: cond<o> && !cond<r>
+    // Do nothing
+    /*
     switch (paths.at(1)) {
       case z3::unknown:
       case z3::sat:
@@ -2605,6 +2611,7 @@ namespace lang {
         // Do nothing
         break;
     }
+    */
 
     // Case 3: !cond<o> && cond<r>
     switch (paths.at(2)) {
@@ -2660,8 +2667,7 @@ namespace lang {
     if (ignore_original) restore_unused_vars(old_versions, 'r');
     else add_constraint(*nonrel_inv.original);
 
-    if (ignore_relaxed) restore_unused_vars(old_versions, 'o');
-    else add_constraint(*nonrel_inv.relaxed);
+    add_constraint(*nonrel_inv.relaxed);
 
 
 
