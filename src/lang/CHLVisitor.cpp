@@ -1440,6 +1440,8 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(RelationalAssert &node) {
+    if (ignore_relaxed) RETURN_VOID;
+
     z3pair assertion = node.assertion->accept(*this);
 
     assert(assertion.original);
