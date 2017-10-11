@@ -796,7 +796,12 @@ namespace lang {
     std::string rname = name + "<r>";
     z3::expr* oexpr = nullptr;
     z3::expr* rexpr = nullptr;
-    expr_type = types.at(name);
+    try {
+      expr_type = types.at(name);
+    } catch (const std::out_of_range&) {
+      std::cerr << "No such var: " << name << std::endl;
+      exit(1);
+    }
     if (in_assign) {
       old_o = old_r = nullptr;
       // Get old version
