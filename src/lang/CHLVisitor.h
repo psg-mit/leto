@@ -165,6 +165,7 @@ namespace lang {
                           const std::string& rname,
                           const dim_vec& dimensions);
       void add_constraint(const z3::expr& constraint, bool invert_last=false);
+      void assume_prefixes();
       z3::expr* get_current_var(std::string name);
       z3::func_decl* get_current_vec(std::string name);
       z3::expr* make_float(const std::string& name);

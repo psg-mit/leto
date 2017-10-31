@@ -228,6 +228,13 @@ namespace lang {
     solver->add(!get_constraint(constraint, false));
   }
 
+  void CHLVisitor::assume_prefixes() {
+    for (const z3::expr* prefix : prefixes) {
+      ++constraints_generated;
+      solver->add(*prefix);
+    }
+  }
+
   void CHLVisitor::check_context() {
 #ifndef NO_CHECK_CONTEXT
     std::cout << "Checking context for satisfiability" << std::endl;
@@ -1984,6 +1991,7 @@ namespace lang {
     solver->push();
     add_constraint(original);
     add_constraint(relaxed);
+    assume_prefixes();
     debug_print("check if path cond<o> && cond<r>");
     results.at(0) = check(false);
     solver->pop();
@@ -1992,6 +2000,7 @@ namespace lang {
     solver->push();
     add_constraint(original);
     add_constraint(!relaxed);
+    assume_prefixes();
     debug_print("check if path cond<o> && !cond<r>");
     results.at(1) = check(false);
     solver->pop();
@@ -2000,6 +2009,7 @@ namespace lang {
     solver->push();
     add_constraint(!original);
     add_constraint(relaxed);
+    assume_prefixes();
     debug_print("check if path !cond<o> && cond<r>");
     results.at(2) = check(false);
     solver->pop();
@@ -2008,6 +2018,7 @@ namespace lang {
     solver->push();
     add_constraint(!original);
     add_constraint(!relaxed);
+    assume_prefixes();
     debug_print("check if path !cond<o> && !cond<r>");
     results.at(3) = check(false);
     solver->pop();
