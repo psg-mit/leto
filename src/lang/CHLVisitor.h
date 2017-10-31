@@ -164,7 +164,7 @@ namespace lang {
                           const std::string& oname,
                           const std::string& rname,
                           const dim_vec& dimensions);
-      void add_constraint(const z3::expr& constraint, bool invert_last=false);
+      void add_constraint(const z3::expr& constraint, bool invert=false);
       void assume_prefixes();
       z3::expr* get_current_var(std::string name);
       z3::func_decl* get_current_vec(std::string name);
@@ -185,7 +185,7 @@ namespace lang {
                    Statement* obody,
                    Statement* rbody);
       void add_checked_constraint(const z3::expr& constraint);
-      z3::expr get_constraint(const z3::expr& constraint, bool invert_last);
+      z3::expr get_constraint(const z3::expr& constraint, bool invert);
       z3::expr* light_mat_elem_eq(Var& lhs_elem_v,
                                   Var& rhs_elem_v,
                                   RelationalVar& lhs_rv,

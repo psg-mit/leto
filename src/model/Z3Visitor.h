@@ -63,6 +63,8 @@ namespace model {
 
       bool use_snapshot;
 
+      z3::expr* var_equality;
+
     protected:
       std::unordered_set<std::string>* current_mods;
 
@@ -76,6 +78,7 @@ namespace model {
       std::map<operator_t, std::vector<const Operator*>> ops;
       std::map<operator_t, std::unordered_set<std::string>*> op_mods;
       std::map<std::string, version_map> frames;
+      z3::expr* get_var_at(const std::string& name, unsigned version);
 
       operator_t op;
       z3::expr* arg1;

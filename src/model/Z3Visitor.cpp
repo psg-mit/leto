@@ -42,6 +42,7 @@ namespace model {
     current_mods = nullptr;
     use_snapshot = false;
     frame = "";
+    var_equality = nullptr;
   }
 
   z3::expr* Z3Visitor::get_current_var(const std::string& name) {
@@ -58,6 +59,10 @@ namespace model {
     unsigned version = use_snapshot ? snapshot.at(name) : var_version.at(name);
     assert(version);
     return vars.at(name + "-" + std::to_string(version - 1));
+  }
+
+  z3::expr* Z3Visitor::get_var_at(const std::string& name, unsigned version) {
+    return vars.at(name + "-" + std::to_string(version));
   }
 
   type_t Z3Visitor::get_var_type(const std::string& name) {
@@ -271,6 +276,9 @@ namespace model {
     const std::vector<const Operator*>& impls = ops.at(op);
     assert(!impls.empty());
 
+    // Track old versions
+    version_map old_versions(var_version);
+
     // Substitute and OR operators together
     updated = op_mods.at(op);
     OperatorVisitor subst(arg1,
@@ -292,6 +300,22 @@ namespace model {
       z3::expr* part = impl->accept(subst);
       *fn = *fn || *part;
     }
+
+    // Build equality with old versions
+    assert(old_versions.size() == var_version.size());
+    assert(!var_equality);
+    var_equality = new z3::expr(context->bool_val(true));
+    for (const std::pair<std::string, unsigned>& old_var : old_versions) {
+      const std::string& vname = old_var.first;
+      const unsigned old_version = old_var.second;
+      if (old_version != var_version.at(vname)) {
+        z3::expr* old = get_var_at(vname, old_version);
+        z3::expr* cur = get_current_var(vname);
+
+        *var_equality = *var_equality && *old == *cur;
+      }
+    }
+
 
     arg1 = arg2 = nullptr;
     return fn;

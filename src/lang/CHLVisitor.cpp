@@ -199,27 +199,23 @@ namespace lang {
   }
 
   z3::expr CHLVisitor::get_constraint(const z3::expr& constraint,
-                                      bool invert_last) {
+                                      bool invert) {
     if (prefixes.empty()) {
       return constraint;
     } else {
-      std::vector<z3::expr*>::reverse_iterator rit = prefixes.rbegin();
-      z3::expr impl = constraint;
-      if (invert_last) {
-        impl = z3::implies(!(**rit), constraint);
-      } else {
-        impl = z3::implies(**rit, constraint);
+      z3::expr impl = *prefixes.at(0);
+      for (size_t i = 1; i < prefixes.size(); ++i) {
+        impl = impl && *prefixes.at(i);
       }
-      ++rit;
-      for (; rit != prefixes.rend(); ++rit) impl = z3::implies(**rit, impl);
-      return impl;
+      if (invert) impl = !impl;
+      return z3::implies(impl, constraint);
     }
   }
 
   void CHLVisitor::add_constraint(const z3::expr& constraint,
-                                  bool invert_last) {
+                                  bool invert) {
     ++constraints_generated;
-    solver->add(get_constraint(constraint, invert_last));
+    solver->add(get_constraint(constraint, invert));
   }
 
   void CHLVisitor::add_checked_constraint(const z3::expr& constraint) {
@@ -761,6 +757,7 @@ namespace lang {
 
     // Set LHS<r> == RHS<r>
     z3::expr *rres = nullptr;
+    model_visitor->var_equality = nullptr;
     if (!ignore_relaxed) {
       if (model_visitor->prepped()) {
         if (lhs_type == UINT) {
@@ -786,7 +783,11 @@ namespace lang {
     }
     assert(rres);
     add_constraint(*rres);
-    if (!prefixes.empty()) add_constraint(*lhs.relaxed == *old_r, true);
+    if (!prefixes.empty()) {
+      add_constraint(*lhs.relaxed == *old_r, true);
+      z3::expr* var_eq = model_visitor->var_equality;
+      if (var_eq) add_constraint(*var_eq, true);
+    }
 
     return {ores, rres};
   }
@@ -956,6 +957,7 @@ namespace lang {
     assert(old_r);
 
     if (!ignore_relaxed) {
+      model_visitor->var_equality = nullptr;
       if (dest_type == UINT) {
         std::string tname = H_TMP_PREFIX + std::to_string(h_tmp++);
         z3::expr tmp = context->int_const(tname.c_str());
@@ -967,6 +969,9 @@ namespace lang {
         model_visitor->prep_op(FWRITE, dest.relaxed, val.relaxed);
         z3::expr* res = model_visitor->replace_op(dest_type, nullptr);
         add_constraint(*res);
+      }
+      if (!prefixes.empty()) {
+        add_constraint(*model_visitor->var_equality, true);
       }
     } else {
       add_constraint(*dest.relaxed == *old_r);
@@ -2821,7 +2826,11 @@ namespace lang {
       z3::expr forall_src = (*src.relaxed)(*forall_i);
       z3::expr forall_dest = (*dest.relaxed)(*forall_i);
       model_visitor->prep_op(FWRITE, &forall_dest, &forall_src);
+      model_visitor->var_equality = nullptr;
       z3::expr* inner = model_visitor->replace_op(dest_type, nullptr);
+      if (!prefixes.empty()) {
+        add_constraint(*model_visitor->var_equality, true);
+      }
 
       // Use inner in a vec equals
       z3::expr bounds = (*forall_i >= context->int_val(0)) &&
