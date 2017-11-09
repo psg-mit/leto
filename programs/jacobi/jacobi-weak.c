@@ -48,7 +48,7 @@ matrix<real> jacobi(uint N,
     }
     --iters;
     x = next_x;
-    relational_assert(bounded_diff(next_x));
+    relational_assert(bounded_diff(x));
   }
 
   return x;
