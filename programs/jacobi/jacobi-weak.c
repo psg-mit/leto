@@ -5,9 +5,8 @@ property nzd(matrix<real> A) :
   forall(uint fi)((E / EPSILON) < A[fi][fi] || A[fi][fi] < (-(E / EPSILON)));
 
 property_r sig(real sigma) :
-  (out[model.upset] == false) ->
-    (((model.upset == false) -> eq(sigma)) &&
-     ((model.upset == true) -> (sigma<r> - E < sigma<o> < sigma<r> + E)));
+  ((model.upset == false) -> eq(sigma)) &&
+  ((out[model.upset] == false && model.upset == true) -> (sigma<r> - E < sigma<o> < sigma<r> + E));
 
 
 property_r bounded_diff(matrix<real> x) :
