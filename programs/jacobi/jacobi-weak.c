@@ -5,21 +5,18 @@ property nzd(matrix<real> A) :
   forall(uint fi)((E / EPSILON) < A[fi][fi] || A[fi][fi] < (-(E / EPSILON)));
 
 property_r sig(real sigma) :
-  (out[model.upset] == false) -> (
-  ((model.upset == false) -> eq(sigma)) &&
-  (/*(mid[model.upset] == false &&*/ model.upset == true) ->
-    (sigma<r> - E < sigma<o> < sigma<r> + E))/* &&
-  ((mid[model.upset] == true && model.upset == true) -> eq(sigma))*/;
+  (out[model.upset] == false) ->
+    (((model.upset == false) -> eq(sigma)) &&
+     ((model.upset == true) -> (sigma<r> - E < sigma<o> < sigma<r> + E)));
 
 
-property_r bounded_diff_at(matrix<real> x, int index, int i) :
-  forall(uint fi)((0 <= fi < N<o>) -> (-EPSILON < x<o>[fi] - x<r>[fi] < EPSILON)) /*&&
-  forall(uint fi)((fi < i<r> && fi != index) -> x<o>[fi] == x<r>[fi])*/;
+property_r bounded_diff(matrix<real> x) :
+  (out[model.upset] == false && model.upset == true) ->
+    forall(uint fi)((fi < N<o>) -> (-EPSILON < x<o>[fi] - x<r>[fi] < EPSILON));
 
-// TODO: Non_relational NZD in requires
-requires 0 < N && nzd(A)
+requires nzd(A)
 r_requires eq(N) && eq(iters) && eq(A) && eq(b) && eq(x)
-matrix<real> jacobi(int N,
+matrix<real> jacobi(uint N,
                     int iters,
                     matrix<real> A(N,N),
                     matrix<real> b(N),
@@ -28,22 +25,19 @@ matrix<real> jacobi(int N,
   while (0 <= iters)
         (1 == 1)
         (model.upset == false -> eq(x)) {
-    specvar int upset_index = 0;
     matrix<real> next_x(N);
     @label(mid)
-    for (int i = 0; i < N; ++i)
+    for (uint i = 0; i < N; ++i)
         (1 == 1)
-        (((out[model.upset] == false && model.upset == true) -> bounded_diff_at(next_x, upset_index, i)) &&
+        (bounded_diff(next_x) &&
          (model.upset == false -> (out[model.upset] == false && eq(next_x))) &&
-         out[model.upset] == false -> eq(x) /*&&
-         0 <= upset_index < N<r>*/) {
+         out[model.upset] == false -> eq(x)) {
 
       real sigma = 0;
       @label(in)
-      for (int j = 0; j < N; ++j)
-          (0 <= i < N && 0 <= j <= N)
-          ((/*out[model.upset] == false ->*/ sig(sigma)) && eq(j) /*&&
-           (mid[model.upset] == true -> (model.upset == true))*/) {
+      for (uint j = 0; j < N; ++j)
+          (j <= N)
+          ((sig(sigma)) && eq(j)) {
         if (i != j) {
           real delta = A[i][j] *. x[j];
           sigma = sigma +. delta;
@@ -51,15 +45,10 @@ matrix<real> jacobi(int N,
       }
       real num = b[i] - sigma;
       next_x[i] = num / A[i][i];
-
-      if (mid[model.upset] == false && model.upset == true) {
-        upset_index = i;
-      }
     }
     --iters;
     x = next_x;
-    relational_assert((out[model.upset] == false && model.upset == true) ->
-                        bounded_diff_at(next_x, upset_index, i));
+    relational_assert(bounded_diff(next_x));
   }
 
   return x;
