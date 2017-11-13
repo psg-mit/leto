@@ -39,11 +39,8 @@ matrix<real> jacobi(uint N,
           (j <= N)
           ((sig(sigma)) && eq(j)) {
         if (i != j) {
-          real delta;
-          real prod = A[i][j] *. x[j];
-          if (-E/E_REL < prod / (1 - E_REL) < E/E_REL) {
-            delta = prod;
-          } else {
+          real delta = A[i][j] *. x[j];
+          if (delta / (1 - E_REL) <= -E/E_REL ||  E/E_REL <= delta / (1 - E_REL)) {
             delta = A[i][j] * x[j];
           }
           sigma = sigma + delta;
