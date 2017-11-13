@@ -40,7 +40,8 @@ matrix<real> jacobi(uint N,
           ((sig(sigma)) && eq(j)) {
         if (i != j) {
           real delta = A[i][j] *. x[j];
-          if (delta / (1 - E_REL) <= -E/E_REL ||  E/E_REL <= delta / (1 - E_REL)) {
+          real max_delta = delta / (1 - E_REL);
+          if (max_delta <= -E/E_REL ||  E/E_REL <= max_delta) {
             delta = A[i][j] * x[j];
           }
           sigma = sigma + delta;
