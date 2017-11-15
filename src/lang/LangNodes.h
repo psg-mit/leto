@@ -482,6 +482,19 @@ namespace lang {
       Statement* else_body;
   };
 
+  class Try : public Statement {
+    public:
+      Try(Statement* try_body_,
+          RelationalBoolExp* inv_,
+          Statement* catch_body_) :
+          try_body(try_body_), inv(inv_), catch_body(catch_body_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      Statement* try_body;
+      RelationalBoolExp* inv;
+      Statement* catch_body;
+  };
+
   class Skip : public Statement {
     public:
       Skip() {}

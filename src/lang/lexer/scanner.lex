@@ -60,6 +60,10 @@ property                            return lang::LangParser::PROPERTY;
 property_r                          return lang::LangParser::PROPERTY_R;
 @region                             return lang::LangParser::REGION;
 @label                              return lang::LangParser::LABEL;
+try                                 return lang::LangParser::TRY;
+catch                               return lang::LangParser::CATCH;
+invariant_r                         return lang::LangParser::INVARIANT_R;
+poweron                             return lang::LangParser::POWERON;
 [[:alpha:]_][[:alpha:][:digit:]_]*  return lang::LangParser::ID;
 .                                   return matched()[0];
 

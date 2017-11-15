@@ -674,4 +674,16 @@ namespace lang {
     print_property_application(node, "SpecPropertyApplication");
     RETURN_VOID;
   }
+
+  z3pair PrintVisitor::visit(Try& node) {
+    printf("Try:\n");
+    printf("  try_body:\n");
+    node.try_body->accept(*this);
+    printf("  inv:\n");
+    node.inv->accept(*this);
+    printf("  catch_body:\n");
+    node.catch_body->accept(*this);
+
+    RETURN_VOID;
+  }
 }

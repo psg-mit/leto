@@ -50,6 +50,10 @@
        PROPERTY_R
        REGION
        LABEL
+       TRY
+       CATCH
+       INVARIANT_R
+       POWERON
 
 
 %left ';'
@@ -577,6 +581,11 @@ cflow:
   R_REQUIRES relboolexp
   MATRIX type '>' var '(' declarelist ')' '{' statementlist '}' {
     $$ = new lang::Function($2, $4, true, $6, $8, $10, $13);
+    lang_ast = $$;
+  }
+| TRY '{' statementlist '}'
+  CATCH '(' POWERON ')' INVARIANT_R relboolexp '{' statementlist '}' {
+    $$ = new lang::Try($3, $10, $12);
     lang_ast = $$;
   }
 ;

@@ -80,6 +80,7 @@ namespace lang {
       virtual z3pair visit(Return &node) override {assert(false);}
       virtual z3pair visit(Property &node) override {assert(false);}
       virtual z3pair visit(RelationalProperty &node) override {assert(false);}
+      virtual z3pair visit(Try &node) override {assert(false);}
 #pragma clang diagnostic pop
 
     private:

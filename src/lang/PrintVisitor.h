@@ -59,6 +59,7 @@ namespace lang {
       virtual z3pair visit(PropertyApplication &node) override;
       virtual z3pair visit(RelationalPropertyApplication &node) override;
       virtual z3pair visit(SpecPropertyApplication &node) override;
+      virtual z3pair visit(Try &node) override;
 
 
       std::string output;

@@ -213,4 +213,8 @@ namespace lang {
   z3pair SpecPropertyApplication::accept(ASTVisitor& visitor) {
     return visitor.visit(*this);
   }
+
+  z3pair Try::accept(ASTVisitor& visitor) {
+    return visitor.visit(*this);
+  }
 }
