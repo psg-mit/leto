@@ -2,6 +2,7 @@
 #define EPSILON real(10000, 1)
 #define E_REL real(1, 10)
 
+
 property nzd(matrix<real> A) :
   forall(uint fi)((E / EPSILON) < A[fi][fi] || A[fi][fi] < (-(E / EPSILON)));
 
@@ -40,8 +41,7 @@ matrix<real> jacobi(uint N,
           ((sig(sigma)) && eq(j)) {
         if (i != j) {
           real delta = A[i][j] *. x[j];
-          real max_delta = delta / (1 - E_REL);
-          if (max_delta <= -E/E_REL ||  E/E_REL <= max_delta) {
+          if (delta <= (-E/E_REL + E) || (E/E_REL - E) <= delta) {
             delta = A[i][j] * x[j];
           }
           sigma = sigma + delta;
