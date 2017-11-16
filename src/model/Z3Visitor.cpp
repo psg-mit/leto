@@ -339,6 +339,39 @@ namespace model {
     return fn;
   }
 
+  z3::expr* Z3Vistor::commit(commit_t type) {
+    // TODO: This makes no sense, we need a void expr type or something, but
+    // this will fall through to binop soooooo....  int for now
+    expr_type = INT;
+
+    const Commit* impl = nullptr;
+    switch (type) {
+      case BEGIN:
+        if (!begin_commit) ERROR("model.begin_commit not defined");
+        impl = begin_commit;
+        break;
+      case END:
+        if (!end_commit) ERROR("model.end_commit not defined");
+        impl = end_commit;
+        break;
+      default:
+        assert(false);
+    }
+
+    OperatorVisitor subst(nullptr,
+                          nullptr,
+                          nullptr,
+                          &vars,
+                          &var_version,
+                          context,
+                          solver,
+                          expr_type,
+                          impl->modifies,
+                          types);
+#error Left off here, need to build up an op-mods equivalent...
+
+  }
+
   void Z3Visitor::check() {
     /*
     // Build functions
