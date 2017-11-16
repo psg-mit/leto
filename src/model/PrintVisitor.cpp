@@ -48,6 +48,13 @@ namespace model {
     return nullptr;
   }
 
+  z3::expr* PrintVisitor::visit(const Real &node) {
+    printf("Real:\n");
+    printf("  numerator: %d\n", node.numerator);
+    printf("  denominator : %d\n", node.denominator);
+    return nullptr;
+  }
+
   z3::expr* PrintVisitor::visit(const BinOp &node) {
     printf("BinOp: ");
     print_binop(node.op);
@@ -75,6 +82,9 @@ namespace model {
         break;
       case INT:
         printf("int\n");
+        break;
+      case UINT:
+        printf("uint\n");
         break;
       case FLOAT:
         printf("float\n");
@@ -171,6 +181,24 @@ namespace model {
   z3::expr* PrintVisitor::visit(const Old& node) {
     printf("Old:\n");
     node.var->accept(*this);
+    return nullptr;
+  }
+
+  z3::expr* PrintVisitor::visit(const Commit& node) {
+    printf("Commit:\n");
+    printf("  type:");
+    switch (node.type) {
+      case BEGIN:
+        printf("begin\n");
+        break;
+      case END:
+        printf("end\n");
+        break;
+    }
+    printf("modifies:\n");
+    node.modifies->accept(*this);
+    printf("  ensures:\n");
+    node.ensures->accept(*this);
     return nullptr;
   }
 }

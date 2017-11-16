@@ -43,6 +43,8 @@ namespace model {
     use_snapshot = false;
     frame = "";
     var_equality = nullptr;
+    begin_commit = nullptr;
+    end_commit = nullptr;
   }
 
   z3::expr* Z3Visitor::get_current_var(const std::string& name) {
@@ -242,6 +244,22 @@ namespace model {
     if (node.car) {
       current_mods->insert(node.car->name);
       if (node.cdr) node.cdr->accept(*this);
+    }
+    return nullptr;
+  }
+
+  z3::expr* Z3Visitor::visit(const Commit& node) {
+    switch (node.type) {
+      case BEGIN:
+        if (begin_commit) ERROR("begin_commit already defined");
+        begin_commit = &node;
+        break;
+      case END:
+        if (end_commit) ERROR("end_commit already defined");
+        end_commit = &node;
+        break;
+      default:
+        assert(false);
     }
     return nullptr;
   }

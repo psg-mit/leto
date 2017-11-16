@@ -39,6 +39,7 @@ namespace model {
       virtual z3::expr* visit(const VarList &node);
       virtual z3::expr* visit(const Old &node);
       virtual z3::expr* visit(const Real &node);
+      virtual z3::expr* visit(const Commit &node);
 
       void prep_op(operator_t op, z3::expr* arg1_, z3::expr* arg2_);
       bool prepped();
@@ -84,6 +85,9 @@ namespace model {
       z3::expr* arg1;
       z3::expr* arg2;
       type_t expr_type;
+
+      const Commit* begin_commit;
+      const Commit* end_commit;
 
 
       void BuildOp(operator_t op,

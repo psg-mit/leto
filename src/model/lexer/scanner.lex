@@ -23,6 +23,8 @@ fwrite                              return model::ModelParser::FWRITE;
 \<=                                 return model::ModelParser::LTEQ;
 old                                 return model::ModelParser::OLD;
 @region                             return model::ModelParser::REGION;
+begin_commit\(\)                    return model::ModelParser::BEGIN_COMMIT;
+end_commit\(\)                      return model::ModelParser::END_COMMIT;
 [[:alpha:]_][[:alpha:][:digit:]_]*  return model::ModelParser::ID;
 .                                   return matched()[0];
 

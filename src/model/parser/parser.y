@@ -20,6 +20,8 @@
        FWRITE
        OLD
        REGION
+       BEGIN_COMMIT
+       END_COMMIT
 
 %left ';'
 %left AND OR
@@ -219,6 +221,18 @@ statement:
     $$ = new model::Operator($2, $4, $6, $10, $14, $18);
     model_ast = $$;
   }
+| BEGIN_COMMIT
+  MODIFIES '(' varlist ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Commit(commit_t::BEGIN, $4, $8);
+    model_ast = $$;
+}
+| END_COMMIT
+  MODIFIES '(' varlist ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Commit(commit_t::END, $4, $8);
+    model_ast = $$;
+}
 | REGION '(' var ')'
   FREAD '(' var ')'
   WHEN '(' boolexp ')'

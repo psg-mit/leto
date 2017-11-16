@@ -88,6 +88,7 @@ namespace lang {
       virtual z3pair visit(RelationalProperty& node) override;
       virtual z3pair visit(RelationalPropertyApplication& node) override;
       virtual z3pair visit(SpecPropertyApplication& node) override;
+      virtual z3pair visit(Try& node) override;
 
       z3::check_result check(bool exit_on_sat=true);
       int get_errors() { return errors; }
@@ -154,6 +155,7 @@ namespace lang {
       std::unordered_map<std::string, std::string> substitutions;
       std::unordered_map<std::string, std::string> regions;
       std::unordered_set<std::string> labels;
+      RelationalBoolExp* try_inv;
 
       // Contains *unqualified* vars to be set equal to eachother
       std::vector<RelationalBoolExp*>* cur_houdini_invs;
@@ -251,5 +253,6 @@ namespace lang {
 
       std::string get_current_var_name(std::string name);
       void handle_uint_read(std::string name, bool is_vec);
+      void check_try_inv();
   };
 }

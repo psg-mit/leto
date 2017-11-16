@@ -8,6 +8,11 @@
 
 #define RETURN_VOID return {nullptr, nullptr}
 
+#define ERROR(s) { \
+  std::cerr << "ERROR: " << s << " (" << __FILE__ << " : " << __LINE__ << ")" << std::endl; \
+  exit(1); \
+ }
+
 typedef std::unordered_map<std::string, unsigned> version_map;
 
 

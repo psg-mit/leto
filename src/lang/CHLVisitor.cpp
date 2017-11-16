@@ -67,6 +67,7 @@ namespace lang {
     parent_function = nullptr;
     h_var_version = nullptr;
     assume_eq = true;
+    try_inv = nullptr;
   }
 
   static void debug_print(const std::string &str) {
@@ -574,9 +575,22 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
+  void CHLVisitor::check_try_inv() {
+    if (try_inv && !ignore_relaxed) {
+      z3pair inv = try_inv->accept(*this);
+      solver->push();
+      add_checked_constraint(*inv.original);
+      check();
+      solver->pop();
+    }
+  }
+
   z3pair CHLVisitor::visit(StatementList &node) {
+    check_try_inv();
     node.lhs->accept(*this);
+    check_try_inv();
     node.rhs->accept(*this);
+    if (!dynamic_cast<StatementList*>(node.rhs)) check_try_inv();
 
     return {nullptr, nullptr};
   }
@@ -2793,6 +2807,12 @@ namespace lang {
 
   z3pair CHLVisitor::visit(Copy &node) {
     // TODO: Allow bad reads in copy nodes as well
+    if (try_inv) {
+      std::cerr << "ERROR: Illegal array copy in try/catch block."
+                << std::endl;
+      exit(1);
+    }
+
     vec_pair src = {get_current_vec(node.src->name + "<o>"),
                     get_current_vec(node.src->name + "<r>")};
     std::string odest = node.dest->name + "<o>";
@@ -3324,6 +3344,21 @@ namespace lang {
     specvars = old_specvars;
 
     return ret;
+  }
+
+  z3pair CHLVisitor::visit(Try& node) {
+    if (try_inv) ERROR("Nesting try/catch blocks is not currently supported");
+
+    try_inv = node.inv;
+
+    node.try_body->accept(*this);
+
+    // TODO: Get the inv before the catch body
+    try_inv = nullptr;
+
+    node.catch_body->accept(*this);
+
+    RETURN_VOID;
   }
 }
 

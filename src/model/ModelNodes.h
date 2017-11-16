@@ -7,6 +7,7 @@
 
 namespace model {
   enum bool_t {AND, OR, EQUALS, LT, XOR, LTEQ};
+  enum commit_t {BEGIN, END};
 
   class ASTVisitor;
 
@@ -162,5 +163,20 @@ namespace model {
       virtual z3::expr* accept(ASTVisitor &visitor) const override;
 
       const Statement* const body;
+  };
+
+  class Commit : public Statement {
+    public:
+      Commit(commit_t type_,
+             const VarList* modifies_,
+             const BoolExp *ensures_) :
+          type(type_),
+          modifies(modifies_),
+          ensures(ensures_) {}
+      virtual z3::expr* accept(ASTVisitor &visitor) const override;
+
+      const commit_t type;
+      const VarList* const modifies;
+      const BoolExp* const ensures;
   };
 }
