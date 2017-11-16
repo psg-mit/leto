@@ -92,5 +92,8 @@ int main() {
             << chl.num_inferred
             << std::endl;
 
+  std::cout << "Total paths: " << chl.total_paths << std::endl;
+  std::cout << "Pruned paths: " << chl.pruned_paths << std::endl;
+
   return chl.get_errors();
 }

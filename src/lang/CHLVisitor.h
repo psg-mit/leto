@@ -103,6 +103,8 @@ namespace lang {
       bool unknown_context;
       size_t constraints_generated;
       size_t num_inferred;
+      size_t total_paths;
+      size_t pruned_paths;
     private:
       z3::context* context;
       z3::solver* solver;

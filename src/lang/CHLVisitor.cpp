@@ -54,6 +54,8 @@ namespace lang {
     quantifier_ctr = 0;
     constraints_generated = 0;
     num_inferred = 0;
+    total_paths = 0;
+    pruned_paths = 0;
     z3_model = nullptr;
     houdini_failed = false;
     h_tmp = 0;
@@ -2068,6 +2070,10 @@ namespace lang {
 
     std::array<z3::check_result, 4> paths;
     legal_if_paths(*cond.original, *cond.relaxed, paths);
+    total_paths += 4;
+    for (z3::check_result res : paths) {
+      if (res == z3::unsat) ++pruned_paths;
+    }
 
     // Case 1: cond<o> && cond<r>
     switch (paths.at(0)) {
@@ -2598,6 +2604,7 @@ namespace lang {
     std::array<z3::check_result, 3> paths;
     legal_path(*cond.original, *cond.relaxed, path_inv, node, paths);
 
+    total_paths += 2;
     // Case 1: cond<o> && cond<r>
     switch (paths.at(0)) {
       case z3::unknown:
@@ -2608,6 +2615,7 @@ namespace lang {
         break;
       case z3::unsat:
         // All constraints implicitly true
+        ++pruned_paths;
         break;
     }
 
@@ -2651,6 +2659,7 @@ namespace lang {
         break;
       case z3::unsat:
         // Do nothing
+        ++pruned_paths;
         break;
     }
 
