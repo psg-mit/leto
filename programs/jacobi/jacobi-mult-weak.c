@@ -8,11 +8,11 @@ property nzd(matrix<real> A) :
 
 property_r sig(real sigma) :
   ((model.upset == false) -> eq(sigma)) &&
-  ((out[model.upset] == false && model.upset == true) -> (sigma<r> - E < sigma<o> < sigma<r> + E));
+  ((old_upset == false && model.upset == true) -> (sigma<r> - E < sigma<o> < sigma<r> + E));
 
 
 property_r bounded_diff(matrix<real> x) :
-  (out[model.upset] == false && model.upset == true) ->
+  (old_upset == false && model.upset == true) ->
     forall(uint fi)((fi < N<o>) -> (-EPSILON < x<o>[fi] - x<r>[fi] < EPSILON));
 
 requires nzd(A)
@@ -26,13 +26,14 @@ matrix<real> jacobi(uint N,
   while (0 <= iters)
         (1 == 1)
         (model.upset == false -> eq(x)) {
+    specvar bool old_upset = model.upset;
     matrix<real> next_x(N);
     @label(mid)
     for (uint i = 0; i < N; ++i)
         (1 == 1)
         (bounded_diff(next_x) &&
-         (model.upset == false -> (out[model.upset] == false && eq(next_x))) &&
-         out[model.upset] == false -> eq(x)) {
+         (model.upset == false -> eq(next_x)) &&
+         old_upset == false -> eq(x)) {
 
       real sigma = 0;
       @label(in)
