@@ -30,6 +30,7 @@ namespace model {
       virtual z3::expr* visit(const Var &node) override;
       virtual z3::expr* visit(const Operator &node) override;
       virtual z3::expr* visit(const Old& node);
+      virtual z3::expr* visit(const Commit& node) override;
 
       // Inherited
       /*

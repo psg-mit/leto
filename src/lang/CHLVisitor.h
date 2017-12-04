@@ -89,6 +89,7 @@ namespace lang {
       virtual z3pair visit(RelationalPropertyApplication& node) override;
       virtual z3pair visit(SpecPropertyApplication& node) override;
       virtual z3pair visit(Try& node) override;
+      virtual z3pair visit(Commit& node) override;
 
       z3::check_result check(bool exit_on_sat=true);
       int get_errors() { return errors; }

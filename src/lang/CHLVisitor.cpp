@@ -3360,6 +3360,14 @@ namespace lang {
 
     RETURN_VOID;
   }
+
+  z3pair CHLVisitor::visit(Commit& node) {
+    z3::expr* fn = model_visitor->commit(node.type);
+    assert(fn);
+    add_constraint(*fn);
+
+    RETURN_VOID;
+  }
 }
 
 

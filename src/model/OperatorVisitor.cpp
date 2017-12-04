@@ -119,6 +119,15 @@ namespace model {
     return ret;
   }
 
+  z3::expr* OperatorVisitor::visit(const Commit& node) {
+    in_ensures = true;
+    z3::expr* ensures = node.ensures->accept(*this);
+    assert(ensures);
+    in_ensures = false;
+
+    return ensures;
+  }
+
   z3::expr* OperatorVisitor::get_current_var(const std::string& name) const {
     return vars->at(name + "-" + std::to_string(var_version->at(name)));
   }

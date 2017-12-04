@@ -265,6 +265,7 @@ namespace model {
       auto ret = commit_mods.emplace(node.type, mods);
       assert(ret.second);
 
+      current_mods = mods;
       node.modifies->accept(*this);
       current_mods = nullptr;
     }
