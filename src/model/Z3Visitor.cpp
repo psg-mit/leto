@@ -251,16 +251,24 @@ namespace model {
   z3::expr* Z3Visitor::visit(const Commit& node) {
     switch (node.type) {
       case BEGIN:
-        if (begin_commit) ERROR("begin_commit already defined");
+        if (begin_commit) PERROR("begin_commit already defined");
         begin_commit = &node;
         break;
       case END:
-        if (end_commit) ERROR("end_commit already defined");
+        if (end_commit) PERROR("end_commit already defined");
         end_commit = &node;
         break;
-      default:
-        assert(false);
     }
+
+    if (node.modifies) {
+      std::unordered_set<std::string>* mods = new std::unordered_set<std::string>();
+      auto ret = commit_mods.emplace(node.type, mods);
+      assert(ret.second);
+
+      node.modifies->accept(*this);
+      current_mods = nullptr;
+    }
+
     return nullptr;
   }
 
@@ -339,7 +347,7 @@ namespace model {
     return fn;
   }
 
-  z3::expr* Z3Vistor::commit(commit_t type) {
+  z3::expr* Z3Visitor::commit(commit_t type) {
     // TODO: This makes no sense, we need a void expr type or something, but
     // this will fall through to binop soooooo....  int for now
     expr_type = INT;
@@ -347,15 +355,13 @@ namespace model {
     const Commit* impl = nullptr;
     switch (type) {
       case BEGIN:
-        if (!begin_commit) ERROR("model.begin_commit not defined");
+        if (!begin_commit) PERROR("model.begin_commit not defined");
         impl = begin_commit;
         break;
       case END:
-        if (!end_commit) ERROR("model.end_commit not defined");
+        if (!end_commit) PERROR("model.end_commit not defined");
         impl = end_commit;
         break;
-      default:
-        assert(false);
     }
 
     OperatorVisitor subst(nullptr,
@@ -366,10 +372,12 @@ namespace model {
                           context,
                           solver,
                           expr_type,
-                          impl->modifies,
+                          commit_mods.at(type),
                           types);
-#error Left off here, need to build up an op-mods equivalent...
 
+    z3::expr* fn = impl->accept(subst);
+    assert(fn);
+    return fn;
   }
 
   void Z3Visitor::check() {

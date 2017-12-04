@@ -8,7 +8,7 @@
 
 #define RETURN_VOID return {nullptr, nullptr}
 
-#define ERROR(s) { \
+#define PERROR(s) { \
   std::cerr << "ERROR: " << s << " (" << __FILE__ << " : " << __LINE__ << ")" << std::endl; \
   exit(1); \
  }

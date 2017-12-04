@@ -3347,7 +3347,7 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(Try& node) {
-    if (try_inv) ERROR("Nesting try/catch blocks is not currently supported");
+    if (try_inv) PERROR("Nesting try/catch blocks is not currently supported");
 
     try_inv = node.inv;
 
