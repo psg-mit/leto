@@ -59,6 +59,7 @@ namespace lang {
       virtual z3pair visit(RelationalPropertyApplication &node) = 0;
       virtual z3pair visit(SpecPropertyApplication &node) = 0;
       virtual z3pair visit(Try &node) = 0;
+      virtual z3pair visit(Commit &node) = 0;
 
       virtual ~ASTVisitor() {}
   };

@@ -27,6 +27,7 @@ enum operator_t {RPLUS,
                  FREAD,
                  FWRITE};
 enum type_t {INT, FLOAT, BOOL, REAL, UINT};
+enum commit_t {BEGIN, END};
 
 z3::expr* binop(z3::context* context,
                 operator_t op,

@@ -616,4 +616,12 @@ namespace lang {
 
       Expression* exp;
   };
+
+  class Commit : public Statement {
+    public:
+      Commit(commit_t type_) : type(type_) {}
+      virtual z3pair accept(ASTVisitor &visitor) override;
+
+      commit_t type;
+  };
 }

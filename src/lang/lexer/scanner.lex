@@ -64,6 +64,8 @@ try                                 return lang::LangParser::TRY;
 catch                               return lang::LangParser::CATCH;
 invariant_r                         return lang::LangParser::INVARIANT_R;
 poweron                             return lang::LangParser::POWERON;
+model\.begin_commit\(\)             return lang::LangParser::BEGIN_COMMIT;
+model\.end_commit\(\)               return lang::LangParser::END_COMMIT;
 [[:alpha:]_][[:alpha:][:digit:]_]*  return lang::LangParser::ID;
 .                                   return matched()[0];
 

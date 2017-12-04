@@ -686,4 +686,18 @@ namespace lang {
 
     RETURN_VOID;
   }
+
+  z3pair PrintVisitor::visit(Commit& node) {
+    printf("Commit:\n");
+    switch (node.type) {
+      case BEGIN:
+        printf("  BEGIN\n");
+        break;
+      case END:
+        printf("  END\n");
+        break;
+    }
+
+    RETURN_VOID;
+  }
 }

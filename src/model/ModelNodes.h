@@ -7,7 +7,6 @@
 
 namespace model {
   enum bool_t {AND, OR, EQUALS, LT, XOR, LTEQ};
-  enum commit_t {BEGIN, END};
 
   class ASTVisitor;
 

@@ -54,6 +54,8 @@
        CATCH
        INVARIANT_R
        POWERON
+       BEGIN_COMMIT
+       END_COMMIT
 
 
 %left ';'
@@ -717,6 +719,14 @@ statement:
     assert(!$2->vars->cdr);
     $2->specvar = true;
     $$ = new lang::StatementList($2, new lang::ArrayAssign($2->vars->car, $5));
+    lang_ast = $$;
+  }
+| BEGIN_COMMIT {
+    $$ = new lang::Commit(commit_t::BEGIN);
+    lang_ast = $$;
+  }
+| END_COMMIT {
+    $$ = new lang::Commit(commit_t::END);
     lang_ast = $$;
   }
 | LMATRIX INT '>' var '(' size ')' {
