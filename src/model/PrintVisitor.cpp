@@ -186,7 +186,7 @@ namespace model {
 
   z3::expr* PrintVisitor::visit(const Commit& node) {
     printf("Commit:\n");
-    printf("  type:");
+    printf("  type: ");
     switch (node.type) {
       case BEGIN:
         printf("begin\n");
@@ -195,8 +195,26 @@ namespace model {
         printf("end\n");
         break;
     }
-    printf("modifies:\n");
+    printf("  modifies:\n");
     node.modifies->accept(*this);
+    printf("  ensures:\n");
+    node.ensures->accept(*this);
+    return nullptr;
+  }
+
+  z3::expr* PrintVisitor::visit(const Step& node) {
+    printf("Step:\n");
+    printf("  when:\n");
+    node.when->accept(*this);
+    printf("  throws: ");
+    switch(node.throws) {
+      case NONE:
+        printf("nothing\n");
+        break;
+      case POWERON:
+        printf("poweron\n");
+        break;
+    }
     printf("  ensures:\n");
     node.ensures->accept(*this);
     return nullptr;

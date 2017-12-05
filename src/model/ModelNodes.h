@@ -7,6 +7,7 @@
 
 namespace model {
   enum bool_t {AND, OR, EQUALS, LT, XOR, LTEQ};
+  enum exception_t {NONE, POWERON};
 
   class ASTVisitor;
 
@@ -176,6 +177,21 @@ namespace model {
 
       const commit_t type;
       const VarList* const modifies;
+      const BoolExp* const ensures;
+  };
+
+  class Step : public Statement {
+    public:
+      Step(const BoolExp* when_,
+           exception_t throws_,
+           const BoolExp *ensures_) :
+          when(when_),
+          throws(throws_),
+          ensures(ensures_) {}
+      virtual z3::expr* accept(ASTVisitor &visitor) const override;
+
+      const BoolExp* const when;
+      const exception_t throws;
       const BoolExp* const ensures;
   };
 }

@@ -22,6 +22,9 @@
        REGION
        BEGIN_COMMIT
        END_COMMIT
+       STEP
+       THROWS
+       POWERON
 
 %left ';'
 %left AND OR
@@ -325,6 +328,18 @@ statement:
                              &TRUE_NODE,
                              nullptr,
                              $16);
+    model_ast = $$;
+  }
+| STEP
+  WHEN '(' boolexp ')'
+  THROWS POWERON
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Step($4, exception_t::POWERON, $10);
+    model_ast = $$;
+  }
+| STEP
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Step(&TRUE_NODE, exception_t::NONE, $4);
     model_ast = $$;
   }
 | '{' statement '}' {

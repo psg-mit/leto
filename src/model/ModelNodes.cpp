@@ -61,4 +61,8 @@ namespace model {
   z3::expr* Commit::accept(ASTVisitor &visitor) const {
     return visitor.visit(*this);
   }
+
+  z3::expr* Step::accept(ASTVisitor &visitor) const {
+    return visitor.visit(*this);
+  }
 }

@@ -26,6 +26,7 @@ namespace model {
       virtual z3::expr* visit(const Old &node) = 0;
       virtual z3::expr* visit(const Real &node) = 0;
       virtual z3::expr* visit(const Commit &node) = 0;
+      virtual z3::expr* visit(const Step &node) = 0;
 
       virtual ~ASTVisitor() {}
   };
