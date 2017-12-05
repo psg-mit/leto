@@ -1,7 +1,14 @@
 #include "OperatorVisitor.h"
 #include "Z3Visitor.h"
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wexit-time-destructors"
+#pragma clang diagnostic ignored "-Wglobal-constructors"
+const static std::string POWERON_VAR_NAME = "exn-poweron";
+#pragma clang diagnostic pop
+
 namespace model {
+
   void Z3Visitor::BuildOp(operator_t op_type,
                           Var* op_arg1,
                           Var* op_arg2,
@@ -71,21 +78,16 @@ namespace model {
     return types.at(name);
   }
 
-  z3::expr* Z3Visitor::visit(const Declare &node) {
-    // TODO: Take type into account
-    assert(node.var->name != ARG1_STR);
-    assert(node.var->name != ARG2_STR);
-    assert(node.var->name != RESULT_STR);
-
+  void Z3Visitor::add_var(const std::string& name, type_t type) {
 #ifndef NDEBUG
     size_t start_size = vars.size();
     size_t start_version_size = var_version.size();
 #endif
 
     // Declare var
-    const std::string &name = node.var->name + "-0";
+    const std::string &qname = name + "-0";
     z3::expr* var = nullptr;
-    switch (node.type) {
+    switch (type) {
       case BOOL:
         var = new z3::expr(this->context->bool_const(name.c_str()));
         break;
@@ -99,12 +101,25 @@ namespace model {
       case UINT:
         assert(false);
     }
-    vars[name] = var;
-    var_version[node.var->name] = 0;
-    types[node.var->name] = node.type;
+    vars[qname] = var;
+    var_version[name] = 0;
+    types[name] = type;
 
     assert(vars.size() == start_size + 1);
     assert(var_version.size() == start_version_size + 1);
+  }
+
+  bool Z3Visitor::var_exists(const std::string& name) {
+    return types.count(name);
+  }
+
+  z3::expr* Z3Visitor::visit(const Declare &node) {
+    // TODO: Take type into account
+    assert(node.var->name != ARG1_STR);
+    assert(node.var->name != ARG2_STR);
+    assert(node.var->name != RESULT_STR);
+
+    add_var(node.var->name, node.type);
 
     return nullptr;
   }
@@ -235,6 +250,21 @@ namespace model {
       current_mods = op_mods.at(node.op);
       node.modifies->accept(*this);
       current_mods = nullptr;
+    }
+
+    return nullptr;
+  }
+
+  z3::expr* Z3Visitor::visit(const Step &node) {
+    // Save this snippet of the tree for later
+    steps.push_back(&node);
+
+    // Init exceptions
+    switch (node.throws) {
+      case NONE:
+        break;
+      case POWERON:
+        if (!var_exists(POWERON_VAR_NAME)) add_var(POWERON_VAR_NAME, BOOL);
     }
 
     return nullptr;

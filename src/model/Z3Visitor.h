@@ -40,6 +40,7 @@ namespace model {
       virtual z3::expr* visit(const Old &node);
       virtual z3::expr* visit(const Real &node);
       virtual z3::expr* visit(const Commit &node);
+      virtual z3::expr* visit(const Step &node);
 
       void prep_op(operator_t op, z3::expr* arg1_, z3::expr* arg2_);
       bool prepped();
@@ -83,6 +84,7 @@ namespace model {
       std::map<commit_t, std::unordered_set<std::string>*> commit_mods;
       std::map<std::string, version_map> frames;
       z3::expr* get_var_at(const std::string& name, unsigned version);
+      std::vector<const Step*> steps;
 
       operator_t op;
       z3::expr* arg1;
@@ -98,6 +100,9 @@ namespace model {
                    Var* op_arg2,
                    Var* result,
                    Bool* when);
+
+      void add_var(const std::string& name, type_t type);
+      bool var_exists(const std::string& name);
 
   };
 }
