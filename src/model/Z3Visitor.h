@@ -50,9 +50,6 @@ namespace model {
       z3::expr* get_previous_var(const std::string& name);
       type_t get_var_type(const std::string& name);
 
-
-      void check();
-
       void snapshot_vars();
 
       void add_frame(const std::string& name);

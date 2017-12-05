@@ -411,30 +411,6 @@ namespace model {
     return fn;
   }
 
-  void Z3Visitor::check() {
-    /*
-    // Build functions
-    for (const std::pair<operator_t, std::vector<z3::expr*>> &op : ops) {
-      const std::string &name = FN_NAMES.at(op.first);
-      const std::vector<z3::expr*> &bodies = op.second;
-
-      // OR operators together
-      z3::expr body = *bodies.at(0);
-      for (size_t i = 1; i < bodies.size(); ++i) {
-        body = body || bodies.at(i);
-      }
-
-      // Emit constraint
-      // TODO: Make this work for more than just ints
-      context.function(name.c_str(),
-                       context.int_sort(),
-                       context.int_sort(),
-                       context.int_sort());
-    }
-    */
-    std::cout << *solver << std::endl;
-  }
-
   void Z3Visitor::snapshot_vars() {
     snapshot = var_version;
   }
