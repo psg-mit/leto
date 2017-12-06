@@ -264,7 +264,10 @@ namespace model {
       case NONE:
         break;
       case POWERON:
-        if (!var_exists(POWERON_VAR_NAME)) add_var(POWERON_VAR_NAME, BOOL);
+        if (!var_exists(POWERON_VAR_NAME)) {
+          add_var(POWERON_VAR_NAME, BOOL);
+          exception_mods.emplace(POWERON_VAR_NAME);
+        }
     }
 
     return nullptr;
@@ -411,11 +414,46 @@ namespace model {
     return fn;
   }
 
+  z3::expr* Z3Visitor::step() {
+    // TODO: This makes no sense, we need a void expr type or something, but
+    // this will fall through to binop soooooo....  int for now
+    expr_type = INT;
+    assert(steps.size());
+
+    OperatorVisitor subst(nullptr,
+                          nullptr,
+                          nullptr,
+                          &vars,
+                          &var_version,
+                          context,
+                          solver,
+                          expr_type,
+                          &exception_mods,
+                          types);
+    const Step* impl = steps.at(0);
+    assert(impl);
+    z3::expr* fn = impl->accept(subst);
+    for (size_t i = 1; i < steps.size(); ++i) {
+      impl = steps.at(i);
+      assert(impl);
+      z3::expr* part = impl->accept(subst);
+      *fn = *fn || *part;
+    }
+
+    // TODO: Build equality with old versions like replace_op?
+
+    return fn;
+  }
+
   void Z3Visitor::snapshot_vars() {
     snapshot = var_version;
   }
 
   void Z3Visitor::add_frame(const  std::string& name) {
     frames[name] = var_version;
+  }
+
+  bool Z3Visitor::has_user_step() {
+    return steps.size();
   }
 }

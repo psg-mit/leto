@@ -128,6 +128,10 @@ namespace model {
     return ensures;
   }
 
+  z3::expr* OperatorVisitor::visit(const Step& node) {
+#error left off here
+  }
+
   z3::expr* OperatorVisitor::get_current_var(const std::string& name) const {
     return vars->at(name + "-" + std::to_string(var_version->at(name)));
   }

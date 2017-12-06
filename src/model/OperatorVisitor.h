@@ -29,8 +29,9 @@ namespace model {
                       const std::unordered_map<std::string, type_t>& types);
       virtual z3::expr* visit(const Var &node) override;
       virtual z3::expr* visit(const Operator &node) override;
-      virtual z3::expr* visit(const Old& node);
+      virtual z3::expr* visit(const Old& node) override ;
       virtual z3::expr* visit(const Commit& node) override;
+      virtual z3::expr* visit(const Step& node) override;
 
       // Inherited
       /*
@@ -42,10 +43,10 @@ namespace model {
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
-      virtual z3::expr* visit(const StatementList &node) { assert(false); }
-      virtual z3::expr* visit(const Declare &node) { assert(false); }
-      virtual z3::expr* visit(const Assign &node) { assert(false); }
-      virtual z3::expr* visit(const Block &node) { assert(false); }
+      virtual z3::expr* visit(const StatementList &node) override { assert(false); }
+      virtual z3::expr* visit(const Declare &node) override { assert(false); }
+      virtual z3::expr* visit(const Assign &node) override { assert(false); }
+      virtual z3::expr* visit(const Block &node) override { assert(false); }
 #pragma clang diagnostic pop
 
     private:

@@ -52,10 +52,13 @@ namespace model {
 
       void snapshot_vars();
 
+      bool has_user_step();
+
       void add_frame(const std::string& name);
       std::string frame;
 
       z3::expr* commit(commit_t type);
+      z3::expr* step();
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
@@ -65,6 +68,7 @@ namespace model {
       bool use_snapshot;
 
       z3::expr* var_equality;
+
 
     protected:
       std::unordered_set<std::string>* current_mods;
@@ -82,6 +86,7 @@ namespace model {
       std::map<std::string, version_map> frames;
       z3::expr* get_var_at(const std::string& name, unsigned version);
       std::vector<const Step*> steps;
+      std::unordered_set<std::string> exception_mods;
 
       operator_t op;
       z3::expr* arg1;
