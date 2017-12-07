@@ -15,6 +15,8 @@ namespace z3 {
 #include "ModelNodes.h"
 #include "ASTVisitor.h"
 
+#define POWERON_VAR_NAME "exn-poweron"
+
 namespace model {
 
   typedef std::unordered_map<std::string, z3::expr*> var_map;

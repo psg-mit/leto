@@ -1,12 +1,6 @@
 #include "OperatorVisitor.h"
 #include "Z3Visitor.h"
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wexit-time-destructors"
-#pragma clang diagnostic ignored "-Wglobal-constructors"
-const static std::string POWERON_VAR_NAME = "exn-poweron";
-#pragma clang diagnostic pop
-
 namespace model {
 
   void Z3Visitor::BuildOp(operator_t op_type,

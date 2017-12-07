@@ -99,20 +99,6 @@ namespace model {
 
     z3::expr* ret = new z3::expr(assertion);
 
-    // Ensure that updated variables are set to their old values if this
-    // implementation isn't used
-    /*
-    z3::expr carry = context->bool_val(true);
-    for (const std::string& name : updated) {
-      z3::expr* current = get_current_var(name);
-      z3::expr* prev = get_prev_var(name);
-      z3::expr equal = *current == *prev;
-      carry = carry && equal;
-    }
-
-    *ret = z3::implies(!(*when), carry) && *ret;
-    */
-
     delete current_mods;
     current_mods = nullptr;
 
@@ -129,7 +115,36 @@ namespace model {
   }
 
   z3::expr* OperatorVisitor::visit(const Step& node) {
-#error left off here
+    z3::expr* when = node.when->accept(*this);
+    in_ensures = true;
+    z3::expr* ensures = node.ensures->accept(*this);
+    in_ensures = false;
+    assert(when);
+    assert(ensures);
+
+    z3::expr assertion = *when && *ensures;
+
+    // TODO: Exception handling code will have to be updated when there is more
+    // than one possible exception type
+    assert(updated);
+    assert(updated->empty() || updated->size() == 1);
+    z3::expr* cur_exn = get_current_var(POWERON_VAR_NAME);
+    switch (node.throws) {
+      case NONE:
+        if (updated->size() == 1) {
+          // Set exn state to be equal to old exn state
+          z3::expr* prev = get_prev_var(POWERON_VAR_NAME);
+          assertion = assertion && (*cur_exn == *prev);
+        }
+        break;
+      case POWERON:
+        assertion = assertion && cur_exn;
+        break;
+    }
+
+    z3::expr* ret = new z3::expr(assertion);
+    assert(ret);
+    return ret;
   }
 
   z3::expr* OperatorVisitor::get_current_var(const std::string& name) const {
