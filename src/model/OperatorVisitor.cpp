@@ -138,7 +138,7 @@ namespace model {
         }
         break;
       case POWERON:
-        assertion = assertion && cur_exn;
+        assertion = assertion && *cur_exn;
         break;
     }
 
