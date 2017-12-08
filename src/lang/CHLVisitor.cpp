@@ -577,6 +577,12 @@ namespace lang {
 
   void CHLVisitor::check_try_inv() {
     if (try_inv && !ignore_relaxed) {
+      // TODO: Move this step elsewhere so you don't have to be in a try block
+      // for it to be called
+      if (!model_visitor->has_user_step()) PERROR("No step function defined");
+      z3::expr* step = model_visitor->step();
+      add_constraint(*step);
+
       z3pair inv = try_inv->accept(*this);
       solver->push();
       add_checked_constraint(*inv.original);
@@ -588,9 +594,10 @@ namespace lang {
   z3pair CHLVisitor::visit(StatementList &node) {
     check_try_inv();
     node.lhs->accept(*this);
-    check_try_inv();
+    StatementList* tail = dynamic_cast<StatementList*>(node.rhs);
+    if (!tail) check_try_inv();
     node.rhs->accept(*this);
-    if (!dynamic_cast<StatementList*>(node.rhs)) check_try_inv();
+    if (!tail) check_try_inv();
 
     return {nullptr, nullptr};
   }
