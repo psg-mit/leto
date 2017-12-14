@@ -7,7 +7,6 @@
 
 namespace model {
   enum bool_t {AND, OR, EQUALS, LT, XOR, LTEQ};
-  enum exception_t {NONE, POWERON};
 
   class ASTVisitor;
 

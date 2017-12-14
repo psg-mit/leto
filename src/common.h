@@ -28,6 +28,7 @@ enum operator_t {RPLUS,
                  FWRITE};
 enum type_t {INT, FLOAT, BOOL, REAL, UINT};
 enum commit_t {BEGIN, END};
+enum exception_t {NONE, POWERON};
 
 z3::expr* binop(z3::context* context,
                 operator_t op,

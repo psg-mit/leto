@@ -118,12 +118,42 @@ namespace lang {
   }
 
   void CHLVisitor::push_prefix(z3::expr* prefix) {
+    prefix_t elem;
+    elem.kind = RAW;
+    elem.raw = prefix;
+    prefixes.push_back(elem);
+  }
+
+  void CHLVisitor::push_prefix(prefix_t prefix) {
     prefixes.push_back(prefix);
   }
 
   void CHLVisitor::pop_prefix() {
     assert(!prefixes.empty());
     prefixes.pop_back();
+  }
+
+  z3::expr* CHLVisitor::get_prefix_at(size_t index) {
+    prefix_t prefix = prefixes.at(index);
+
+    z3::expr* ret = nullptr;
+    switch (prefix.kind) {
+      case RAW:
+        ret = prefix.raw;
+        break;
+      case EXCEPTION:
+        switch (prefix.exn_type) {
+          case POWERON:
+            ret = model_visitor->get_current_var(POWERON_VAR_NAME);
+            if (prefix.negated) ret = new z3::expr(!*ret);
+            break;
+          case NONE:
+            assert(false);
+        }
+        break;
+    }
+
+    return ret;
   }
 
   std::string CHLVisitor::get_current_var_name(std::string name) {
@@ -206,9 +236,9 @@ namespace lang {
     if (prefixes.empty()) {
       return constraint;
     } else {
-      z3::expr impl = *prefixes.at(0);
+      z3::expr impl = *get_prefix_at(0);
       for (size_t i = 1; i < prefixes.size(); ++i) {
-        impl = impl && *prefixes.at(i);
+        impl = impl && *get_prefix_at(i);
       }
       if (invert) impl = !impl;
       return z3::implies(impl, constraint);
@@ -228,7 +258,8 @@ namespace lang {
   }
 
   void CHLVisitor::assume_prefixes() {
-    for (const z3::expr* prefix : prefixes) {
+    for (size_t i = 0; i < prefixes.size(); ++i) {
+      const z3::expr* prefix = get_prefix_at(i);
       ++constraints_generated;
       solver->add(*prefix);
     }
@@ -3358,12 +3389,23 @@ namespace lang {
 
     try_inv = node.inv;
 
+    prefix_t prefix;
+    prefix.kind = EXCEPTION;
+    // TODO: Support more exception types
+    prefix.exn_type = POWERON;
+    prefix.negated = true;
+
+    push_prefix(prefix);
+
     node.try_body->accept(*this);
 
-    // TODO: Get the inv before the catch body
-    try_inv = nullptr;
+    pop_prefix();
+    prefix.negated = false;
+    push_prefix(prefix);
 
     node.catch_body->accept(*this);
+
+    pop_prefix();
 
     RETURN_VOID;
   }

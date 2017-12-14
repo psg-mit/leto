@@ -1,3 +1,8 @@
 CC = clang++
 CFLAGS = -std=gnu++14 -g
-WARN = -Weverything -Wno-c++98-compat -Wno-padded -Wno-weak-vtables
+WARN = -Weverything \
+			 -Wno-c++98-compat \
+			 -Wno-padded \
+			 -Wno-weak-vtables \
+			 -Wno-gnu-anonymous-struct \
+			 -Wno-nested-anon-types

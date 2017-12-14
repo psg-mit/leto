@@ -31,6 +31,19 @@ namespace lang {
   typedef std::vector<z3pair> dim_vec;
   typedef std::unordered_map<std::string, std::string> assign_map;
 
+  enum prefix_kind { RAW, EXCEPTION };
+
+  struct prefix_t {
+    enum prefix_kind kind;
+    union {
+      z3::expr* raw;
+      struct {
+        exception_t exn_type;
+        bool negated;
+      };
+    };
+  };
+
   class CHLVisitor : public ASTVisitor {
     public:
       CHLVisitor(z3::context* context_,
@@ -132,7 +145,7 @@ namespace lang {
       unsigned ignore_relaxed;
       z3::expr* old_o;
       z3::expr* old_r;
-      std::vector<z3::expr*> prefixes;
+      std::vector<prefix_t> prefixes;
       std::ofstream& z3_log;
       std::ofstream& smt2_log;
       const std::string* last_base_name;
@@ -183,6 +196,7 @@ namespace lang {
 
       z3::expr* get_previous_var(std::string name);
       void push_prefix(z3::expr* prefix);
+      void push_prefix(prefix_t prefix);
       void pop_prefix();
       void if_same(z3::expr original, z3::expr relaxed, Statement* body);
       void if_diff(z3::expr original,
@@ -190,6 +204,7 @@ namespace lang {
                    Statement* obody,
                    Statement* rbody);
       void add_checked_constraint(const z3::expr& constraint);
+      z3::expr* get_prefix_at(size_t index);
       z3::expr get_constraint(const z3::expr& constraint, bool invert);
       z3::expr* light_mat_elem_eq(Var& lhs_elem_v,
                                   Var& rhs_elem_v,
