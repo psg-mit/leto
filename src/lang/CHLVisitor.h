@@ -182,8 +182,11 @@ namespace lang {
                           const std::string& oname,
                           const std::string& rname,
                           const dim_vec& dimensions);
-      void add_constraint(const z3::expr& constraint, bool invert=false);
+      void add_constraint(const z3::expr& constraint,
+                          bool invert,
+                          bool no_except);
       void assume_prefixes();
+      bool has_prefixes(bool no_except);
       z3::expr* get_current_var(std::string name);
       z3::func_decl* get_current_vec(std::string name);
       z3::expr* make_float(const std::string& name);
@@ -192,7 +195,7 @@ namespace lang {
       /**
        * Returns true if houdini was unknown
        */
-      bool check_loop(While &node, z3::expr cond);
+      bool check_loop(While &node, z3::expr ocond, z3::expr rcond);
 
       z3::expr* get_previous_var(std::string name);
       void push_prefix(z3::expr* prefix);
@@ -204,8 +207,10 @@ namespace lang {
                    Statement* obody,
                    Statement* rbody);
       void add_checked_constraint(const z3::expr& constraint);
-      z3::expr* get_prefix_at(size_t index);
-      z3::expr get_constraint(const z3::expr& constraint, bool invert);
+      z3::expr* get_prefix_at(size_t index, bool no_except);
+      z3::expr get_constraint(const z3::expr& constraint,
+                              bool invert,
+                              bool no_except);
       z3::expr* light_mat_elem_eq(Var& lhs_elem_v,
                                   Var& rhs_elem_v,
                                   RelationalVar& lhs_rv,
@@ -265,7 +270,8 @@ namespace lang {
                                         std::unordered_map<std::string, U*>& props);
 
       void restore_unused_vars(const version_map& old_versions,
-                               char ignore_type);
+                               char of_type,
+                               bool invert);
 
       std::string get_current_var_name(std::string name);
       void handle_uint_read(std::string name, bool is_vec);

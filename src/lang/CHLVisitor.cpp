@@ -133,7 +133,7 @@ namespace lang {
     prefixes.pop_back();
   }
 
-  z3::expr* CHLVisitor::get_prefix_at(size_t index) {
+  z3::expr* CHLVisitor::get_prefix_at(size_t index, bool no_except) {
     prefix_t prefix = prefixes.at(index);
 
     z3::expr* ret = nullptr;
@@ -142,13 +142,17 @@ namespace lang {
         ret = prefix.raw;
         break;
       case EXCEPTION:
-        switch (prefix.exn_type) {
-          case POWERON:
-            ret = model_visitor->get_current_var(POWERON_VAR_NAME);
-            if (prefix.negated) ret = new z3::expr(!*ret);
-            break;
-          case NONE:
-            assert(false);
+        if (no_except) {
+          ret = new z3::expr(context->bool_val(true));
+        } else {
+          switch (prefix.exn_type) {
+            case POWERON:
+              ret = model_visitor->get_current_var(POWERON_VAR_NAME);
+              if (prefix.negated) ret = new z3::expr(!*ret);
+              break;
+            case NONE:
+              assert(false);
+          }
         }
         break;
     }
@@ -232,13 +236,15 @@ namespace lang {
   }
 
   z3::expr CHLVisitor::get_constraint(const z3::expr& constraint,
-                                      bool invert) {
+                                      bool invert,
+                                      bool no_except) {
     if (prefixes.empty()) {
+      assert(!invert);
       return constraint;
     } else {
-      z3::expr impl = *get_prefix_at(0);
+      z3::expr impl = *get_prefix_at(0, no_except);
       for (size_t i = 1; i < prefixes.size(); ++i) {
-        impl = impl && *get_prefix_at(i);
+        impl = impl && *get_prefix_at(i, no_except);
       }
       if (invert) impl = !impl;
       return z3::implies(impl, constraint);
@@ -246,23 +252,33 @@ namespace lang {
   }
 
   void CHLVisitor::add_constraint(const z3::expr& constraint,
-                                  bool invert) {
+                                  bool invert,
+                                  bool no_except) {
     ++constraints_generated;
-    solver->add(get_constraint(constraint, invert));
+    solver->add(get_constraint(constraint, invert, no_except));
   }
 
   void CHLVisitor::add_checked_constraint(const z3::expr& constraint) {
     ++constraints_generated;
     check_context();
-    solver->add(!get_constraint(constraint, false));
+    solver->add(!get_constraint(constraint, false, false));
   }
 
   void CHLVisitor::assume_prefixes() {
     for (size_t i = 0; i < prefixes.size(); ++i) {
-      const z3::expr* prefix = get_prefix_at(i);
+      const z3::expr* prefix = get_prefix_at(i, false);
       ++constraints_generated;
       solver->add(*prefix);
     }
+  }
+
+  bool CHLVisitor::has_prefixes(bool no_except) {
+    for (const prefix_t& prefix : prefixes) {
+      if (no_except && prefix.kind == EXCEPTION) continue;
+      return true;
+    }
+
+    return false;
   }
 
   void CHLVisitor::check_context() {
@@ -497,7 +513,9 @@ namespace lang {
       if (node.specvar) specvars.insert(var->name);
 
       // Assume variables are equal at declare time
-      if (assume_eq) add_constraint(*res.original == *res.relaxed);
+      if (assume_eq) {
+        add_constraint(*res.original == *res.relaxed, false, false);
+      }
 
       if (node.region) regions[var->name] = node.region->name;
     }
@@ -526,7 +544,7 @@ namespace lang {
         dimensions->push_back({res.original, res.relaxed});
 
         // Assume dimensions are equal
-        add_constraint(*res.original == *res.relaxed);
+        add_constraint(*res.original == *res.relaxed, false, false);
       }
 
       // Declare var<o> and var<r>
@@ -549,7 +567,7 @@ namespace lang {
                                      *res.relaxed,
                                      *dimensions,
                                      dimensions->size() == 1 ? IGNORE_1D : IGNORE_2D);
-        add_constraint(*eq);
+        add_constraint(*eq, false, false);
       }
 
       if (node.region) regions[var->name] = node.region->name;
@@ -612,7 +630,7 @@ namespace lang {
       // for it to be called
       if (!model_visitor->has_user_step()) PERROR("No step function defined");
       z3::expr* step = model_visitor->step();
-      add_constraint(*step);
+      add_constraint(*step, false, false);
 
       z3pair inv = try_inv->accept(*this);
       solver->push();
@@ -718,9 +736,13 @@ namespace lang {
           // Eval vec at i
           z3pair constraint = virtual_vec.at(i)->accept(*this);
           add_constraint((*last_array.original)
-                             (context->int_val(static_cast<int>(i))) == *constraint.original);
+                             (context->int_val(static_cast<int>(i))) == *constraint.original,
+                         false,
+                         true);
           add_constraint((*last_array.relaxed)
-                             (context->int_val(static_cast<int>(i))) == *constraint.relaxed);
+                             (context->int_val(static_cast<int>(i))) == *constraint.relaxed,
+                         false,
+                         false);
         }
         break;
       case 2:
@@ -806,8 +828,8 @@ namespace lang {
       ores = new z3::expr(*lhs.original == *old_o);
     }
     assert(ores);
-    add_constraint(*ores);
-    if (!prefixes.empty()) add_constraint(*lhs.original == *old_o, true);
+    add_constraint(*ores, false, true);
+    if (has_prefixes(true)) add_constraint(*lhs.original == *old_o, true, true);
 
     // Set LHS<r> == RHS<r>
     z3::expr *rres = nullptr;
@@ -818,14 +840,14 @@ namespace lang {
           std::string tname = H_TMP_PREFIX + std::to_string(h_tmp++);
           z3::expr tmp = context->int_const(tname.c_str());
           z3::expr* replacement = model_visitor->replace_op(lhs_type, &tmp);
-          add_constraint(*replacement);
+          add_constraint(*replacement, false, false);
           rres = new z3::expr(z3::implies(0 <= tmp, *lhs.relaxed == tmp));
         } else rres = model_visitor->replace_op(lhs_type, lhs.relaxed);
-        if (!prefixes.empty()) {
+        if (has_prefixes(false)) {
           for (const std::string& var : *model_visitor->updated) {
             z3::expr* cur = model_visitor->get_current_var(var);
             z3::expr* prev = model_visitor->get_previous_var(var);
-            add_constraint(*cur == *prev, true);
+            add_constraint(*cur == *prev, true, false);
           }
         }
       } else if (lhs_type == UINT) {
@@ -836,11 +858,11 @@ namespace lang {
       rres = new z3::expr(*lhs.relaxed == *old_r);
     }
     assert(rres);
-    add_constraint(*rres);
-    if (!prefixes.empty()) {
-      add_constraint(*lhs.relaxed == *old_r, true);
+    add_constraint(*rres, false, false);
+    if (has_prefixes(false)) {
+      add_constraint(*lhs.relaxed == *old_r, true, false);
       z3::expr* var_eq = model_visitor->var_equality;
-      if (var_eq) add_constraint(*var_eq, true);
+      if (var_eq) add_constraint(*var_eq, true, false);
     }
 
     return {ores, rres};
@@ -1017,30 +1039,34 @@ namespace lang {
         z3::expr tmp = context->int_const(tname.c_str());
         model_visitor->prep_op(FWRITE, &tmp, val.relaxed);
         z3::expr* replacement = model_visitor->replace_op(dest_type, nullptr);
-        add_constraint(*replacement);
-        add_constraint(z3::implies(0 <= tmp, (tmp == *dest.relaxed)));
+        add_constraint(*replacement, false, false);
+        add_constraint(z3::implies(0 <= tmp, (tmp == *dest.relaxed)),
+                       false,
+                       false);
       } else {
         model_visitor->prep_op(FWRITE, dest.relaxed, val.relaxed);
         z3::expr* res = model_visitor->replace_op(dest_type, nullptr);
-        add_constraint(*res);
+        add_constraint(*res, false, false);
       }
-      if (!prefixes.empty()) {
-        add_constraint(*model_visitor->var_equality, true);
+      if (has_prefixes(false)) {
+        add_constraint(*model_visitor->var_equality, true, false);
       }
     } else {
-      add_constraint(*dest.relaxed == *old_r);
+      add_constraint(*dest.relaxed == *old_r, false, false);
     }
 
     if (!ignore_original) {
       if (dest_type == UINT) {
         add_constraint(z3::implies(0 <= *val.original,
-                                   *dest.original == *val.original));
+                                   *dest.original == *val.original),
+                       false,
+                       true);
       } else {
         z3::expr res = (*dest.original == *val.original);
-        add_constraint(res);
+        add_constraint(res, false, true);
       }
     } else {
-      add_constraint(*dest.original == *old_o);
+      add_constraint(*dest.original == *old_o, false, true);
     }
 
     return {nullptr, nullptr};
@@ -1506,7 +1532,7 @@ namespace lang {
     assert(assumption.original);
     assert(!assumption.relaxed);
 
-    add_constraint(*assumption.original);
+    add_constraint(*assumption.original, false, false);
     return {nullptr, nullptr};
   }
 
@@ -1527,7 +1553,7 @@ namespace lang {
     }
 
     // Assertion passed!  Add to context
-    add_constraint(*assertion.original);
+    add_constraint(*assertion.original, false, false);
 
     return {nullptr, nullptr};
   }
@@ -1540,7 +1566,7 @@ namespace lang {
 
     if (!ignore_original) {
       // Get original assertion as an assumption
-      add_constraint(*assertion.original);
+      add_constraint(*assertion.original, false, true);
     }
 
     if (!ignore_relaxed) {
@@ -1553,7 +1579,7 @@ namespace lang {
       }
 
       // Assertion passed!  Get relaxed assertion as an assumption
-      add_constraint(*assertion.relaxed);
+      add_constraint(*assertion.relaxed, false, false);
     }
 
     return {nullptr, nullptr};
@@ -1565,11 +1591,11 @@ namespace lang {
     assert(clause.relaxed);
 
     if (!ignore_original) {
-      add_constraint(!(*clause.original));
+      add_constraint(!(*clause.original), false, true);
     }
 
     if (!ignore_relaxed) {
-      add_constraint(!(*clause.relaxed));
+      add_constraint(!(*clause.relaxed), false, false);
     }
 
     return {nullptr, nullptr};
@@ -1830,26 +1856,34 @@ namespace lang {
           add_constraint(*(vector_equals(*new_oarray,
                                          *oarray,
                                          *dimension,
-                                         ignore)));
+                                         ignore)),
+                         false,
+                         true);
           ignore = {i1.relaxed};
           add_constraint(*(vector_equals(*new_rarray,
                                          *rarray,
                                          *dimension,
-                                         ignore)));
+                                         ignore)),
+                         false,
+                         false);
 
-          if (!prefixes.empty()) {
+          ignore = {nullptr};
+          if (has_prefixes(true)) {
             // Set equal
-            ignore = {nullptr};
             add_constraint(*(vector_equals(*new_oarray,
                                            *oarray,
                                            *dimension,
                                            ignore)),
+                           true,
                            true);
+          }
+          if (has_prefixes(false)) {
             add_constraint(*(vector_equals(*new_rarray,
                                            *rarray,
                                            *dimension,
                                            ignore)),
-                           true);
+                           true,
+                           false);
           }
           break;
         case 2:
@@ -1863,25 +1897,33 @@ namespace lang {
             add_constraint(*(vector_equals(*new_oarray,
                                            *oarray,
                                            *dimension,
-                                           ignore)));
+                                           ignore)),
+                           false,
+                           true);
             ignore = {i1.relaxed, i2.relaxed};
             add_constraint(*(vector_equals(*new_rarray,
                                            *rarray,
                                            *dimension,
-                                           ignore)));
+                                           ignore)),
+                           false,
+                           false);
 
-            if (!prefixes.empty()) {
-              ignore = {nullptr, nullptr};
+            ignore = {nullptr, nullptr};
+            if (has_prefixes(true)) {
               add_constraint(*(vector_equals(*new_oarray,
                                              *oarray,
                                              *dimension,
                                              ignore)),
+                             true,
                              true);
+            }
+            if (has_prefixes(false)) {
               add_constraint(*(vector_equals(*new_rarray,
                                              *rarray,
                                              *dimension,
                                              ignore)),
-                             true);
+                             true,
+                             false);
 
             }
           }
@@ -2048,8 +2090,8 @@ namespace lang {
                                   std::array<z3::check_result, 4>& results) {
     // Case 1: cond<o> && cond<r>
     solver->push();
-    add_constraint(original);
-    add_constraint(relaxed);
+    add_constraint(original, false, true);
+    add_constraint(relaxed, false, false);
     assume_prefixes();
     debug_print("check if path cond<o> && cond<r>");
     results.at(0) = check(false);
@@ -2057,8 +2099,8 @@ namespace lang {
 
     // Case 2: cond<o> && !cond<r>
     solver->push();
-    add_constraint(original);
-    add_constraint(!relaxed);
+    add_constraint(original, false, true);
+    add_constraint(!relaxed, false, false);
     assume_prefixes();
     debug_print("check if path cond<o> && !cond<r>");
     results.at(1) = check(false);
@@ -2066,8 +2108,8 @@ namespace lang {
 
     // Case 3: !cond<o> && cond<r>
     solver->push();
-    add_constraint(!original);
-    add_constraint(relaxed);
+    add_constraint(!original, false, true);
+    add_constraint(relaxed, false, false);
     assume_prefixes();
     debug_print("check if path !cond<o> && cond<r>");
     results.at(2) = check(false);
@@ -2075,8 +2117,8 @@ namespace lang {
 
     // Case 4: !cond<o> && !cond<r>
     solver->push();
-    add_constraint(!original);
-    add_constraint(!relaxed);
+    add_constraint(!original, false, true);
+    add_constraint(!relaxed, false, false);
     assume_prefixes();
     debug_print("check if path !cond<o> && !cond<r>");
     results.at(3) = check(false);
@@ -2179,7 +2221,7 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
-  bool CHLVisitor::check_loop(While &node, z3::expr cond) {
+  bool CHLVisitor::check_loop(While &node, z3::expr ocond, z3::expr rcond) {
     assert(!ignore_relaxed);
 
     if (inner_h_unknown) {
@@ -2199,22 +2241,23 @@ namespace lang {
     h_z3pair eqs = houdini_to_constraints(node);
     assert(eqs.assumes);
     assert(eqs.asserts);
-    add_constraint(*eqs.assumes);
-    add_constraint(*eqs.asserts);
+    add_constraint(*eqs.assumes, false, true);
+    add_constraint(*eqs.asserts, false, false);
 
     z3pair inv = node.inv->accept(*this);
     assert(inv.original);
     assert(!inv.relaxed);
-    add_constraint(*inv.original);
+    add_constraint(*inv.original, false, false);
 
     z3pair nonrel_inv = node.nonrel_inv->accept(*this);
     assert(nonrel_inv.original);
     assert(nonrel_inv.relaxed);
-    if (!ignore_original) add_constraint(*nonrel_inv.original);
-    add_constraint(*nonrel_inv.relaxed);
+    if (!ignore_original) add_constraint(*nonrel_inv.original, false, true);
+    add_constraint(*nonrel_inv.relaxed, false, false);
 
     // Add cond to state
-    add_constraint(cond);
+    add_constraint(ocond, false, true);
+    add_constraint(rcond, false, false);
 
     // Check body
     debug_print("Body:");
@@ -2224,7 +2267,7 @@ namespace lang {
     debug_print("Houdini invariant: " + label);
     eqs = houdini_to_constraints(node);
     solver->push();
-    add_constraint(*eqs.assumes);
+    add_constraint(*eqs.assumes, false, true);
     add_checked_constraint(*eqs.asserts);
     z3::check_result h_res = check(!in_houdini);
     solver->pop();
@@ -2239,7 +2282,7 @@ namespace lang {
       // Check post-body invariant
       debug_print("Post body invariant: " + label);
       solver->push();
-      if (!ignore_original) add_constraint(*nonrel_inv.original);
+      if (!ignore_original) add_constraint(*nonrel_inv.original, false, true);
       add_checked_constraint(*inv.original && *nonrel_inv.relaxed);
       check();
       solver->pop();
@@ -2349,7 +2392,7 @@ namespace lang {
 
       z3::expr tmp = context->bool_const(tmp_name.c_str());
 
-      add_constraint(tmp == *res.original);
+      add_constraint(tmp == *res.original, false, true);
 
       asserts = asserts && tmp;
     }
@@ -2365,7 +2408,7 @@ namespace lang {
 
       z3::expr tmp = context->bool_const(tmp_name.c_str());
 
-      add_constraint(tmp == *res.relaxed);
+      add_constraint(tmp == *res.relaxed, false, true);
 
       if (!ignore_original) assumes = assumes && res.original;
 
@@ -2465,7 +2508,7 @@ namespace lang {
       // Assume oringinal non-relational invariant
       // (but no need to check the loop)
       z3pair post = node.nonrel_inv->accept(*this);
-      add_constraint(*post.original);
+      add_constraint(*post.original, false, true);
       RETURN_VOID;
     }
 
@@ -2491,7 +2534,7 @@ namespace lang {
       assert(nonrel_inv.relaxed);
       debug_print("Pre body invariant: " + label);
       solver->push();
-      if (!ignore_original) add_constraint(*nonrel_inv.original);
+      if (!ignore_original) add_constraint(*nonrel_inv.original, false, true);
       add_checked_constraint(*inv.original && *nonrel_inv.relaxed);
       check();
       solver->pop();
@@ -2615,7 +2658,7 @@ namespace lang {
     if (!passed_houdini_pre || &node.houdini_invs != cur_houdini_invs) {
       debug_print("Pre body houdini: " + label);
       solver->push();
-      add_constraint(*eqs.assumes);
+      add_constraint(*eqs.assumes, false, true);
       add_checked_constraint(*eqs.asserts);
       z3::check_result h_res =  check(!in_houdini);
       h_unknown = h_res == z3::unknown || h_unknown;
@@ -2663,7 +2706,7 @@ namespace lang {
       case z3::sat:
         // Check both in lockstep
         debug_print(label + " : body cond<o> && cond<r>");
-        h_unknown = check_loop(node, *cond.original && *cond.relaxed) || h_unknown;
+        h_unknown = check_loop(node, *cond.original, *cond.relaxed) || h_unknown;
         break;
       case z3::unsat:
         // All constraints implicitly true
@@ -2704,7 +2747,7 @@ namespace lang {
           z3pair cond_new = node.cond->accept(*this);
           ++ignore_original;
           debug_print(label + " : body !cond<o> && cond<r>");
-          h_unknown = check_loop(node, !(*cond_new.original) && *cond_new.relaxed) || h_unknown;
+          h_unknown = check_loop(node, !(*cond_new.original), *cond_new.relaxed) || h_unknown;
           --ignore_original;
           solver->pop();
         }
@@ -2731,33 +2774,34 @@ namespace lang {
     cond = node.cond->accept(*this);
     assert(cond.original);
     assert(cond.relaxed);
-    add_constraint(!*cond.original);
-    add_constraint(!*cond.relaxed);
+    add_constraint(!*cond.original, false, true);
+    add_constraint(!*cond.relaxed, false, false);
     inv = node.inv->accept(*this);
     nonrel_inv = node.nonrel_inv->accept(*this);
     assert(inv.original);
     assert(!inv.relaxed);
     assert(nonrel_inv.original);
     assert(nonrel_inv.relaxed);
-    add_constraint(*inv.original);
+    add_constraint(*inv.original, false, false);
 
 
 
     // TODO: Set vars in unrun vars to be equal to their old selves
-    if (!prefixes.empty()) restore_unused_vars(old_versions, 0);
+    if (has_prefixes(true)) restore_unused_vars(old_versions, 'o', true);
+    if (has_prefixes(false)) restore_unused_vars(old_versions, 'r', true);
 
-    if (ignore_original) restore_unused_vars(old_versions, 'r');
-    else add_constraint(*nonrel_inv.original);
+    if (ignore_original) restore_unused_vars(old_versions, 'o', false);
+    else add_constraint(*nonrel_inv.original, false, true);
 
-    add_constraint(*nonrel_inv.relaxed);
+    add_constraint(*nonrel_inv.relaxed, false, false);
 
 
 
 
     if (!h_unknown) {
       eqs = houdini_to_constraints(node);
-      add_constraint(*eqs.assumes);
-      add_constraint(*eqs.asserts);
+      add_constraint(*eqs.assumes, false, true);
+      add_constraint(*eqs.asserts, false, false);
     }
     parent_while = old_parent_while;
 
@@ -2770,12 +2814,13 @@ namespace lang {
   }
 
   void CHLVisitor::restore_unused_vars(const version_map& old_versions,
-                                       char ignore_type) {
+                                       char of_type,
+                                       bool invert) {
     for (const std::pair<std::string, unsigned>& oldv : old_versions) {
       const std::string& name = oldv.first;
       const char& type = name.at(name.size() - 2);
-      assert(type == 'r' || type == 'o' || type == 0);
-      if (type == ignore_type) continue;
+      assert(type == 'r' || type == 'o');
+      if (type != of_type) continue;
 
       const unsigned old_version = oldv.second;
       unsigned new_version = var_version.at(name);
@@ -2791,7 +2836,7 @@ namespace lang {
           assert(old_var);
           assert(new_var);
           assert(old_var != new_var);
-          add_constraint(*old_var == *new_var, !ignore_type);
+          add_constraint(*old_var == *new_var, invert, type == 'o');
         } else {
           // Dealing with a vector
           z3::func_decl* old_vec = vectors.at(qname);
@@ -2808,7 +2853,7 @@ namespace lang {
                                                *new_vec,
                                                *dimensions,
                                                dimensions->size() == 1 ?  IGNORE_1D : IGNORE_2D);
-          add_constraint(*constraint, !ignore_type);
+          add_constraint(*constraint, invert, type == 'o');
         }
       }
     }
@@ -2876,8 +2921,8 @@ namespace lang {
     z3::expr oforall = z3::forall(*forall_i, 0 <= (*src.original)(*forall_i));
     z3::expr rforall = z3::forall(*forall_i, 0 <= (*src.relaxed)(*forall_i));
     if (types.at(node.src->name) == UINT) {
-      add_constraint(oforall);
-      add_constraint(rforall);
+      add_constraint(oforall, false, true);
+      add_constraint(rforall, false, false);
     }
 
     z3::expr* oeq = vector_equals(*dest.original,
@@ -2895,8 +2940,8 @@ namespace lang {
       model_visitor->prep_op(FWRITE, &forall_dest, &forall_src);
       model_visitor->var_equality = nullptr;
       z3::expr* inner = model_visitor->replace_op(dest_type, nullptr);
-      if (!prefixes.empty()) {
-        add_constraint(*model_visitor->var_equality, true);
+      if (has_prefixes(false)) {
+        add_constraint(*model_visitor->var_equality, true, false);
       }
 
       // Use inner in a vec equals
@@ -2912,11 +2957,11 @@ namespace lang {
     }
     assert(req);
     if (dest_type == UINT) {
-      add_constraint(z3::implies(oforall, *oeq));
-      add_constraint(z3::implies(rforall, *req));
+      add_constraint(z3::implies(oforall, *oeq), false, true);
+      add_constraint(z3::implies(rforall, *req), false, false);
     } else {
-      add_constraint(*oeq);
-      add_constraint(*req);
+      add_constraint(*oeq, false, true);
+      add_constraint(*req, false, false);
     }
 
     return {nullptr, nullptr};
@@ -3217,8 +3262,8 @@ namespace lang {
     z3pair requires = node.requires->accept(*this);
     assert(requires.original);
     assert(requires.relaxed);
-    add_constraint(*requires.original);
-    add_constraint(*requires.relaxed);
+    add_constraint(*requires.original, false, true);
+    add_constraint(*requires.relaxed, false, false);
 
     // Leverage existing code for r_requires
     RelationalAssume r_requires_node(node.r_requires);
@@ -3413,7 +3458,7 @@ namespace lang {
   z3pair CHLVisitor::visit(Commit& node) {
     z3::expr* fn = model_visitor->commit(node.type);
     assert(fn);
-    add_constraint(*fn);
+    add_constraint(*fn, false, false);
 
     RETURN_VOID;
   }
