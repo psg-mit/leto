@@ -238,7 +238,7 @@ namespace lang {
   z3::expr CHLVisitor::get_constraint(const z3::expr& constraint,
                                       bool invert,
                                       bool no_except) {
-    if (prefixes.empty()) {
+    if (!has_prefixes(no_except)) {
       assert(!invert);
       return constraint;
     } else {
