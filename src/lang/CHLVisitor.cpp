@@ -3444,11 +3444,16 @@ namespace lang {
 
     node.try_body->accept(*this);
 
+    try_inv = nullptr;
+
     pop_prefix();
     prefix.negated = false;
     push_prefix(prefix);
 
+    bool old_ignore_original = ignore_original;
+    ignore_original = true;
     node.catch_body->accept(*this);
+    ignore_original = old_ignore_original;
 
     pop_prefix();
 
