@@ -215,6 +215,8 @@ namespace model {
         printf("poweron\n");
         break;
     }
+    printf("  modifies:\n");
+    if (node.modifies) node.modifies->accept(*this);
     printf("  ensures:\n");
     node.ensures->accept(*this);
     return nullptr;

@@ -334,12 +334,20 @@ statement:
   WHEN '(' boolexp ')'
   THROWS POWERON
   ENSURES '(' boolexp ')' {
-    $$ = new model::Step($4, exception_t::POWERON, $10);
+    $$ = new model::Step($4, exception_t::POWERON, nullptr, $10);
+    model_ast = $$;
+  }
+| STEP
+  WHEN '(' boolexp ')'
+  THROWS POWERON
+  MODIFIES '(' varlist ')'
+  ENSURES '(' boolexp ')' {
+    $$ = new model::Step($4, exception_t::POWERON, $10, $14);
     model_ast = $$;
   }
 | STEP
   ENSURES '(' boolexp ')' {
-    $$ = new model::Step(&TRUE_NODE, exception_t::NONE, $4);
+    $$ = new model::Step(&TRUE_NODE, exception_t::NONE, nullptr, $4);
     model_ast = $$;
   }
 | '{' statement '}' {

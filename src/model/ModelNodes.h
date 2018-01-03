@@ -183,14 +183,17 @@ namespace model {
     public:
       Step(const BoolExp* when_,
            exception_t throws_,
+           const VarList* modifies_,
            const BoolExp *ensures_) :
           when(when_),
           throws(throws_),
+          modifies(modifies_),
           ensures(ensures_) {}
       virtual z3::expr* accept(ASTVisitor &visitor) const override;
 
       const BoolExp* const when;
       const exception_t throws;
+      const VarList* modifies;
       const BoolExp* const ensures;
   };
 }
