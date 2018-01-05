@@ -188,6 +188,14 @@ namespace lang {
     return vectors.at(vname);
   }
 
+  z3::func_decl* CHLVisitor::get_previous_vec(std::string name) {
+    unsigned version = var_version.at(name);
+    assert(version);
+    --version;
+    name += "-" + std::to_string(version);
+    return vectors.at(name);
+  }
+
   z3::expr* CHLVisitor::get_previous_var(std::string name) {
     unsigned version = var_version.at(name);
     assert(version);
@@ -201,6 +209,92 @@ namespace lang {
     unsigned version = var_version.at(name);
     name += "-" + std::to_string(version);
     return vars.count(name);
+  }
+
+  bool CHLVisitor::incr_vars(const std::string& region) {
+    bool exists = false;
+    for (const std::pair<std::string, std::string>& vr : regions) {
+      if (vr.second == region) {
+        exists = true;
+        const std::string& name = vr.first;
+        std::string oname = name + "<o>";
+        std::string rname = name + "<r>";
+
+        if (vars.count(oname)) {
+          // Var
+          assert(vars.count(rname));
+          z3::expr* old_o = get_current_var(oname);
+          z3pair res = add_var(types.at(name), oname, rname);
+          add_constraint(*res.original == *old_o, false, false);
+        } else {
+          // Vector
+          assert(vectors.count(oname));
+          assert(vectors.count(rname));
+          z3::func_decl* old_o = get_current_vec(oname);
+
+          unsigned version = var_version.at(oname);
+          assert(version == var_version.at(rname));
+          ++version;
+          ++var_version.at(oname);
+          ++var_version.at(rname);
+          oname += "-" + std::to_string(version);
+          rname += "-" + std::to_string(version);
+          dim_vec* dims = dim_map.at(name);
+
+          vec_pair res = add_vector(types.at(name), oname, rname, *dims);
+
+          assert(dims->size() == 1 || dims->size() == 2);
+          z3::expr* eq = vector_equals(*res.original,
+                                       *old_o,
+                                       *dims,
+                                       dims->size() == 1 ? IGNORE_1D :
+                                                           IGNORE_2D);
+
+
+          add_constraint(*eq, false, false);
+        }
+      }
+    }
+
+    return exists;
+  }
+
+  z3::expr* CHLVisitor::revert_r_vars(const std::string& region) {
+    z3::expr ret(context->bool_val(true));
+
+    for (const std::pair<std::string, std::string>& vr : regions) {
+      if (vr.second == region) {
+        const std::string& name = vr.first;
+        std::string oname = name + "<o>";
+        std::string rname = name + "<r>";
+
+        if (vars.count(oname)) {
+          // Var
+          assert(vars.count(rname));
+          z3::expr* old_r = get_previous_var(rname);
+          z3::expr* cur_r = get_current_var(rname);
+          ret = ret && *old_r == *cur_r;
+        } else {
+          // Vector
+          assert(vectors.count(oname));
+          assert(vectors.count(rname));
+
+          z3::func_decl* old_r = get_previous_vec(rname);
+          z3::func_decl* cur_r = get_current_vec(rname);
+          dim_vec* dims = dim_map.at(name);
+
+          assert(dims->size() == 1 || dims->size() == 2);
+          z3::expr* eq = vector_equals(*old_r,
+                                       *cur_r,
+                                       *dims,
+                                       dims->size() == 1 ? IGNORE_1D :
+                                                           IGNORE_2D);
+
+        }
+      }
+    }
+
+    return new z3::expr(ret);
   }
 
   void CHLVisitor::handle_uint_read(std::string name, bool is_vec) {

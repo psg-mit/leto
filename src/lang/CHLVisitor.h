@@ -107,6 +107,9 @@ namespace lang {
       z3::check_result check(bool exit_on_sat=true);
       int get_errors() { return errors; }
 
+      bool incr_vars(const std::string& region);
+      z3::expr* CHLVisitor::revert_r_vars(const std::string& region);
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
       virtual z3pair visit(Block &node) override {assert(false);}
@@ -198,6 +201,7 @@ namespace lang {
       bool check_loop(While &node, z3::expr ocond, z3::expr rcond);
 
       z3::expr* get_previous_var(std::string name);
+      z3::func_decl* get_previous_vec(std::string name);
       void push_prefix(z3::expr* prefix);
       void push_prefix(prefix_t prefix);
       void pop_prefix();

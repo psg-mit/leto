@@ -250,6 +250,8 @@ namespace model {
   }
 
   z3::expr* Z3Visitor::visit(const Step &node) {
+    assert(!current_mods);
+
     // Save this snippet of the tree for later
     steps.push_back(&node);
 
@@ -262,6 +264,13 @@ namespace model {
           add_var(POWERON_VAR_NAME, BOOL);
           exception_mods.emplace(POWERON_VAR_NAME);
         }
+    }
+
+    if (node.modifies) {
+      // Store modifications
+      current_mods = &exception_mods;
+      node.modifies->accept(*this);
+      current_mods = nullptr;
     }
 
     return nullptr;

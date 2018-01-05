@@ -25,25 +25,30 @@ namespace model {
 
     // Update all modified vars
     for (const std::string& name : *updated) {
-      // Intialize next version
-      unsigned next_version = ++var_version->at(name);
-      const std::string &new_name = name + "-" + std::to_string(next_version);
-      z3::expr *var = nullptr;
-      switch (types.at(name)) {
-        case BOOL:
-          var = new z3::expr(context->bool_const(new_name.c_str()));
-          break;
-        case INT:
-        case UINT:
-          var = new z3::expr(context->int_const(new_name.c_str()));
-          break;
-        case REAL:
-          var = new z3::expr(context->real_const(new_name.c_str()));
-          break;
-        case FLOAT:
-          assert(false);
+      if (!var_version->count(name)) {
+        // Potential memory region
+#error TODO: Rev all vars in this region.  ERROR if it doesn't exist
+      } else {
+        // Intialize next version
+        unsigned next_version = ++var_version->at(name);
+        const std::string &new_name = name + "-" + std::to_string(next_version);
+        z3::expr *var = nullptr;
+        switch (types.at(name)) {
+          case BOOL:
+            var = new z3::expr(context->bool_const(new_name.c_str()));
+            break;
+          case INT:
+          case UINT:
+            var = new z3::expr(context->int_const(new_name.c_str()));
+            break;
+          case REAL:
+            var = new z3::expr(context->real_const(new_name.c_str()));
+            break;
+          case FLOAT:
+            assert(false);
+        }
+        (*vars)[new_name] = var;
       }
-      (*vars)[new_name] = var;
     }
 
     in_ensures = false;
@@ -141,6 +146,8 @@ namespace model {
         assertion = assertion && *cur_exn;
         break;
     }
+
+#error restore unmodified vars and regions
 
     z3::expr* ret = new z3::expr(assertion);
     assert(ret);
