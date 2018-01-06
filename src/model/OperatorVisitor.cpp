@@ -14,6 +14,7 @@ namespace model {
       : Z3Visitor(context_, solver_, expr_type_),
         vars(vars_),
         var_version(var_version_) {
+    assert(chl);
     substitutions[ARG1_STR] = arg1_subst;
     substitutions[ARG2_STR] = arg2_subst;
     substitutions[RESULT_STR] = result_subst;
@@ -27,7 +28,8 @@ namespace model {
     for (const std::string& name : *updated) {
       if (!var_version->count(name)) {
         // Potential memory region
-#error TODO: Rev all vars in this region.  ERROR if it doesn't exist
+        bool res = chl->incr_vars(name);
+        if (!res) PERROR("No such region or variable " + name);
       } else {
         // Intialize next version
         unsigned next_version = ++var_version->at(name);
@@ -120,7 +122,12 @@ namespace model {
   }
 
   z3::expr* OperatorVisitor::visit(const Step& node) {
+    assert(!current_mods);
+    assert(chl);
+
     z3::expr* when = node.when->accept(*this);
+    current_mods = new std::unordered_set<std::string>();
+    if (node.modifies) node.modifies->accept(*this);
     in_ensures = true;
     z3::expr* ensures = node.ensures->accept(*this);
     in_ensures = false;
@@ -147,7 +154,33 @@ namespace model {
         break;
     }
 
-#error restore unmodified vars and regions
+    // Figure out which model vars were unmodified
+    std::unordered_set<std::string> unmodified(*updated);
+    for (const std::string& modified : *current_mods) {
+      size_t res = unmodified.erase(modified);
+      assert(res);
+    }
+
+    // Mark new unmodified vars as equivalent to old ones
+    for (const std::string& var : unmodified) {
+      if (var_version->count(var)) {
+        z3::expr* cur = get_current_var(var);
+        z3::expr* prev = get_prev_var(var);
+        assert(cur);
+        assert(prev);
+        assert(cur != prev);
+
+        assertion = assertion && (*cur == *prev);
+      } else {
+        // memory region
+        z3::expr* rev = chl->revert_r_vars(var);
+        assert(rev);
+        assertion = assertion && *rev;
+      }
+    }
+
+    delete current_mods;
+    current_mods = nullptr;
 
     z3::expr* ret = new z3::expr(assertion);
     assert(ret);

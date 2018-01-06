@@ -12,10 +12,18 @@ namespace z3 {
 }
 
 #include "../common.h"
+
+#include "../lang/CHLVisitor.h"
+
 #include "ModelNodes.h"
 #include "ASTVisitor.h"
 
 #define POWERON_VAR_NAME "exn-poweron"
+
+// CHLVisitor forward declaration
+namespace lang {
+  class CHLVisitor;
+}
 
 namespace model {
 
@@ -62,6 +70,8 @@ namespace model {
       z3::expr* commit(commit_t type);
       z3::expr* step();
 
+      void set_chl(lang::CHLVisitor* chl);
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"
       virtual z3::expr* visit(const Block &node) { assert(false); }
@@ -74,6 +84,7 @@ namespace model {
 
     protected:
       std::unordered_set<std::string>* current_mods;
+      lang::CHLVisitor* chl;
 
     private:
       z3::context* context;

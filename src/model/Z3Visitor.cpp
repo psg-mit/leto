@@ -46,6 +46,14 @@ namespace model {
     var_equality = nullptr;
     begin_commit = nullptr;
     end_commit = nullptr;
+    chl = nullptr;
+  }
+
+  void Z3Visitor::set_chl(lang::CHLVisitor* chl_) {
+    assert(chl_);
+    assert(!chl);
+
+    chl = chl_;
   }
 
   z3::expr* Z3Visitor::get_current_var(const std::string& name) {

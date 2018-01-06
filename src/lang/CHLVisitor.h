@@ -27,6 +27,11 @@ struct h_z3pair {
   z3::expr* asserts;
 };
 
+// Forward declare Z3Visitor
+namespace model {
+  class Z3Visitor;
+}
+
 namespace lang {
   typedef std::vector<z3pair> dim_vec;
   typedef std::unordered_map<std::string, std::string> assign_map;
@@ -108,7 +113,7 @@ namespace lang {
       int get_errors() { return errors; }
 
       bool incr_vars(const std::string& region);
-      z3::expr* CHLVisitor::revert_r_vars(const std::string& region);
+      z3::expr* revert_r_vars(const std::string& region);
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wunused-parameter"

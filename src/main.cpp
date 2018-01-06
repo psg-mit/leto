@@ -50,6 +50,7 @@ int main() {
 
   // Check
   lang::CHLVisitor chl(&context, &solver, &model_visitor, z3_log, smt2_log);
+  model_visitor.set_chl(&chl);
   lang_ast->accept(chl);
 
   // Close log files

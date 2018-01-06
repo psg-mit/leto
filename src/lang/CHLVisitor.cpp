@@ -223,14 +223,14 @@ namespace lang {
         if (vars.count(oname)) {
           // Var
           assert(vars.count(rname));
-          z3::expr* old_o = get_current_var(oname);
+          z3::expr* old_o_var = get_current_var(oname);
           z3pair res = add_var(types.at(name), oname, rname);
-          add_constraint(*res.original == *old_o, false, false);
+          add_constraint(*res.original == *old_o_var, false, false);
         } else {
           // Vector
           assert(vectors.count(oname));
           assert(vectors.count(rname));
-          z3::func_decl* old_o = get_current_vec(oname);
+          z3::func_decl* old_o_vec = get_current_vec(oname);
 
           unsigned version = var_version.at(oname);
           assert(version == var_version.at(rname));
@@ -245,7 +245,7 @@ namespace lang {
 
           assert(dims->size() == 1 || dims->size() == 2);
           z3::expr* eq = vector_equals(*res.original,
-                                       *old_o,
+                                       *old_o_vec,
                                        *dims,
                                        dims->size() == 1 ? IGNORE_1D :
                                                            IGNORE_2D);
@@ -262,8 +262,11 @@ namespace lang {
   z3::expr* CHLVisitor::revert_r_vars(const std::string& region) {
     z3::expr ret(context->bool_val(true));
 
+    bool exists = false;
     for (const std::pair<std::string, std::string>& vr : regions) {
       if (vr.second == region) {
+        exists = true;
+
         const std::string& name = vr.first;
         std::string oname = name + "<o>";
         std::string rname = name + "<r>";
@@ -271,28 +274,31 @@ namespace lang {
         if (vars.count(oname)) {
           // Var
           assert(vars.count(rname));
-          z3::expr* old_r = get_previous_var(rname);
+          z3::expr* old_r_var = get_previous_var(rname);
           z3::expr* cur_r = get_current_var(rname);
-          ret = ret && *old_r == *cur_r;
+          ret = ret && *old_r_var == *cur_r;
         } else {
           // Vector
           assert(vectors.count(oname));
           assert(vectors.count(rname));
 
-          z3::func_decl* old_r = get_previous_vec(rname);
+          z3::func_decl* old_r_vec = get_previous_vec(rname);
           z3::func_decl* cur_r = get_current_vec(rname);
           dim_vec* dims = dim_map.at(name);
 
           assert(dims->size() == 1 || dims->size() == 2);
-          z3::expr* eq = vector_equals(*old_r,
+          z3::expr* eq = vector_equals(*old_r_vec,
                                        *cur_r,
                                        *dims,
                                        dims->size() == 1 ? IGNORE_1D :
                                                            IGNORE_2D);
+          ret = ret && *eq;
 
         }
       }
     }
+
+    if (!exists) PERROR("No such memory region " + region);
 
     return new z3::expr(ret);
   }
