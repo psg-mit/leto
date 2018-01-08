@@ -10,11 +10,11 @@ namespace model {
                                    z3::solver* solver_,
                                    type_t expr_type_,
                                    const std::unordered_set<std::string> *updated_,
-                                   const std::unordered_map<std::string, type_t>& types)
+                                   const std::unordered_map<std::string, type_t>& types,
+                                   lang::CHLVisitor* chl_)
       : Z3Visitor(context_, solver_, expr_type_),
         vars(vars_),
         var_version(var_version_) {
-    assert(chl);
     substitutions[ARG1_STR] = arg1_subst;
     substitutions[ARG2_STR] = arg2_subst;
     substitutions[RESULT_STR] = result_subst;
@@ -23,6 +23,7 @@ namespace model {
     solver = solver_;
     expr_type = expr_type_;
     updated = updated_;
+    chl = chl_;
 
     // Update all modified vars
     for (const std::string& name : *updated) {
@@ -139,11 +140,10 @@ namespace model {
     // TODO: Exception handling code will have to be updated when there is more
     // than one possible exception type
     assert(updated);
-    assert(updated->empty() || updated->size() == 1);
     z3::expr* cur_exn = get_current_var(POWERON_VAR_NAME);
     switch (node.throws) {
       case NONE:
-        if (updated->size() == 1) {
+        if (updated->count(POWERON_VAR_NAME)) {
           // Set exn state to be equal to old exn state
           z3::expr* prev = get_prev_var(POWERON_VAR_NAME);
           assertion = assertion && (*cur_exn == *prev);
@@ -163,6 +163,8 @@ namespace model {
 
     // Mark new unmodified vars as equivalent to old ones
     for (const std::string& var : unmodified) {
+      if (var == POWERON_VAR_NAME) continue;
+
       if (var_version->count(var)) {
         z3::expr* cur = get_current_var(var);
         z3::expr* prev = get_prev_var(var);

@@ -27,6 +27,11 @@ struct h_z3pair {
   z3::expr* asserts;
 };
 
+struct name_pair {
+  std::string original;
+  std::string relaxed;
+};
+
 // Forward declare Z3Visitor
 namespace model {
   class Z3Visitor;

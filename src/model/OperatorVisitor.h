@@ -26,7 +26,8 @@ namespace model {
                       z3::solver* solver,
                       type_t expr_type_,
                       const std::unordered_set<std::string> *updated_,
-                      const std::unordered_map<std::string, type_t>& types);
+                      const std::unordered_map<std::string, type_t>& types,
+                      lang::CHLVisitor* chl);
       virtual z3::expr* visit(const Var &node) override;
       virtual z3::expr* visit(const Operator &node) override;
       virtual z3::expr* visit(const Old& node) override ;
@@ -58,6 +59,7 @@ namespace model {
       bool in_ensures;
       const std::unordered_set<std::string> *updated;
       type_t expr_type;
+      lang::CHLVisitor* chl;
 
       z3::expr* get_current_var(const std::string& name) const;
       z3::expr* get_prev_var(const std::string& name) const;

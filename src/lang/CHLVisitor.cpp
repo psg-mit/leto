@@ -220,12 +220,16 @@ namespace lang {
         std::string oname = name + "<o>";
         std::string rname = name + "<r>";
 
-        if (vars.count(oname)) {
+        std::string full_oname = get_current_var_name(oname);
+        std::string full_rname = get_current_var_name(rname);
+
+
+        if (vars.count(full_oname)) {
           // Var
-          assert(vars.count(rname));
-          z3::expr* old_o_var = get_current_var(oname);
+          assert(vars.count(full_rname));
+          z3::expr* old_o_var = vars.at(full_oname);
           z3pair res = add_var(types.at(name), oname, rname);
-          add_constraint(*res.original == *old_o_var, false, false);
+          add_constraint(*res.original == *old_o_var, false, true);
         } else {
           // Vector
           assert(vectors.count(oname));
@@ -237,8 +241,6 @@ namespace lang {
           ++version;
           ++var_version.at(oname);
           ++var_version.at(rname);
-          oname += "-" + std::to_string(version);
-          rname += "-" + std::to_string(version);
           dim_vec* dims = dim_map.at(name);
 
           vec_pair res = add_vector(types.at(name), oname, rname, *dims);
@@ -251,7 +253,7 @@ namespace lang {
                                                            IGNORE_2D);
 
 
-          add_constraint(*eq, false, false);
+          add_constraint(*eq, false, true);
         }
       }
     }
@@ -270,10 +272,12 @@ namespace lang {
         const std::string& name = vr.first;
         std::string oname = name + "<o>";
         std::string rname = name + "<r>";
+        std::string full_oname = get_current_var_name(oname);
+        std::string full_rname = get_current_var_name(rname);
 
-        if (vars.count(oname)) {
+        if (vars.count(full_oname)) {
           // Var
-          assert(vars.count(rname));
+          assert(vars.count(full_rname));
           z3::expr* old_r_var = get_previous_var(rname);
           z3::expr* cur_r = get_current_var(rname);
           ret = ret && *old_r_var == *cur_r;

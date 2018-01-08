@@ -361,7 +361,8 @@ namespace model {
                           solver,
                           expr_type,
                           updated,
-                          types);
+                          types,
+                          chl);
     const Operator* impl = impls.at(0);
     assert(impl);
     z3::expr* fn = impl->accept(subst);
@@ -418,7 +419,8 @@ namespace model {
                           solver,
                           expr_type,
                           commit_mods.at(type),
-                          types);
+                          types,
+                          chl);
 
     z3::expr* fn = impl->accept(subst);
     assert(fn);
@@ -440,7 +442,8 @@ namespace model {
                           solver,
                           expr_type,
                           &exception_mods,
-                          types);
+                          types,
+                          chl);
     const Step* impl = steps.at(0);
     assert(impl);
     z3::expr* fn = impl->accept(subst);

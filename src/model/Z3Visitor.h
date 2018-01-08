@@ -84,7 +84,6 @@ namespace model {
 
     protected:
       std::unordered_set<std::string>* current_mods;
-      lang::CHLVisitor* chl;
 
     private:
       z3::context* context;
@@ -100,6 +99,7 @@ namespace model {
       z3::expr* get_var_at(const std::string& name, unsigned version);
       std::vector<const Step*> steps;
       std::unordered_set<std::string> exception_mods;
+      lang::CHLVisitor* chl;
 
       operator_t op;
       z3::expr* arg1;
