@@ -17,8 +17,8 @@ while (converged == false)
       (1 == 1)
       (eq(converged) &&
        eq(A) &&
-       eq(x) &&
-       eq(r)) {
+       (outer[x<o>] == outer[x<r>] -> (eq(x) &&
+                                       eq(r)))) {
   old_x = x;
 
   // TODO: Regions
@@ -28,21 +28,21 @@ while (converged == false)
   @noinf @label(outer_q)
   for (int i = 0; i < N; ++i)
       (1 == 1)
-      (eq(q) &&
-       eq(A) &&
-       eq(x) &&
+      (eq(A) &&
        eq(i) &&
-       eq(N)) {
+       eq(N) &&
+       (outer[x<o>] == outer[x<r>] -> (eq(q) &&
+                                       eq(x)))) {
     q[i] = 0;
     @noinf @label(inner_q)
     for (int j = 0; j < N; ++j)
-        (0 < j <= N)
-        (eq(q) &&
-         eq(A) &&
-         eq(x) &&
+        (0 <= j <= N)
+        (eq(A) &&
          eq(i) &&
          eq(j) &&
-         eq(N)) {
+         eq(N) &&
+         (outer[x<o>] == outer[x<r>] -> (eq(q) &&
+                                         eq(x)))) {
       real delta = A[i][j] * x[j];
       q[i] = q[i] + delta;
     }
@@ -53,13 +53,13 @@ while (converged == false)
   real rtq = 0;
   @noinf @label(r_related)
   for (int i = 0; i < N; ++i)
-      (0 < i <= N)
-      (eq(r_sq_norm) &&
-       eq(rtq) &&
-       eq(r) &&
-       eq(i) &&
+      (0 <= i <= N)
+      (eq(i) &&
        eq(N) &&
-       eq(q)) {
+       (outer[x<o>] == outer[x<r>] -> (eq(r_sq_norm) &&
+                                       eq(rtq) &&
+                                       eq(r) &&
+                                       eq(q)))) {
     real delta = r[i] * r[i];
     r_sq_norm = r_sq_norm + delta;
     delta = r[i] * q[i];
@@ -73,19 +73,22 @@ while (converged == false)
   @noinf @label(update)
   for (int i = 0; i < N; ++i)
       (4 == 4)
-      (eq(next_x) &&
-       eq(next_r) &&
-       eq(q) &&
-       eq(alpha) &&
-       eq(r) &&
-       eq(i) &&
-       eq(x) &&
-       eq(N)) {
+      (eq(i) &&
+       eq(N) &&
+       (outer[x<o>] == outer[x<r>] -> (eq(next_x) &&
+                                       eq(next_r) &&
+                                       eq(q) &&
+                                       eq(alpha) &&
+                                       eq(r) &&
+                                       eq(x)))) {
     real prod = alpha * r[i];
     next_x[i] = x[i] + prod;
     prod = alpha * q[i];
     next_r[i] = r[i] - prod;
   }
+
+  // TODO: Fix old syntax for program variables
+  //relational_assume(outer[x<o>] == outer[x<r>] -> eq(r));
 
   // TODO: begin commit
   x = next_x;
@@ -95,5 +98,7 @@ while (converged == false)
 
   r = next_r;
 
+  /*
   // TODO: Convergence check
+  */
 }
