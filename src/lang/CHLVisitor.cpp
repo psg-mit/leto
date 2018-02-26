@@ -2049,21 +2049,21 @@ namespace lang {
     z3::expr* prefix = new z3::expr(original && relaxed);
     push_prefix(prefix);
 
-    // Check body<o>
-    ++ignore_relaxed;
-    obody->accept(*this);
-    --ignore_relaxed;
-
     // Check body<r>
     ++ignore_original;
     rbody->accept(*this);
     --ignore_original;
 
+
+    // Check body<o>
+    ++ignore_relaxed;
+    obody->accept(*this);
+    --ignore_relaxed;
+
     pop_prefix();
   }
 
   z3pair CHLVisitor::visit(If &node) {
-    // TODO: Test nesting
     z3pair cond = node.cond->accept(*this);
     assert(cond.original);
     assert(cond.relaxed);
