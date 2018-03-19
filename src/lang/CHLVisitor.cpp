@@ -67,6 +67,7 @@ namespace lang {
     parent_function = nullptr;
     h_var_version = nullptr;
     assume_eq = true;
+    frame = "";
   }
 
   static void debug_print(const std::string &str) {
@@ -128,7 +129,8 @@ namespace lang {
   std::string CHLVisitor::get_current_var_name(std::string name) {
     unsigned version;
     try {
-      version = var_version.at(name);
+      if (frame.empty()) version = var_version.at(name);
+      else version = frames.at(frame).at(name);
     } catch (const std::out_of_range&) {
       return "";
     }
@@ -1708,13 +1710,25 @@ namespace lang {
     return {res, nullptr};
   }
 
+  void CHLVisitor::set_frame(const std::string& new_frame) {
+    assert(frame.empty());
+    frame = new_frame;
+    model_visitor->frame = new_frame;
+  }
+
+  void CHLVisitor::clear_frame() {
+    frame = "";
+    model_visitor->frame = "";
+  }
 
   z3pair CHLVisitor::visit(ArrayAccess &node) {
     const std::string& node_name = node.lhs->name;
     if (labels.count(node_name)) {
       assert(node.rhs.size() == 1);
-      model_visitor->frame = node_name;
-      return node.rhs.at(0)->accept(*this);
+      set_frame(node_name);
+      z3pair ret = node.rhs.at(0)->accept(*this);
+      clear_frame();
+      return ret;
     }
 
     const std::string& name = substitutions.count(node_name) ?
@@ -1967,8 +1981,10 @@ namespace lang {
     const std::string& node_name = node.lhs->name;
     if (labels.count(node_name)) {
       assert(node.rhs.size() == 1);
-      model_visitor->frame = node_name;
-      return node.rhs.at(0)->accept(*this);
+      set_frame(node_name);
+      z3pair ret = node.rhs.at(0)->accept(*this);
+      clear_frame();
+      return ret;
     }
 
     const std::string& name = substitutions.count(node_name) ?
@@ -2127,6 +2143,11 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
+  void CHLVisitor::add_frame(const std::string& name) {
+    frames[name] = var_version;
+    model_visitor->add_frame(name);
+  }
+
   bool CHLVisitor::check_loop(While &node, z3::expr cond) {
     assert(!ignore_relaxed);
 
@@ -2141,7 +2162,7 @@ namespace lang {
     z3::solver* old_solver = solver;
     solver = new z3::solver(*context);
     cached_uints.clear();
-    model_visitor->add_frame(node.label->name);
+    add_frame(node.label->name);
 
     // Get modern inv and add it to the solver state
     h_z3pair eqs = houdini_to_constraints(node);
@@ -2428,7 +2449,7 @@ namespace lang {
     z3pair inv = {nullptr, nullptr};
     z3pair nonrel_inv = {nullptr, nullptr};
     if (!in_houdini) {
-      model_visitor->add_frame(node.label->name);
+      add_frame(node.label->name);
 
       // Verify invariant at top of loop
       inv = node.inv->accept(*this);

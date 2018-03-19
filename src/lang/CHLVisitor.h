@@ -1,6 +1,7 @@
 #pragma once
 
 #include <fstream>
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -154,6 +155,8 @@ namespace lang {
       std::unordered_map<std::string, std::string> substitutions;
       std::unordered_map<std::string, std::string> regions;
       std::unordered_set<std::string> labels;
+      std::map<std::string, version_map> frames;
+      std::string frame;
 
       // Contains *unqualified* vars to be set equal to eachother
       std::vector<RelationalBoolExp*>* cur_houdini_invs;
@@ -172,6 +175,9 @@ namespace lang {
       z3::func_decl* get_current_vec(std::string name);
       z3::expr* make_float(const std::string& name);
       bool contains_var(std::string name);
+      void add_frame(const std::string& name);
+      void set_frame(const std::string& new_frame);
+      void clear_frame();
 
       /**
        * Returns true if houdini was unknown

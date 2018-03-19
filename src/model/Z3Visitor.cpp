@@ -47,10 +47,8 @@ namespace model {
 
   z3::expr* Z3Visitor::get_current_var(const std::string& name) {
     unsigned version = UINT_MAX;
-    if (!frame.empty()) {
-        version = frames.at(frame).at(name);
-        frame = "";
-    } else if (use_snapshot) version = snapshot.at(name);
+    if (!frame.empty()) version = frames.at(frame).at(name);
+    else if (use_snapshot) version = snapshot.at(name);
     else version = var_version.at(name);
     return vars.at(name + "-" + std::to_string(version));
   }
