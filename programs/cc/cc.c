@@ -70,7 +70,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
       for (uint j = 0; j < N; ++j)
           (v < N && N < MAX_N)
           (forall(uint fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
-           inner_spec(j<o>, v<o>, N<o>, next_CC<o>, CC<o>, adj<o>) && eq(j)) {
+           inner_spec(j<o>, v<o>, N<o>, next_CC<o>, CC<o>, adj<o>)) {
 
         // Line 9: if CC^{i-1}[u] < CC^{i}[v] then
         // At this point next_CC[v] == CC[v], so we use CC[v] for the

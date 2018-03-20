@@ -14,6 +14,8 @@ static const int TIMEOUT = 10000;
 // Unstoppable timeout in seconds
 static const int SUPER_TIMEOUT = (TIMEOUT / 1000) * 2;
 
+static const unsigned EQ_TEMPLATE_RUNS = 2;
+
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wexit-time-destructors"
 #pragma clang diagnostic ignored "-Wglobal-constructors"
@@ -2495,15 +2497,17 @@ namespace lang {
         // Eq template
         cur_houdini_invs = &node.houdini_invs;
         cur_nonrel_houdini_invs = &node.nonrel_houdini_invs;
-        for (const std::pair<std::string, type_t>& kv : types) {
-          if (!specvars.count(kv.first)) {
-            // Leverage existing binop logic
-            Var* v = new Var(kv.first);
-            RelationalVar* ovar = new RelationalVar(ORIGINAL, v);
-            RelationalVar* rvar = new RelationalVar(RELAXED, v);
-            RelationalBoolExp* eq = new RelationalBoolExp(EQUALS, ovar, rvar);
+        for (unsigned i = 0; i < EQ_TEMPLATE_RUNS; ++i) {
+          for (const std::pair<std::string, type_t>& kv : types) {
+            if (!specvars.count(kv.first)) {
+              // Leverage existing binop logic
+              Var* v = new Var(kv.first);
+              RelationalVar* ovar = new RelationalVar(ORIGINAL, v);
+              RelationalVar* rvar = new RelationalVar(RELAXED, v);
+              RelationalBoolExp* eq = new RelationalBoolExp(EQUALS, ovar, rvar);
 
-            node.houdini_invs.push_back(eq);
+              node.houdini_invs.push_back(eq);
+            }
           }
         }
 

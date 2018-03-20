@@ -94,7 +94,6 @@ matrix<real> ss_cg(int N,
              dmr_imp(q, q2, spec_q)) {
         not_run = false;
 
-        // TODO: Inference runs out of memory.
         @label(middle_dmr)
         for (int i = 0; i < N; ++i)
             (2 == 2)
@@ -169,7 +168,7 @@ matrix<real> ss_cg(int N,
     } else {
       // Line 12: q = A * p;
       @label(outer_err)
-      for (int i = 0; i < N; ++i) (0 <= i <= N) (eq(i)) {
+      for (int i = 0; i < N; ++i) (0 <= i <= N) (8 == 8) {
         q[i] = 0;
         @label(inner_err)
         for (int j = 0; j < N; ++j)

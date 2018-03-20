@@ -37,7 +37,7 @@ matrix<real> jacobi(uint N,
       @label(in)
       for (uint j = 0; j < N; ++j)
           (j <= N)
-          ((sig(sigma)) && eq(j)) {
+          (sig(sigma)) {
         if (i != j) {
           real delta = A[i][j] *. x[j];
           if (delta <= (-E/E_REL + E) || (E/E_REL - E) <= delta) {
