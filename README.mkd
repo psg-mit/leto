@@ -51,7 +51,7 @@ Jessie package repository.
 * flexc++ (2.01.00)
 * GNU Make (4.0)
 * python3 (3.4.2)
-* z3 (4.4.1)
+* z3 (4.5.0)
 
 ### Compiling Leto ###
 To build the system, run `make` from the `src` directory.
