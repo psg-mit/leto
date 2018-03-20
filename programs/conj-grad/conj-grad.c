@@ -4,7 +4,7 @@ property_r sqr_lt(matrix<real> v, int i) :
   ((q<r>[i<r>] - q<o>[i<o>]) * (q<r>[i<r>] - q<o>[i<o>])) < SQR_MIN_MAX_AIJ;
 
 property_r dmr_eq(matrix<real> x1, matrix<real> x2, matrix<real> spec_x) :
-  x1<r> == spec_x && x2<r> == spec_x;
+  (model.upset == false) -> (x1<r> == spec_x && x2<r> == spec_x);
 
 property_r dmr_imp(matrix<real> x1, matrix<real> x2, matrix<real> spec_x) :
   (x1<r> == x2<r>) -> (x1<r> == spec_x);
@@ -88,8 +88,8 @@ matrix<real> ss_cg(int N,
       @noinf @label(outer_dmr)
       while (not_run == true || r != r2 || q != q2)
             (2 == 2)
-            (((model.upset == false) -> (dmr_eq(r, r2, spec_r) &&
-                                         dmr_eq(q, q2, spec_q))) &&
+            (dmr_eq(r, r2, spec_r) &&
+             dmr_eq(q, q2, spec_q) &&
              dmr_imp(r, r2, spec_r) &&
              dmr_imp(q, q2, spec_q)) {
         not_run = false;

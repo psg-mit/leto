@@ -15,6 +15,8 @@ namespace z3 {
 #include "../common.h"
 #include "LangNodes.h"
 #include "ASTVisitor.h"
+#include "OldWrapper.h"
+#include "ConjunctionBreaker.h"
 
 #include "../model/Z3Visitor.h"
 

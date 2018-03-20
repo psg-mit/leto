@@ -2412,6 +2412,18 @@ namespace lang {
         cur_houdini_invs->insert(cur_houdini_invs->end(),
                                  parent_while->houdini_invs.begin(),
                                  parent_while->houdini_invs.end());
+
+
+        for (RelationalBoolExp* inv : cb_vec) {
+          OldWrapper w(inv, parent_while->label);
+          if (w.wrapped) cur_houdini_invs->push_back(w.wrapped);
+        }
+
+        for (RelationalBoolExp* inv : parent_while->houdini_invs) {
+          OldWrapper w(inv, parent_while->label);
+          if (w.wrapped) cur_houdini_invs->push_back(w.wrapped);
+        }
+
       }
     }
 

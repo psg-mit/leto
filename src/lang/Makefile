@@ -2,7 +2,7 @@ include ../Makefile.include
 
 all: print
 
-chl: chl.cpp parser/parse.o lexer/lex.o LangNodes.o CHLVisitor.o
+chl: chl.cpp parser/parse.o lexer/lex.o LangNodes.o CHLVisitor.o ConjunctionBreaker.o OldWrapper.o
 	$(CC) $(CFLAGS) $(WARN) $^ -o $@ -lz3
 
 print: print.cpp parser/parse.o lexer/lex.o LangNodes.o PrintVisitor.o ConjunctionBreaker.o
@@ -25,6 +25,9 @@ CHLVisitor.o: CHLVisitor.h CHLVisitor.cpp
 
 ConjunctionBreaker.o: ConjunctionBreaker.h ConjunctionBreaker.cpp
 	$(CC) $(CFLAGS) $(WARN) -c ConjunctionBreaker.cpp
+
+OldWrapper.o: OldWrapper.h OldWrapper.cpp
+	$(CC) $(CFLAGS) $(WARN) -c OldWrapper.cpp
 
 parser/parse.cc: parser/parser.y
 	$(MAKE) -C parser parse.cc
