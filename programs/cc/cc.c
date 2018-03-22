@@ -100,7 +100,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
         corrected_next_CC[v] = CC[v];
         // Line 16: for each u in adj(v) do
         @label(inner_correction) for (uint j = 0; j < N; ++j)
-            (v < N && v < next_CC[v])
+            (v < next_CC[v])
             (inner_spec(j<r>, v<r>, N<r>, corrected_next_CC<r>, CC<r>, adj<r>)) {
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then
           if (CC[j] < corrected_next_CC[v] && adj[v][j] == 1) {

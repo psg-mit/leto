@@ -2443,6 +2443,10 @@ namespace lang {
     }
   }
 
+  static BoolExp* generate_leq_inf(BoolExp* cond) {
+    return cond->op == LT ? new BoolExp(LTEQ, cond->lhs, cond->rhs) : nullptr;
+  }
+
   z3pair CHLVisitor::visit(While &node) {
     if (ignore_relaxed) {
       // Assume oringinal non-relational invariant
@@ -2517,6 +2521,10 @@ namespace lang {
         } else if (parent_function) {
           parent_inf(parent_function->requires, parent_function->r_requires);
         }
+
+        // Leq template
+        BoolExp* leq = generate_leq_inf(node.cond);
+        if (leq) node.nonrel_houdini_invs.push_back(leq);
 
         do {
           if (outer_h_unknown) {

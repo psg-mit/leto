@@ -1,6 +1,6 @@
 #define SQR_MIN_MAX_AIJ 2
 
-property_r sqr_lt(matrix<real> v, int i) :
+property_r sqr_lt(matrix<real> v, uint i) :
   ((q<r>[i<r>] - q<o>[i<o>]) * (q<r>[i<r>] - q<o>[i<o>])) < SQR_MIN_MAX_AIJ;
 
 property_r dmr_eq(matrix<real> x1, matrix<real> x2, matrix<real> spec_x) :
@@ -9,11 +9,11 @@ property_r dmr_eq(matrix<real> x1, matrix<real> x2, matrix<real> spec_x) :
 property_r dmr_imp(matrix<real> x1, matrix<real> x2, matrix<real> spec_x) :
   (x1<r> == x2<r>) -> (x1<r> == spec_x);
 
-requires 0 < N
+requires 1 == 1
 r_requires eq(N) && eq(M) && eq(F) && eq(A)
-matrix<real> ss_cg(int N,
-                   int M,
-                   int F,
+matrix<real> ss_cg(uint N,
+                   uint M,
+                   uint F,
                    matrix<real> A(N, N),
                    matrix<real> b(N),
                    matrix<real> x(N)) {
@@ -21,43 +21,43 @@ matrix<real> ss_cg(int N,
   // Params
   matrix<real> r(N), p(N);
 
-  // Introduced line 4
+  // uintroduced line 4
   matrix<real> q(N);
 
-  // Introduced line 6
+  // uintroduced line 6
   real alpha;
 
-  // Introduced line 7
+  // uintroduced line 7
   matrix<real> next_x(N);
 
-  // Introduced line 8
+  // uintroduced line 8
   matrix<real> next_r(N);
 
-  // Introduced line 9
+  // uintroduced line 9
   real beta;
 
-  // Introduced line 10
+  // uintroduced line 10
   matrix<real> next_p(N);
 
   // Misc helpers
-  int man_mod;
+  uint man_mod;
   real tmp, tmp2, num, denom;
   matrix<real> zeros(N);
 
   // Spec vars
   specvar real spec_tmp;
 
-  int it = 0;
+  uint it = 0;
 
   // Line 1: r = b - Ar (sic.  Should probably be r = b - Ax, which is what
   // we'll do)
   // noinf because we don't actually care about this step for what we're
   // verifying
   @noinf @label(l1)
-  for (int i = 0; i < N; ++i) (1 == 1) (1 == 1) {
+  for (uint i = 0; i < N; ++i) (1 == 1) (1 == 1) {
     tmp = 0;
     @noinf @label(l2)
-    for (int j = 0 ; j < N; ++j) (1 == 1) (1 == 1) {
+    for (uint j = 0 ; j < N; ++j) (1 == 1) (1 == 1) {
       tmp = tmp + A[i][j] * x[i];
     }
     r[i] = b[i] - tmp;
@@ -70,7 +70,7 @@ matrix<real> ss_cg(int N,
   // takes forever and nothing in learned.
   @noinf @label(outer_while)
   while (it < M)
-        (0 < N)
+        (1 == 1)
         (eq(A) && eq(it) && eq(M) && eq(N) && eq(man_mod) && eq(F)) {
     if (man_mod == F) {
       // Line 4: [r, q] = A * [x, p]
@@ -95,11 +95,11 @@ matrix<real> ss_cg(int N,
         not_run = false;
 
         @label(middle_dmr)
-        for (int i = 0; i < N; ++i)
+        for (uint i = 0; i < N; ++i)
             (2 == 2)
             (2 == 2) {
 
-          @label(inner_dmr) for (int j = 0; j < N; ++j) (1 == 1) (1 == 1) {
+          @label(inner_dmr) for (uint j = 0; j < N; ++j) (1 == 1) (1 == 1) {
             // Compute r
             tmp = A[i][j] *. x[j];
             tmp2 = A[i][j] *. x[j];
@@ -124,12 +124,12 @@ matrix<real> ss_cg(int N,
 
       // Line 5: r = b - r
       @noinf @label(l5)
-      for (int i = 0; i < N; ++i) (1 == 1) (3 == 3) { r[i] = b[i] - r[i]; }
+      for (uint i = 0; i < N; ++i) (1 == 1) (3 == 3) { r[i] = b[i] - r[i]; }
 
       // Line 6: alpha = (r^T * p) / (p^T * q)
       num = 0;
       denom = 0;
-      @noinf @label(l6) for (int i = 0; i < N; ++i) (1 == 1) (4 == 4) {
+      @noinf @label(l6) for (uint i = 0; i < N; ++i) (1 == 1) (4 == 4) {
         tmp = r[i] * p[i];
         num = num + tmp;
         denom = p[i] * q[i];
@@ -138,7 +138,7 @@ matrix<real> ss_cg(int N,
 
       // Line 7: next_x = x + alpha * p
       // Line 8: next_r = r - alpha * q
-      @noinf @label(xra) for (i = 0; i  < N; ++i) (5 == 5) (5 == 5) {
+      @noinf @label(xra) for (uint i = 0; i  < N; ++i) (5 == 5) (5 == 5) {
         tmp = alpha * p[i];
         next_x[i] = x[i] + tmp;
         tmp = alpha * q[i];
@@ -148,7 +148,7 @@ matrix<real> ss_cg(int N,
       // Line 9: beta = (-next_r^T * q) / (p^t * q)
       num = 0;
       denom = 0;
-      @noinf @label(l9) for (int i = 0; i < N; ++i) (1 == 1) (6 == 6) {
+      @noinf @label(l9) for (uint i = 0; i < N; ++i) (1 == 1) (6 == 6) {
         // Compute num
         tmp = -next_r[i];
         tmp = tmp * q[i];
@@ -161,18 +161,18 @@ matrix<real> ss_cg(int N,
       beta = num / denom;
 
       // Line 10: next_p = next_r + beta * p
-      @noinf @label(pa) for (i = 0; i < N; ++i) (7 == 7) (7 == 7) {
+      @noinf @label(pa) for (uint i = 0; i < N; ++i) (7 == 7) (7 == 7) {
         tmp = beta * p[i];
         next_p[i] = next_r[i] + tmp;
       }
     } else {
       // Line 12: q = A * p;
       @label(outer_err)
-      for (int i = 0; i < N; ++i) (0 <= i <= N) (8 == 8) {
+      for (uint i = 0; i < N; ++i) (8 == 8) (8 == 8) {
         q[i] = 0;
         @label(inner_err)
-        for (int j = 0; j < N; ++j)
-            (0 <= j <= N && 0 <= i < N)
+        for (uint j = 0; j < N; ++j)
+            (9 == 9)
             ((model.upset == false && eq(p)) -> q<r>[i<r>] == q<o>[i<o>]) {
           // Compute q
           tmp = A[i][j] *. p[j];
@@ -188,7 +188,7 @@ matrix<real> ss_cg(int N,
       num = 0;
       denom = 0;
       @noinf @label(l13)
-      for (int i = 0; i < N; ++i) (10 == 10) (10 == 10) {
+      for (uint i = 0; i < N; ++i) (10 == 10) (10 == 10) {
         tmp = r[i] * r[i];
         num = num + tmp;
         denom = p[i] * q[i];
@@ -197,7 +197,7 @@ matrix<real> ss_cg(int N,
 
       // Line 14: next_x = x + alpha * p
       // Line 15: next_r = r - alpha * q
-      @noinf @label(xrb) for (i = 0; i  < N; ++i) (5 == 5) (5 == 5) {
+      @noinf @label(xrb) for (uint i = 0; i  < N; ++i) (5 == 5) (5 == 5) {
         tmp = alpha * p[i];
         next_x[i] = x[i] + tmp;
         tmp = alpha * q[i];
@@ -208,7 +208,7 @@ matrix<real> ss_cg(int N,
       num = 0;
       denom = 0;
       @noinf @label(l16)
-      for (int i = 0; i < N; ++i) (12 == 12) (12 == 12) {
+      for (uint i = 0; i < N; ++i) (12 == 12) (12 == 12) {
         // Compute num
         num = next_r[i] * next_r[i];
 
@@ -218,7 +218,7 @@ matrix<real> ss_cg(int N,
       beta = num / denom;
 
       // Line 17: next_p = next_r + beta * p
-      @noinf @label(pb) for (i = 0; i < N; ++i) (7 == 7) (7 == 7) {
+      @noinf @label(pb) for (uint i = 0; i < N; ++i) (7 == 7) (7 == 7) {
         tmp = beta * p[i];
         next_p[i] = next_r[i] + tmp;
       }

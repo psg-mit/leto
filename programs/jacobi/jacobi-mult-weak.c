@@ -36,7 +36,7 @@ matrix<real> jacobi(uint N,
       real sigma = 0;
       @label(in)
       for (uint j = 0; j < N; ++j)
-          (j <= N)
+          (1 == 1)
           (sig(sigma)) {
         if (i != j) {
           real delta = A[i][j] *. x[j];
