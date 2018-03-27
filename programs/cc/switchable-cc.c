@@ -87,37 +87,47 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
 
     model.reliable = true;
 
+    // TODO: Make a spec var
+    matrix<uint> old_next_CC(N);
+    old_next_CC = next_CC;
+
+    // TODO: Try exact same scenario as copy version but with corrected_next_CC
+    // substituted by next_CC and next_CC substitued by old_next_CC.  Then,
+    // convert over one by one
+
+    // TODO: Disable inference on the inner correction loop for easier
+    // debugging.
+
     // Line 13: for each v in V do
-    matrix<uint> corrected_next_CC(N);
     @noinf @label(outer_correction) for (uint v = 0; v < N; ++v)
         (1 == 1)
-        (outer_spec(v<r>, N<r>, corrected_next_CC<r>, CC<r>, adj<r>) &&
+        (outer_spec(v<r>, N<r>, next_CC<r>, CC<r>, adj<r>) &&
          eq(N) && eq(CC) && eq(adj) &&
-         forall(uint fi)((fi < v<r> -> (corrected_next_CC<r>[fi] == corrected_next_CC<o>[fi]))) &&
+         forall(uint fi)((fi < v<r> -> (next_CC<r>[fi] == next_CC<o>[fi]))) &&
          eq(N_s) && eq(v) &&
-         vec_bound(next_CC, N) &&
-         large_error_r(next_CC, N) &&
-         outer_spec(N<o>, N<o>, next_CC<o>, CC<o>, adj<o>)) {
+         vec_bound(old_next_CC, N) &&
+         large_error_r(old_next_CC, N) &&
+         outer_spec(N<o>, N<o>, old_next_CC<o>, CC<o>, adj<o>)) {
 
-      corrected_next_CC[v] = next_CC[v];
-      if (v < corrected_next_CC[v]) {
-        corrected_next_CC[v] = CC[v];
+      if (v < next_CC[v]) {
+        // TODO: Use fwrites here
+        next_CC[v] = CC[v];
         // Line 16: for each u in adj(v) do
         @label(inner_correction) for (uint j = 0; j < N; ++j)
-            (v < next_CC[v])
-            (inner_spec(j<r>, v<r>, N<r>, corrected_next_CC<r>, CC<r>, adj<r>)) {
+            (v < outer_correction[next_CC[v]])
+            (inner_spec(j<r>, v<r>, N<r>, next_CC<r>, CC<r>, adj<r>)) {
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then
-          if (CC[j] < corrected_next_CC[v] && adj[v][j] == 1) {
+          if (CC[j] < next_CC[v] && adj[v][j] == 1) {
             // Line 18: CC^i[v] = CC^{i-1}[u]
-            corrected_next_CC[v] = CC[j];
+            next_CC[v] = CC[j];
           }
         }
       }
 
-      if (corrected_next_CC[v] < CC[v]) { ++N_s; }
+      if (next_CC[v] < CC[v]) { ++N_s; }
     }
 
-    CC = corrected_next_CC;
+    CC = next_CC;
   }
 
   return CC;
