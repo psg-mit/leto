@@ -67,8 +67,38 @@ namespace model {
     return types.at(name);
   }
 
+  z3::expr* Z3Visitor::add_var(std::string name) {
+    type_t type = types.at(name);
+
+    unsigned version = 0;
+    if (var_version.count(name)) version = var_version.at(name) + 1;
+
+    var_version[name] = version;
+    name += "-" + std::to_string(version);
+    z3::expr *expr = nullptr;
+    switch (type) {
+      case INT:
+        expr = new z3::expr(this->context->int_const(name.c_str()));
+        break;
+      case REAL:
+        expr = new z3::expr(this->context->real_const(name.c_str()));
+        break;
+      case BOOL:
+        expr = new z3::expr(this->context->bool_const(name.c_str()));
+        break;
+      case FLOAT:
+      case UINT:
+        assert(false);
+    }
+
+    assert(expr);
+
+    vars[name] = expr;
+
+    return expr;
+  }
+
   z3::expr* Z3Visitor::visit(const Declare &node) {
-    // TODO: Take type into account
     assert(node.var->name != ARG1_STR);
     assert(node.var->name != ARG2_STR);
     assert(node.var->name != RESULT_STR);
@@ -79,25 +109,8 @@ namespace model {
 #endif
 
     // Declare var
-    const std::string &name = node.var->name + "-0";
-    z3::expr* var = nullptr;
-    switch (node.type) {
-      case BOOL:
-        var = new z3::expr(this->context->bool_const(name.c_str()));
-        break;
-      case INT:
-        var = new z3::expr(this->context->int_const(name.c_str()));
-        break;
-      case REAL:
-        var = new z3::expr(this->context->real_const(name.c_str()));
-        break;
-      case FLOAT:
-      case UINT:
-        assert(false);
-    }
-    vars[name] = var;
-    var_version[node.var->name] = 0;
     types[node.var->name] = node.type;
+    add_var(node.var->name);
 
     assert(vars.size() == start_size + 1);
     assert(var_version.size() == start_version_size + 1);
