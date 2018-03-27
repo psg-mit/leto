@@ -707,6 +707,25 @@ namespace lang {
   // hand expressions in conditionals are too.  Perhaps something more fine
   // grained is needed here
   z3pair CHLVisitor::visit(Assign &node) {
+    // Check for model assignment
+    ModelDeref* mlhs = dynamic_cast<ModelDeref*>(node.lhs);
+    if (mlhs) {
+      if (ignore_relaxed) RETURN_VOID;
+
+      // TODO: This approach may not work within conditionals
+      assert(prefixes.empty());
+
+      in_assign = true;
+      z3pair lhs = node.lhs->accept(*this);
+      in_assign = false;
+
+      z3pair rhs = node.rhs->accept(*this);
+      assert(rhs.relaxed);
+
+      add_constraint(*lhs.relaxed == *rhs.relaxed);
+      RETURN_VOID;
+    }
+
     last_base_name = nullptr;
     z3pair lhs = node.lhs->accept(*this);
     type_t lhs_type = expr_type;
@@ -2808,7 +2827,8 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(ModelDeref &node) {
-    z3::expr* ret = model_visitor->get_current_var(node.var->name);
+    z3::expr* ret = in_assign ? model_visitor->add_var(node.var->name) :
+                                model_visitor->get_current_var(node.var->name);
     expr_type = model_visitor->get_var_type(node.var->name);
     return {ret, ret};
   }
