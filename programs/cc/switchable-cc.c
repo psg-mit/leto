@@ -56,6 +56,8 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
 
     N_s = 0;
 
+    model.reliable = false;
+
     // Line 7: for each v in V do
     @label(outer_faulty)
     for (uint v = 0; v < N; ++v)
@@ -82,6 +84,8 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
       }
     }
     // Fault detection and correction (reliable)
+
+    model.reliable = true;
 
     // Line 13: for each v in V do
     matrix<uint> corrected_next_CC(N);
