@@ -110,12 +110,17 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
          outer_spec(N<o>, N<o>, old_next_CC<o>, CC<o>, adj<o>)) {
 
       next_CC[v] = old_next_CC[v];
-      if (v < old_next_CC[v]) {
+      /*
+      relational_assume(next_CC<o>[v<o>] == old_next_CC[v<o>]);
+      relational_assume(next_CC<r>[v<r>] == old_next_CC[v<r>]);
+      */
+      specvar real old_next_CC_v = next_CC[v];
+      if (v < next_CC[v]) {
         // TODO: Use fwrites here
         next_CC[v] = CC[v];
         // Line 16: for each u in adj(v) do
         @label(inner_correction) for (uint j = 0; j < N; ++j)
-            (v < old_next_CC[v])
+            (v < old_next_CC_v)
             (inner_spec(j<r>, v<r>, N<r>, next_CC<r>, CC<r>, adj<r>)) {
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then
           if (CC[j] < next_CC[v] && adj[v][j] == 1) {
