@@ -101,14 +101,13 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
          large_error_r_bound(next_CC, v, N) &&
          outer_spec(N<o>, N<o>, next_CC<o>, CC<o>, adj<o>)) {
 
-      specvar real old_next_CC_v = next_CC[v];
       if (v < next_CC[v]) {
         // TODO: Use fwrites here
         next_CC[v] = CC[v];
         uint vp1 = v + 1;
         // Line 16: for each u in adj(v) do
         @noinf @label(inner_correction) for (uint j = 0; j < N; ++j)
-            (v < old_next_CC_v && v < N && vp1 == v + 1)
+            (v < outer_correction[next_CC[v]] && v < N && vp1 == v + 1)
             (inner_spec(j<r>, v<r>, N<r>, next_CC<r>, CC<r>, adj<r>) &&
              vec_bound(next_CC, N) &&
              outer_spec(v<r>, N<r>, next_CC<r>, CC<r>, adj<r>) &&
