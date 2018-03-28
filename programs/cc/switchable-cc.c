@@ -109,12 +109,13 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
          large_error_r(old_next_CC, N) &&
          outer_spec(N<o>, N<o>, old_next_CC<o>, CC<o>, adj<o>)) {
 
-      if (v < next_CC[v]) {
+      next_CC[v] = old_next_CC[v];
+      if (v < old_next_CC[v]) {
         // TODO: Use fwrites here
         next_CC[v] = CC[v];
         // Line 16: for each u in adj(v) do
         @label(inner_correction) for (uint j = 0; j < N; ++j)
-            (v < outer_correction[next_CC[v]])
+            (v < old_next_CC[v])
             (inner_spec(j<r>, v<r>, N<r>, next_CC<r>, CC<r>, adj<r>)) {
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then
           if (CC[j] < next_CC[v] && adj[v][j] == 1) {
