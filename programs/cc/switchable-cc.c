@@ -90,17 +90,6 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
 
     model.reliable = true;
 
-    // TODO: Make a spec var
-    matrix<uint> old_next_CC(N);
-    old_next_CC = next_CC;
-
-    // TODO: Try exact same scenario as copy version but with corrected_next_CC
-    // substituted by next_CC and next_CC substitued by old_next_CC.  Then,
-    // convert over one by one
-
-    // TODO: Disable inference on the inner correction loop for easier
-    // debugging.
-
     // Line 13: for each v in V do
     @noinf @label(outer_correction) for (uint v = 0; v < N; ++v)
         (1 == 1)
