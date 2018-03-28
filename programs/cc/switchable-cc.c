@@ -6,8 +6,11 @@ property_r vec_bound(matrix<uint> V, uint to) :
 property_r large_error_r(matrix<uint> x, uint v) :
   forall(uint fi)(fi < v<r> -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
 
-property_r large_error_r_bound(matrix<uint> x, uint from, uint v) :
+property_r large_error_r_inclusive(matrix<uint> x, uint from, uint v) :
   forall(uint fi)((from<r> <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
+
+property_r large_error_r_exclusive(matrix<uint> x, uint from, uint v) :
+  forall(uint fi)((from<r> < fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
 
 property_r outer_spec(uint to,
                       uint N,
@@ -98,21 +101,20 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
          forall(uint fi)((fi < v<r> -> (next_CC<r>[fi] == next_CC<o>[fi]))) &&
          eq(N_s) && eq(v) &&
          vec_bound(next_CC, N) &&
-         large_error_r_bound(next_CC, v, N) &&
+         large_error_r_inclusive(next_CC, v, N) &&
          outer_spec(N<o>, N<o>, next_CC<o>, CC<o>, adj<o>)) {
 
       if (v < next_CC[v]) {
         // TODO: Use fwrites here
         next_CC[v] = CC[v];
-        uint vp1 = v + 1;
         // Line 16: for each u in adj(v) do
         @noinf @label(inner_correction) for (uint j = 0; j < N; ++j)
-            (v < outer_correction[next_CC[v]] && v < N && vp1 == v + 1)
+            (v < outer_correction[next_CC[v]] && v < N)
             (inner_spec(j<r>, v<r>, N<r>, next_CC<r>, CC<r>, adj<r>) &&
              vec_bound(next_CC, N) &&
              outer_spec(v<r>, N<r>, next_CC<r>, CC<r>, adj<r>) &&
              eq(N) && eq(CC) && eq(adj) && eq(v) &&
-             large_error_r_bound(next_CC, vp1, N) &&
+             large_error_r_exclusive(next_CC, v, N) &&
              forall(uint fi)((fi < v<r> -> (next_CC<r>[fi] == next_CC<o>[fi])))) {
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then
           if (CC[j] < next_CC[v] && adj[v][j] == 1) {
