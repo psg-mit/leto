@@ -7,7 +7,7 @@ property_r large_error_r(matrix<uint> x, uint v) :
   forall(uint fi)(fi < v<r> -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
 
 property_r large_error_r_bound(matrix<uint> x, uint from, uint v) :
-  forall(uint fi)((from <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
+  forall(uint fi)((from<r> <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
 
 property_r outer_spec(uint to,
                       uint N,
@@ -122,14 +122,15 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
       if (v < next_CC[v]) {
         // TODO: Use fwrites here
         next_CC[v] = CC[v];
+        uint vp1 = v + 1;
         // Line 16: for each u in adj(v) do
         @noinf @label(inner_correction) for (uint j = 0; j < N; ++j)
-            (v < old_next_CC_v && v < N)
+            (v < old_next_CC_v && v < N && vp1 == v + 1)
             (inner_spec(j<r>, v<r>, N<r>, next_CC<r>, CC<r>, adj<r>) &&
              vec_bound(next_CC, N) &&
              outer_spec(v<r>, N<r>, next_CC<r>, CC<r>, adj<r>) &&
              eq(N) && eq(CC) && eq(adj) && eq(v) &&
-             //large_error_r(next_CC, N) &&
+             large_error_r_bound(next_CC, vp1, N) &&
              forall(uint fi)((fi < v<r> -> (next_CC<r>[fi] == next_CC<o>[fi])))) {
           //relational_assume(vec_bound(next_CC, N));
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then
@@ -139,7 +140,10 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
           }
         }
 
-        //relational_assume(large_error_r_bound(next_CC, v, N));
+        /*
+        uint vp1 = v + 1;
+        relational_assume(large_error_r_bound(next_CC, vp1, N));
+        */
       }
       //relational_assume(outer_spec(N<o>, N<o>, next_CC<o>, CC<o>, adj<o>));
 
