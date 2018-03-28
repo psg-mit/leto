@@ -119,9 +119,13 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
         // TODO: Use fwrites here
         next_CC[v] = CC[v];
         // Line 16: for each u in adj(v) do
-        @label(inner_correction) for (uint j = 0; j < N; ++j)
-            (v < old_next_CC_v)
-            (inner_spec(j<r>, v<r>, N<r>, next_CC<r>, CC<r>, adj<r>)) {
+        @noinf @label(inner_correction) for (uint j = 0; j < N; ++j)
+            (v < old_next_CC_v && v < N)
+            (inner_spec(j<r>, v<r>, N<r>, next_CC<r>, CC<r>, adj<r>) &&
+             vec_bound(old_next_CC, N) &&
+             outer_spec(v<r>, N<r>, next_CC<r>, CC<r>, adj<r>) &&
+             eq(N) && eq(CC) && eq(adj) && eq(v) &&
+             forall(uint fi)((fi < v<r> -> (next_CC<r>[fi] == next_CC<o>[fi])))) {
           //  Line 17: if CC^{i-1}[u] < CC^i[v] then
           if (CC[j] < next_CC[v] && adj[v][j] == 1) {
             // Line 18: CC^i[v] = CC^{i-1}[u]
