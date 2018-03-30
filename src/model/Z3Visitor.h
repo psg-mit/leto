@@ -47,6 +47,7 @@ namespace model {
       z3::expr* get_current_var(const std::string& name);
       z3::expr* get_previous_var(const std::string& name);
       type_t get_var_type(const std::string& name);
+      z3::expr* add_var(std::string name);
 
 
       void check();
@@ -91,6 +92,5 @@ namespace model {
                    Var* op_arg2,
                    Var* result,
                    Bool* when);
-
   };
 }
