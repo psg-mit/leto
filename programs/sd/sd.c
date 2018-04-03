@@ -66,7 +66,7 @@ matrix<real> correct_sd(int N,
 
         Ax[i] = Ax[i] +. tmp;
         Ax2[i] = Ax2[i] +. tmp2;
-        spec_Ax[i] = spec_Ax[i] + tmp;
+        spec_Ax[i] = spec_Ax[i] + spec_tmp;
       }
 
       r[i] = b[i] - Ax[i];
