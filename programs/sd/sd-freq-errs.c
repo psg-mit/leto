@@ -52,7 +52,6 @@ matrix<real> correct_sd(int N,
         (1 == 1)
         (upset2(r, r2, spec_r, Ax, Ax2, spec_Ax)) {
       // recompute Ax[i]
-      // TODO: Inference runs out of memory on this loop
       @label(inner)
       for (int j = 0; j < N; ++j)
           (1 == 1)
@@ -66,8 +65,8 @@ matrix<real> correct_sd(int N,
         spec_Ax[i] = spec_Ax[i] + spec_tmp;
       }
 
-      r[i] = b[i] - Ax[i];
-      r2[i] = b[i] - Ax2[i];
+      r[i] = b[i] -. Ax[i];
+      r2[i] = b[i] -. Ax2[i];
       spec_r[i] = b[i] - spec_Ax[i];
     }
   }
