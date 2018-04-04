@@ -5,9 +5,6 @@ property_r upset2(matrix<real> r, matrix<real> r2, matrix<real> spec_r,
   ((model.upset == false) ->
     (r<r> == spec_r && r2<r> == spec_r && Ax<r> == spec_Ax && Ax2<r> == spec_Ax));
 
-property_r outer(matrix<real> r, matrix<real> spec_r) :
-  ((model.upset == false) -> r<r> == spec_r);
-
 
 // TODO: Get working with pseudo-seu-range
 
@@ -34,7 +31,7 @@ matrix<real> correct_sd(int N,
   @noinf @label(outer)
   while (run == false || r != r2)
         (1 == 1)
-        (outer(r, spec_r) && ((r<r> == r2<r>) -> r<r> == spec_r)) {
+        (((r<r> == r2<r>) -> r<r> == spec_r)) {
     model.upset = false;
     run = true;
 
@@ -53,7 +50,7 @@ matrix<real> correct_sd(int N,
     @noinf @label(middle)
     for (int i = 0; i < N; ++i)
         (1 == 1)
-        (upset2(r, r2, spec_r, Ax, Ax2, spec_Ax) && outer(r, spec_r)) {
+        (upset2(r, r2, spec_r, Ax, Ax2, spec_Ax)) {
       // recompute Ax[i]
       // TODO: Inference runs out of memory on this loop
       @label(inner)
