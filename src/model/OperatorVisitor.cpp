@@ -47,6 +47,8 @@ namespace model {
     }
 
     in_ensures = false;
+    when = nullptr;
+    no_guard = false;
 
     assert(substitutions.size() == 3);
   }
@@ -68,7 +70,10 @@ namespace model {
 
   z3::expr* OperatorVisitor::visit(const Operator &node) {
     assert(!current_mods);
-    z3::expr* when = node.when->accept(*this);
+    when = node.when->accept(*this);
+    const Bool* simple_guard = dynamic_cast<const Bool*>(node.when);
+    no_guard = simple_guard && simple_guard->value;
+
     current_mods = new std::unordered_set<std::string>();
     if (node.modifies) node.modifies->accept(*this);
     in_ensures = true;

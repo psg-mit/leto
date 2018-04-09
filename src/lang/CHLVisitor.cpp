@@ -702,6 +702,30 @@ namespace lang {
     return {nullptr, nullptr};
   }
 
+  z3::expr* CHLVisitor::replace_op(type_t type, z3::expr* res) {
+    model::op_sub sub = model_visitor->replace_op(type, res);
+
+    if (!in_houdini) {
+      if (sub.trivially_not_stuck) {
+        std::cout << "Model is trivially not stuck" << std::endl;
+      } else {
+        // Check that the model is not stuck
+        std::cout << "Checking whether model is stuck" << std::endl;
+        solver->push();
+        add_constraint(*sub.when_disjunction);
+        z3::check_result check_res = check(false);
+        solver->pop();
+
+        if (check_res != z3::sat) {
+          std::cerr << "ERROR: Model may be stuck" << std::endl;
+          exit(1);
+        }
+      }
+    }
+
+    return sub.subst;
+  }
+
   // FIXME: Replacement only happens in assignments.  Is this bad?  Not sure!
   // On one hand, it means assertions are always reliable, but on the other
   // hand expressions in conditionals are too.  Perhaps something more fine
@@ -788,10 +812,10 @@ namespace lang {
         if (lhs_type == UINT) {
           std::string tname = H_TMP_PREFIX + std::to_string(h_tmp++);
           z3::expr tmp = context->int_const(tname.c_str());
-          z3::expr* replacement = model_visitor->replace_op(lhs_type, &tmp);
+          z3::expr* replacement = replace_op(lhs_type, &tmp);
           add_constraint(*replacement);
           rres = new z3::expr(z3::implies(0 <= tmp, *lhs.relaxed == tmp));
-        } else rres = model_visitor->replace_op(lhs_type, lhs.relaxed);
+        } else rres = replace_op(lhs_type, lhs.relaxed);
         if (!prefixes.empty()) {
           for (const std::string& var : *model_visitor->updated) {
             z3::expr* cur = model_visitor->get_current_var(var);
@@ -987,12 +1011,12 @@ namespace lang {
         std::string tname = H_TMP_PREFIX + std::to_string(h_tmp++);
         z3::expr tmp = context->int_const(tname.c_str());
         model_visitor->prep_op(FWRITE, &tmp, val.relaxed);
-        z3::expr* replacement = model_visitor->replace_op(dest_type, nullptr);
+        z3::expr* replacement = replace_op(dest_type, nullptr);
         add_constraint(*replacement);
         add_constraint(z3::implies(0 <= tmp, (tmp == *dest.relaxed)));
       } else {
         model_visitor->prep_op(FWRITE, dest.relaxed, val.relaxed);
-        z3::expr* res = model_visitor->replace_op(dest_type, nullptr);
+        z3::expr* res = replace_op(dest_type, nullptr);
         add_constraint(*res);
       }
       if (!prefixes.empty()) {
@@ -2901,7 +2925,7 @@ namespace lang {
       z3::expr forall_dest = (*dest.relaxed)(*forall_i);
       model_visitor->prep_op(FWRITE, &forall_dest, &forall_src);
       model_visitor->var_equality = nullptr;
-      z3::expr* inner = model_visitor->replace_op(dest_type, nullptr);
+      z3::expr* inner = replace_op(dest_type, nullptr);
       if (!prefixes.empty()) {
         add_constraint(*model_visitor->var_equality, true);
       }

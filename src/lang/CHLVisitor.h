@@ -2,6 +2,7 @@
 
 #include <fstream>
 #include <map>
+#include <memory>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -180,6 +181,7 @@ namespace lang {
       void add_frame(const std::string& name);
       void set_frame(const std::string& new_frame);
       void clear_frame();
+      z3::expr* replace_op(type_t type, z3::expr* res);
 
       /**
        * Returns true if houdini was unknown

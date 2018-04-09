@@ -1,6 +1,7 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
@@ -18,6 +19,12 @@ namespace z3 {
 namespace model {
 
   typedef std::unordered_map<std::string, z3::expr*> var_map;
+
+  struct op_sub {
+    std::unique_ptr<z3::expr> when_disjunction;
+    z3::expr* subst;
+    bool trivially_not_stuck;
+  };
 
   class Z3Visitor : public ASTVisitor {
     public:
@@ -43,12 +50,11 @@ namespace model {
       void prep_op(operator_t op, z3::expr* arg1_, z3::expr* arg2_);
       bool prepped();
       void unprep();
-      z3::expr* replace_op(type_t type, z3::expr* res);
+      op_sub replace_op(type_t type, z3::expr* res);
       z3::expr* get_current_var(const std::string& name);
       z3::expr* get_previous_var(const std::string& name);
       type_t get_var_type(const std::string& name);
       z3::expr* add_var(std::string name);
-
 
       void check();
 

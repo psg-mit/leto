@@ -279,7 +279,7 @@ namespace model {
     arg1 = arg2 = nullptr;
   }
 
-  z3::expr* Z3Visitor::replace_op(type_t type, z3::expr* res) {
+  op_sub Z3Visitor::replace_op(type_t type, z3::expr* res) {
     expr_type = type;
     assert(arg1);
     assert((op == FREAD) ^ (arg2 != nullptr));
@@ -305,11 +305,15 @@ namespace model {
     const Operator* impl = impls.at(0);
     assert(impl);
     z3::expr* fn = impl->accept(subst);
+    std::unique_ptr<z3::expr> whens(new z3::expr(*subst.when));
+    bool trivially_not_stuck = subst.no_guard;
     for (size_t i = 1; i < impls.size(); ++i) {
       impl = impls.at(i);
       assert(impl);
       z3::expr* part = impl->accept(subst);
       *fn = *fn || *part;
+      *whens = *whens || *subst.when;
+      trivially_not_stuck = trivially_not_stuck || subst.no_guard;
     }
 
     // Build equality with old versions
@@ -329,7 +333,7 @@ namespace model {
 
 
     arg1 = arg2 = nullptr;
-    return fn;
+    return {std::move(whens), fn, trivially_not_stuck};
   }
 
   void Z3Visitor::check() {
@@ -360,7 +364,7 @@ namespace model {
     snapshot = var_version;
   }
 
-  void Z3Visitor::add_frame(const  std::string& name) {
+  void Z3Visitor::add_frame(const std::string& name) {
     frames[name] = var_version;
   }
 }

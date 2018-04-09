@@ -47,6 +47,9 @@ namespace model {
       virtual z3::expr* visit(const Block &node) { assert(false); }
 #pragma clang diagnostic pop
 
+      z3::expr* when;
+      bool no_guard;
+
     private:
       z3::context* context;
       z3::solver* solver;
