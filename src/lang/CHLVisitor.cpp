@@ -712,11 +712,11 @@ namespace lang {
         // Check that the model is not stuck
         std::cout << "Checking whether model is stuck" << std::endl;
         solver->push();
-        add_constraint(*sub.when_disjunction);
+        add_checked_constraint(*sub.when_disjunction);
         z3::check_result check_res = check(false);
         solver->pop();
 
-        if (check_res != z3::sat) {
+        if (check_res != z3::unsat) {
           std::cerr << "ERROR: Model may be stuck" << std::endl;
           exit(1);
         }
