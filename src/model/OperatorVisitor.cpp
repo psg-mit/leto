@@ -131,16 +131,12 @@ namespace model {
     return ret;
   }
 
-  z3::expr* OperatorVisitor::get_set_var(const std::string& name) const {
-    z3::expr* ret = vars->at(name + "-" + std::to_string(var_version->at(name)) + "-set");
-    if (types->at(name) == UINT) solver->add(0 <= *ret);
-    return ret;
-  }
-
   z3::expr* OperatorVisitor::get_prev_var(const std::string& name) const {
     unsigned version = var_version->at(name);
     assert(version);
     --version;
-    return vars->at(name + "-" + std::to_string(version));
+    z3::expr* ret = vars->at(name + "-" + std::to_string(version));
+    if (types->at(name) == UINT) solver->add(0 <= *ret);
+    return ret;
   }
 }

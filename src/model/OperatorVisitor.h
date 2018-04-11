@@ -64,6 +64,5 @@ namespace model {
 
       z3::expr* get_current_var(const std::string& name) const;
       z3::expr* get_prev_var(const std::string& name) const;
-      z3::expr* get_set_var(const std::string& name) const;
   };
 }
