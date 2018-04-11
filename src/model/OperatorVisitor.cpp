@@ -10,7 +10,7 @@ namespace model {
                                    z3::solver* solver_,
                                    type_t expr_type_,
                                    const std::unordered_set<std::string> *updated_,
-                                   const std::unordered_map<std::string, type_t>& types)
+                                   const std::unordered_map<std::string, type_t>* types_)
       : Z3Visitor(context_, solver_, expr_type_),
         vars(vars_),
         var_version(var_version_) {
@@ -22,6 +22,7 @@ namespace model {
     solver = solver_;
     expr_type = expr_type_;
     updated = updated_;
+    types = types_;
 
     // Update all modified vars
     for (const std::string& name : *updated) {
@@ -29,7 +30,7 @@ namespace model {
       unsigned next_version = ++var_version->at(name);
       const std::string &new_name = name + "-" + std::to_string(next_version);
       z3::expr *var = nullptr;
-      switch (types.at(name)) {
+      switch (types->at(name)) {
         case BOOL:
           var = new z3::expr(context->bool_const(new_name.c_str()));
           break;
@@ -125,11 +126,15 @@ namespace model {
   }
 
   z3::expr* OperatorVisitor::get_current_var(const std::string& name) const {
-    return vars->at(name + "-" + std::to_string(var_version->at(name)));
+    z3::expr* ret = vars->at(name + "-" + std::to_string(var_version->at(name)));
+    if (types->at(name) == UINT) solver->add(0 <= *ret);
+    return ret;
   }
 
   z3::expr* OperatorVisitor::get_set_var(const std::string& name) const {
-    return vars->at(name + "-" + std::to_string(var_version->at(name)) + "-set");
+    z3::expr* ret = vars->at(name + "-" + std::to_string(var_version->at(name)) + "-set");
+    if (types->at(name) == UINT) solver->add(0 <= *ret);
+    return ret;
   }
 
   z3::expr* OperatorVisitor::get_prev_var(const std::string& name) const {

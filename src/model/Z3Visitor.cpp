@@ -50,13 +50,21 @@ namespace model {
     if (!frame.empty()) version = frames.at(frame).at(name);
     else if (use_snapshot) version = snapshot.at(name);
     else version = var_version.at(name);
-    return vars.at(name + "-" + std::to_string(version));
+    z3::expr* ret = vars.at(name + "-" + std::to_string(version));
+
+    if (types.at(name) == UINT) solver->add(0 <= *ret);
+
+    return ret;
   }
 
   z3::expr* Z3Visitor::get_previous_var(const std::string& name) {
     unsigned version = use_snapshot ? snapshot.at(name) : var_version.at(name);
     assert(version);
-    return vars.at(name + "-" + std::to_string(version - 1));
+    z3::expr* ret = vars.at(name + "-" + std::to_string(version - 1));
+
+    if (types.at(name) == UINT) solver->add(0 <= *ret);
+
+    return ret;
   }
 
   z3::expr* Z3Visitor::get_var_at(const std::string& name, unsigned version) {
@@ -78,6 +86,7 @@ namespace model {
     z3::expr *expr = nullptr;
     switch (type) {
       case INT:
+      case UINT:
         expr = new z3::expr(this->context->int_const(name.c_str()));
         break;
       case REAL:
@@ -87,7 +96,6 @@ namespace model {
         expr = new z3::expr(this->context->bool_const(name.c_str()));
         break;
       case FLOAT:
-      case UINT:
         assert(false);
     }
 
@@ -127,8 +135,13 @@ namespace model {
     assert(lhs);
     assert(rhs);
 
+    const Var* lvar = dynamic_cast<const Var*>(node.lhs);
+    assert(lvar);
+
     // Set LHS == RHS
-    solver->add(*lhs == *rhs);
+    if (types.at(lvar->name) == UINT) {
+      solver->add(z3::implies(0 <= *rhs, *lhs == *rhs));
+    } else solver->add(*lhs == *rhs);
 
     return nullptr;
   }
@@ -301,7 +314,7 @@ namespace model {
                           solver,
                           expr_type,
                           updated,
-                          types);
+                          &types);
     const Operator* impl = impls.at(0);
     assert(impl);
     z3::expr* fn = impl->accept(subst);

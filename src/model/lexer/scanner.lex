@@ -10,6 +10,7 @@ true                                return model::ModelParser::TRUE;
 false                               return model::ModelParser::FALSE;
 bool                                return model::ModelParser::BOOL;
 int                                 return model::ModelParser::INT;
+uint                                return model::ModelParser::UINT;
 real                                return model::ModelParser::REAL;
 ==                                  return model::ModelParser::EQUALS;
 &&                                  return model::ModelParser::AND;

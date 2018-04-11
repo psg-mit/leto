@@ -2206,6 +2206,7 @@ namespace lang {
     // New solver state for loop
     z3::solver* old_solver = solver;
     solver = new z3::solver(*context);
+    model_visitor->solver = solver;
     cached_uints.clear();
     add_frame(node.label->name);
 
@@ -2262,6 +2263,7 @@ namespace lang {
     // Restore old solver
     delete solver;
     solver = old_solver;
+    model_visitor->solver = old_solver;
     cached_uints.clear();
 
     bool ret = h_res == z3::unknown || inner_h_unknown;

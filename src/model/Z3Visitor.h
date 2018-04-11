@@ -71,13 +71,13 @@ namespace model {
       bool use_snapshot;
 
       z3::expr* var_equality;
+      z3::solver* solver;
 
     protected:
       std::unordered_set<std::string>* current_mods;
 
     private:
       z3::context* context;
-      z3::solver* solver;
       var_map vars;
       std::unordered_map<std::string, type_t> types;
       version_map var_version;

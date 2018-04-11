@@ -9,6 +9,7 @@ namespace model {
       PrintVisitor() {}
       virtual z3::expr* visit(const Int &node) override;
       virtual z3::expr* visit(const Float &node) override;
+      virtual z3::expr* visit(const Real &node) override;
       virtual z3::expr* visit(const BinOp &node) override;
       virtual z3::expr* visit(const Var &node) override;
       virtual z3::expr* visit(const Bool &node) override;

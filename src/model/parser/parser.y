@@ -10,6 +10,7 @@
        FALSE
        BOOL
        INT
+       UINT
        REAL
        OPERATOR
        WHEN
@@ -179,6 +180,15 @@ statement:
   }
 | INT var '=' expression {
     $$ = new model::StatementList(new model::Declare(type_t::INT, $2),
+                                  new model::Assign($2, $4));
+    model_ast = $$;
+  }
+| UINT var {
+    $$ = new model::Declare(type_t::UINT, $2);
+    model_ast = $$;
+  }
+| UINT var '=' expression {
+    $$ = new model::StatementList(new model::Declare(type_t::UINT, $2),
                                   new model::Assign($2, $4));
     model_ast = $$;
   }
