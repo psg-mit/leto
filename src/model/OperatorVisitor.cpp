@@ -126,7 +126,14 @@ namespace model {
   }
 
   z3::expr* OperatorVisitor::get_current_var(const std::string& name) const {
-    z3::expr* ret = vars->at(name + "-" + std::to_string(var_version->at(name)));
+    z3::expr* ret = nullptr;
+    try {
+      ret = vars->at(name + "-" + std::to_string(var_version->at(name)));
+    } catch (const std::out_of_range&) {
+      std::cerr << "No such model variable " << name << std::endl;
+      exit(1);
+    }
+    assert(ret);
     if (types->at(name) == UINT) solver->add(0 <= *ret);
     return ret;
   }
