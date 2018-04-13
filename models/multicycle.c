@@ -1,5 +1,5 @@
 bool stuck = false;
-uint length = 10000;
+uint length;
 
 operator *(x1, x2)
   when (stuck == false || length == 0)
