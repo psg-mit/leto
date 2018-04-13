@@ -1,7 +1,7 @@
-#define ERROR 1000
+#define ERROR 1
 
 bool stuck = false;
-uint length = 10000;
+uint length;
 
 operator *(x1, x2)
   when (stuck == false || length == 0)
