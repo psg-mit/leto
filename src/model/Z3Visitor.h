@@ -91,6 +91,7 @@ namespace model {
       z3::expr* arg1;
       z3::expr* arg2;
       type_t expr_type;
+      std::unordered_set<std::string> initialized;
 
 
       void BuildOp(operator_t op,

@@ -43,6 +43,15 @@ namespace model {
     use_snapshot = false;
     frame = "";
     var_equality = nullptr;
+
+    // Declare the forbidden vars
+    // TODO: Allow for more than just reals
+    Declare arg1_decl(REAL, op_arg1);
+    Declare arg2_decl(REAL, op_arg2);
+    Declare result_decl(REAL, result);
+    arg1_decl.accept(*this);
+    arg2_decl.accept(*this);
+    result_decl.accept(*this);
   }
 
   z3::expr* Z3Visitor::get_current_var(const std::string& name) {
@@ -107,10 +116,6 @@ namespace model {
   }
 
   z3::expr* Z3Visitor::visit(const Declare &node) {
-    assert(node.var->name != ARG1_STR);
-    assert(node.var->name != ARG2_STR);
-    assert(node.var->name != RESULT_STR);
-
 #ifndef NDEBUG
     size_t start_size = vars.size();
     size_t start_version_size = var_version.size();
@@ -127,7 +132,6 @@ namespace model {
   }
 
   z3::expr* Z3Visitor::visit(const Assign &node) {
-    // TODO: Allow redefinition
     // Get both pairs
     z3::expr* lhs = node.lhs->accept(*this);
     z3::expr* rhs = node.rhs ->accept(*this);
@@ -138,8 +142,18 @@ namespace model {
     const Var* lvar = dynamic_cast<const Var*>(node.lhs);
     assert(lvar);
 
+    std::string vname = lvar->name;
+    if (initialized.count(vname)) {
+      std::cerr << "ERROR: Refinement failure on variable "
+                << vname
+                << std::endl;
+      exit(1);
+    }
+
+    initialized.emplace(vname);
+
     // Set LHS == RHS
-    if (types.at(lvar->name) == UINT) {
+    if (types.at(vname) == UINT) {
       solver->add(z3::implies(0 <= *rhs, *lhs == *rhs));
     } else solver->add(*lhs == *rhs);
 
@@ -257,6 +271,53 @@ namespace model {
       current_mods = op_mods.at(node.op);
       node.modifies->accept(*this);
       current_mods = nullptr;
+    }
+
+    if (node.refines < ops.at(node.op).size()) {
+      const Operator* super = ops.at(node.op).at(node.refines);
+
+      z3::expr* super_when = super->when->accept(*this);
+      z3::expr* when = node.when->accept(*this);
+
+      solver->push();
+      solver->add(!z3::implies(*when, *super_when));
+      std::cout << "Checking when refinement of operator "
+                << node.refines
+                << std::endl;
+      std::cout << *solver << std::endl;
+      z3::check_result res = solver->check();
+      solver->pop();
+
+      if (res != z3::unsat) {
+        std::cerr << "ERROR: when refinement failure on operator "
+                  << node.refines
+                  << std::endl;
+        exit(1);
+      } else {
+        std::cout << "Passed" << std::endl;
+      }
+
+      z3::expr* super_ensures = super->ensures->accept(*this);
+      z3::expr* ensures = node.ensures->accept(*this);
+
+      solver->push();
+      solver->add(!z3::implies(*ensures, *super_ensures));
+      std::cout << "Checking ensures refinement of operator "
+                << node.refines
+                << std::endl;
+      std::cout << *solver << std::endl;
+      res = solver->check();
+      solver->pop();
+
+      if (res != z3::unsat) {
+        std::cerr << "ERROR: ensures refinement failure on operator "
+                  << node.refines
+                  << std::endl;
+        exit(1);
+      } else {
+        std::cout << "Passed" << std::endl;
+      }
+
     }
 
     return nullptr;

@@ -21,6 +21,7 @@
        FWRITE
        OLD
        REGION
+       REFINES
 
 %left ';'
 %left AND OR
@@ -222,11 +223,12 @@ statement:
     $$ = new model::Assign($1, $3);
     model_ast = $$;
   }
-| OPERATOR op '(' var ',' var ')'
+| REFINES '(' size ')'
+  OPERATOR op '(' var ',' var ')'
   WHEN '(' boolexp ')'
   MODIFIES '(' varlist ')'
   ENSURES '(' boolexp ')' {
-    $$ = new model::Operator($2, $4, $6, $10, $14, $18);
+    $$ = new model::Operator($3, $6, $8, $10, $14, $18, $22);
     model_ast = $$;
   }
 | REGION '(' var ')'
@@ -245,11 +247,12 @@ statement:
     $$ = new model::Operator(operator_t::FWRITE, $7, $9, $13, $17, $21);
     model_ast = $$;
   }
-| OPERATOR op '(' var ',' var ')'
+| REFINES '(' size ')'
+  OPERATOR op '(' var ',' var ')'
   WHEN '(' boolexp ')'
   MODIFIES '(' ')'
   ENSURES '(' boolexp ')' {
-    $$ = new model::Operator($2, $4, $6, $10, nullptr, $17);
+    $$ = new model::Operator($3, $6, $8, $10, $14, nullptr, $21);
     model_ast = $$;
   }
 | REGION '(' var ')'

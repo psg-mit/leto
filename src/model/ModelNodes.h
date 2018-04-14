@@ -140,6 +140,22 @@ namespace model {
                const BoolExp *when_,
                const VarList* modifies_,
                const BoolExp *ensures_) :
+          refines(ULONG_MAX),
+          op(op_),
+          arg1(arg1_),
+          arg2(arg2_),
+          when(when_),
+          modifies(modifies_),
+          ensures(ensures_) {}
+
+      Operator(size_t refines_,
+               operator_t op_,
+               const Var *arg1_,
+               const Var *arg2_,
+               const BoolExp *when_,
+               const VarList* modifies_,
+               const BoolExp *ensures_) :
+          refines(refines_),
           op(op_),
           arg1(arg1_),
           arg2(arg2_),
@@ -148,6 +164,7 @@ namespace model {
           ensures(ensures_) {}
       virtual z3::expr* accept(ASTVisitor &visitor) const override;
 
+      const size_t refines;
       const operator_t op;
       const Var* const arg1;
       const Var* const arg2;

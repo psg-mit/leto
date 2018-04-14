@@ -24,6 +24,7 @@ fwrite                              return model::ModelParser::FWRITE;
 \<=                                 return model::ModelParser::LTEQ;
 old                                 return model::ModelParser::OLD;
 @region                             return model::ModelParser::REGION;
+@refines                            return model::ModelParser::REFINES;
 [[:alpha:]_][[:alpha:][:digit:]_]*  return model::ModelParser::ID;
 .                                   return matched()[0];
 
