@@ -43,6 +43,7 @@ namespace model {
     use_snapshot = false;
     frame = "";
     var_equality = nullptr;
+    tmp_count = 0;
 
     // Declare the forbidden vars
     // TODO: Allow for more than just reals
@@ -143,21 +144,25 @@ namespace model {
     assert(lvar);
 
     std::string vname = lvar->name;
-    if (initialized.count(vname)) {
+    if (initializations.count(vname)) {
       std::cerr << "ERROR: Refinement failure on variable "
                 << vname
                 << std::endl;
       exit(1);
     }
 
-    initialized.emplace(vname);
-
     // Set LHS == RHS
     if (types.at(vname) == UINT) {
-      solver->add(z3::implies(0 <= *rhs, *lhs == *rhs));
-    } else solver->add(*lhs == *rhs);
+      initializations.emplace(vname, z3::implies(0 <= *rhs, *lhs == *rhs));
+    } else initializations.emplace(vname, *lhs == *rhs);
 
     return nullptr;
+  }
+
+  void Z3Visitor::init_vars() {
+    for (const std::pair<std::string, z3::expr>& init : initializations) {
+      solver->add(init.second);
+    }
   }
 
   z3::expr* Z3Visitor::visit(const Var &node) {

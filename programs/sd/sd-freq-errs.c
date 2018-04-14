@@ -52,10 +52,10 @@ matrix<real> correct_sd(int N,
         (1 == 1)
         (upset2(r, r2, spec_r, Ax, Ax2, spec_Ax)) {
       // recompute Ax[i]
-      @label(inner)
+      @noinf @label(inner)
       for (int j = 0; j < N; ++j)
           (1 == 1)
-          (1 == 1) {
+          (upset2(r, r2, spec_r, Ax, Ax2, spec_Ax)) {
         real tmp = A[i][j] *. x[j];
         real tmp2 = A[i][j] *. x[j];
         specvar real spec_tmp = A[i][j] * x[j];

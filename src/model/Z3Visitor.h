@@ -70,6 +70,8 @@ namespace model {
 
       bool use_snapshot;
 
+      void init_vars();
+
       z3::expr* var_equality;
       z3::solver* solver;
 
@@ -91,7 +93,9 @@ namespace model {
       z3::expr* arg1;
       z3::expr* arg2;
       type_t expr_type;
-      std::unordered_set<std::string> initialized;
+      std::unordered_map<std::string, z3::expr> initializations;
+      size_t tmp_count;
+
 
 
       void BuildOp(operator_t op,
