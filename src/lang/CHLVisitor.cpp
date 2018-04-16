@@ -707,10 +707,14 @@ namespace lang {
 
     if (!in_houdini) {
       if (sub.trivially_not_stuck) {
+#ifndef NDEBUG
         std::cout << "Model is trivially not stuck" << std::endl;
+#endif
       } else {
         // Check that the model is not stuck
+#ifndef NDEBUG
         std::cout << "Checking whether model is stuck" << std::endl;
+#endif
         solver->push();
         add_checked_constraint(*sub.when_disjunction);
         z3::check_result check_res = check(false);
