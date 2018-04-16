@@ -12,7 +12,7 @@ matrix<real> product(uint N, matrix<real> x(N), matrix<real> y(N)) {
   @label(loop)
   for (uint i = 0; i < N; ++i)
       (1 == 1)
-      (bounded_diff(result, N)) {
+      (bounded_diff(result, i)) {
     result[i] = x[i] *. y[i];
   }
 

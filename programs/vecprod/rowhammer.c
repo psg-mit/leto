@@ -12,7 +12,7 @@ matrix<uint> product(uint N, matrix<uint> x(N), matrix<uint> y(N)) {
   @label(loop)
   for (uint i = 0; i < N; ++i)
       (1 == 1)
-      (large_error(result, N)) {
+      (large_error(result, i)) {
     uint prod = x[i] * y[i];
     fwrite(result[i], prod);
   }
