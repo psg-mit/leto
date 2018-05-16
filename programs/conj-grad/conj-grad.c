@@ -132,7 +132,8 @@ matrix<real> ss_cg(uint N,
       @noinf @label(l6) for (uint i = 0; i < N; ++i) (1 == 1) (4 == 4) {
         tmp = r[i] * p[i];
         num = num + tmp;
-        denom = p[i] * q[i];
+        tmp = p[i] * q[i];
+        denom = denom + tmp;
       }
       alpha = num / denom;
 
@@ -191,7 +192,8 @@ matrix<real> ss_cg(uint N,
       for (uint i = 0; i < N; ++i) (10 == 10) (10 == 10) {
         tmp = r[i] * r[i];
         num = num + tmp;
-        denom = p[i] * q[i];
+        tmp = p[i] * q[i];
+        denom = tmp + denom;
       }
       alpha = num / denom;
 
@@ -210,10 +212,12 @@ matrix<real> ss_cg(uint N,
       @noinf @label(l16)
       for (uint i = 0; i < N; ++i) (12 == 12) (12 == 12) {
         // Compute num
-        num = next_r[i] * next_r[i];
+        tmp = next_r[i] * next_r[i];
+        num = num + tmp;
 
         // Compute denom
-        denom = r[i] * r[i];
+        tmp = r[i] * r[i];
+        denom = tmp + denom;
       }
       beta = num / denom;
 
