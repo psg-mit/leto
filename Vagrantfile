@@ -9,6 +9,9 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # options are documented and commented below. For a complete reference,
   # please see the online documentation at vagrantup.com.
 
+  # Use new vagrantcloud service
+  Vagrant::DEFAULT_SERVER_URL.replace('https://vagrantcloud.com')
+
   # Every Vagrant virtual environment requires a box to build off of.
   config.vm.box = "debian/contrib-jessie64"
   config.vm.provision :shell, path: "setup.bash"
