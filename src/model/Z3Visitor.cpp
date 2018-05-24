@@ -197,6 +197,7 @@ namespace model {
   }
 
   z3::expr* Z3Visitor::visit(const Float &node) {
+    assert(0);
     z3::expr* res = float_val(context, node.value);
     expr_type = FLOAT;
     assert(res);

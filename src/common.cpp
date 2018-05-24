@@ -18,6 +18,7 @@ z3::expr* binop(z3::context* context,
           break;
         case FLOAT:
           {
+            assert(0);
             Z3_ast prim = Z3_mk_fpa_add(*context, rm, *lhs, *rhs);
             res = new z3::expr(z3::to_expr(*context, prim));
           }
@@ -37,6 +38,7 @@ z3::expr* binop(z3::context* context,
           break;
         case FLOAT:
           {
+            assert(0);
             Z3_ast prim = Z3_mk_fpa_sub(*context, rm, *lhs, *rhs);
             res = new z3::expr(z3::to_expr(*context, prim));
           }
@@ -56,6 +58,7 @@ z3::expr* binop(z3::context* context,
           break;
         case FLOAT:
           {
+            assert(0);
             Z3_ast prim = Z3_mk_fpa_mul(*context, rm, *lhs, *rhs);
             res = new z3::expr(z3::to_expr(*context, prim));
           }
@@ -75,6 +78,7 @@ z3::expr* binop(z3::context* context,
           break;
         case FLOAT:
           {
+            assert(0);
             Z3_ast prim = Z3_mk_fpa_div(*context, rm, *lhs, *rhs);
             res = new z3::expr(z3::to_expr(*context, prim));
           }
@@ -95,6 +99,7 @@ z3::expr* binop(z3::context* context,
 }
 
 z3::expr* float_val(z3::context* context, float val) {
+  assert(0);
   Z3_sort fl = Z3_mk_fpa_sort_single(*context);
   Z3_ast float_val = Z3_mk_fpa_numeral_float(*context, val, fl);
   return new z3::expr(z3::to_expr(*context, float_val));

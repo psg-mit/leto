@@ -258,6 +258,7 @@ namespace lang {
 
 
   z3::expr* CHLVisitor::make_float(const std::string& name) {
+    assert(0);
     Z3_sort fl = Z3_mk_fpa_sort_single(*context);
     Z3_symbol sym = Z3_mk_string_symbol(*context, name.c_str());
     Z3_ast var = Z3_mk_const(*context, sym, fl);
@@ -290,6 +291,7 @@ namespace lang {
         rexpr = new z3::expr(this->context->real_const(rname.c_str()));
         break;
       case FLOAT:
+        assert(0);
         oexpr = make_float(oname);
         rexpr = make_float(rname);
         break;
@@ -390,6 +392,7 @@ namespace lang {
                                                              rs));
             break;
           case FLOAT:
+            assert(0);
             ofun = new z3::func_decl(this->context->function(oname.c_str(),
                                                              is,
                                                              fs));
@@ -426,6 +429,7 @@ namespace lang {
                                                              rs));
             break;
           case FLOAT:
+            assert(0);
             ofun = new z3::func_decl(this->context->function(oname.c_str(),
                                                              is,
                                                              is,
@@ -889,6 +893,7 @@ namespace lang {
           rexpr = new z3::expr(this->context->real_const(rname.c_str()));
           break;
         case FLOAT:
+          assert(0);
           oexpr = make_float(oname);
           rexpr = make_float(rname);
           break;
@@ -1180,6 +1185,7 @@ namespace lang {
             break;
           case FLOAT:
             {
+              assert(0);
               Z3_ast oast = Z3_mk_fpa_lt(*context,
                                          *lhs.original,
                                          *rhs.original);
@@ -1450,6 +1456,7 @@ namespace lang {
               break;
             case FLOAT:
               {
+                assert(0);
                 Z3_ast ast = Z3_mk_fpa_lt(*context,
                                           *lhs.original,
                                           *rhs.original);
@@ -1746,6 +1753,7 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(Float &node) {
+    assert(0);
     z3::expr* res = float_val(context, node.value);
     assert(res);
     expr_type = FLOAT;
@@ -1753,6 +1761,7 @@ namespace lang {
   }
 
   z3pair CHLVisitor::visit(RelationalFloat &node) {
+    assert(0);
     z3::expr* res = float_val(context, node.value);
     assert(res);
     expr_type = FLOAT;
