@@ -72,6 +72,13 @@ namespace lang {
     frame = "";
   }
 
+  std::unordered_map<z3::expr*, z3::expr*> CHLVisitor::float_pairs;
+  std::unordered_map<z3::expr*, int> CHLVisitor::float_error_range;
+  std::unordered_map<z3::expr*, std::string> CHLVisitor::float_clones;
+  size_t CHLVisitor::constraints_generated;
+  z3::solver* CHLVisitor::solver;
+  std::vector<z3::expr*> CHLVisitor::prefixes;
+
   static void debug_print(const std::string &str) {
 #ifndef NDEBUG
     std::cout << str << std::endl;
@@ -141,6 +148,8 @@ namespace lang {
 
   z3::expr* CHLVisitor::get_current_var(std::string name) {
     std::string vname = get_current_var_name(name);
+    assert(std::strlen(vname.c_str()) > 0);
+    // std::cout << "doing well10 " << vname << "\n";
     if (name.empty()) {
       std::cerr << "No such var: " << name << std::endl;
       exit(1);
@@ -257,13 +266,58 @@ namespace lang {
   }
 
 
-  z3::expr* CHLVisitor::make_float(const std::string& name) {
-    assert(0);
-    Z3_sort fl = Z3_mk_fpa_sort_single(*context);
-    Z3_symbol sym = Z3_mk_string_symbol(*context, name.c_str());
-    Z3_ast var = Z3_mk_const(*context, sym, fl);
-    return new z3::expr(z3::to_expr(*context, var));
+  z3::expr* CHLVisitor::make_float(std::string& name, unsigned version, int which_func) {
+    // assert(0);
+    // Z3_sort fl = Z3_mk_fpa_sort_single(*context);
+    // Z3_symbol sym = Z3_mk_string_symbol(*context, name.c_str());
+    // Z3_ast var = Z3_mk_const(*context, sym, fl);
+    // return new z3::expr(z3::to_expr(*context, var));
+    z3::expr *n1 = nullptr;   // corresponds to lower limit of name
+    z3::expr *n2 = nullptr;   // corresponds to upper limit of name
+    std::string upper = name + "_tmp";
+    if(which_func == 1){
+      var_version[upper] = version;
+    }
+
+    else if(which_func == 2){
+      z3::expr* old_upp = nullptr;
+      // std::cout << "doing well8\n";
+      // for(auto it = var_version.cbegin(); it != var_version.cend(); ++it)
+      // {
+      //   std::cout << it->first << " " << it->second << "\n";
+      // }
+      // std::cout << var_version.size() <<  " "  << upper << '\n';
+      // std::cout << "doing well12\n"; 
+      // std::cout << "doing well13\n"; 
+      old_upp = get_current_var(upper);
+      ++var_version.at(upper);      // similar to ++var_version.at(oname); Order of events is important here, it has to match the caller function
+      // std::cout << "doing well14\n";      
+      assert(old_upp);
+    }
+
+    name += "-" + std::to_string(version);   // why is this after this ?
+    upper += "-" + std::to_string(version);
+    // rname += "-" + std::to_string(version);
+    n1 = new z3::expr(this->context->real_const(name.c_str()));    // have two expressions for upper and lower limits of floating number
+    n2 = new z3::expr(this->context->real_const(upper.c_str()));
+    assert(n2);
+    // std::cout << "doing well1\n";
+    // std::cout << "doing well2\n";
+    // if (which_func == 1){
+    float_pairs[n1] = n2;    // store the z3 expr pairs for the original and delta version, this should be done for all versions
+    float_error_range[n1] = 1;    // you don't store this for upper -.- . This will change for calculations
+    if (float_clones.find(n1) == float_clones.end() ) {
+      float_clones[n1] = "tmp" + std::to_string(temporary_float_counter);   // why we can't use float_pairs is obvious in common.cpp, there we do not have string names of variables
+      temporary_float_counter += 1;
+    }
+    // std::cout << float_pairs.size() << "\n";
+    vars[upper] = n2;   // common in both which_func 1 and 2. For n1 it is done in the caller function
+    // std::cout << "doing well3\n";
+    // std::cout << which_func << "\n";
+    
+    return n1;
   }
+
 
   z3pair CHLVisitor::add_var(type_t type,
                              std::string oname,
@@ -276,38 +330,46 @@ namespace lang {
 
     var_version[oname] = version;
     var_version[rname] = version;
-    oname += "-" + std::to_string(version);
-    rname += "-" + std::to_string(version);
     z3::expr *oexpr = nullptr;
     z3::expr *rexpr = nullptr;
+    // std::cout << type << "\n";
+    // assert(0);
     switch (type) {
       case INT:
       case UINT:
+        // std::cout << "hello " << type << "\n";
+        oname += "-" + std::to_string(version);   // why is this after this ?
+        rname += "-" + std::to_string(version);
         oexpr = new z3::expr(this->context->int_const(oname.c_str()));
         rexpr = new z3::expr(this->context->int_const(rname.c_str()));
         break;
       case REAL:
+        // std::cout << type << "\n";
+        oname += "-" + std::to_string(version);   // why is this after this ?
+        rname += "-" + std::to_string(version);
         oexpr = new z3::expr(this->context->real_const(oname.c_str()));
         rexpr = new z3::expr(this->context->real_const(rname.c_str()));
         break;
       case FLOAT:
-        assert(0);
-        oexpr = make_float(oname);
-        rexpr = make_float(rname);
+        // std::cout << type << "\n";
+        // assert(0);
+        oexpr = make_float(oname, version, 1);
+        rexpr = make_float(rname, version, 1);
         break;
       case BOOL:
+        oname += "-" + std::to_string(version);   // why is this after this ?
+        rname += "-" + std::to_string(version);
         oexpr = new z3::expr(this->context->bool_const(oname.c_str()));
         rexpr = new z3::expr(this->context->bool_const(rname.c_str()));
         break;
     }
-
     assert(oexpr);
     assert(rexpr);
-
+    // std::cout << "doing well4\n";
     vars[oname] = oexpr;
     vars[rname] = rexpr;
-
-    return {oexpr, rexpr};
+    // std::cout << "doing well5\n";
+    return {oexpr, rexpr};    // Not sure if correct for float
   }
 
   z3::expr* CHLVisitor::vector_equals(z3::func_decl& x,
@@ -849,6 +911,12 @@ namespace lang {
     return {ores, rres};
   }
 
+  // There should be a map between each float variable and its error range.
+  // If on the left side, the error range of a float will remain same, expand or shrink according to standard error rules - I do not yet know how to do this
+  // If on the right side, the error range of float will remain unchanged, but you emit constraints to z3 in these case. 
+  // The constraints are the basic range constraint
+  // x<o> - x<o>_delta <= tmp1 <= x<r> - x<r>_delta
+
   z3pair CHLVisitor::visit(Var &node) {
     // Perform substitution if necessary
     std::string name = substitutions.count(node.name) ?
@@ -867,37 +935,50 @@ namespace lang {
       std::cerr << "No such var: " << name << std::endl;
       exit(1);
     }
-    if (in_assign) {
+    
+    // std::cout << expr_type << " " << in_assign << " " << oname << "\n";
+    // assert(0); 
+    if (in_assign) {    // I am on the left side of assignment
+      // the range constraint for float is to be added only for the left side, not declaration, so doing it here.
       old_o = old_r = nullptr;
       // Get old version
       old_o = get_current_var(oname);
       old_r = get_current_var(rname);
 
+      // std::cout << old_o << " hello " << old_r << "\n";
+
       // Rev version number
       unsigned version = ++var_version.at(oname);
+      // std::cout << var_version.at(oname) << " hello " << rname << "\n";
       assert(version);
       ++var_version.at(rname);
       assert(var_version.at(oname) == var_version.at(rname));
 
       // Construct new variables
-      oname += "-" + std::to_string(version);
-      rname += "-" + std::to_string(version);
       switch (expr_type) {
         case INT:
         case UINT:
+          oname += "-" + std::to_string(version);
+          rname += "-" + std::to_string(version);
           oexpr = new z3::expr(this->context->int_const(oname.c_str()));
           rexpr = new z3::expr(this->context->int_const(rname.c_str()));
           break;
         case REAL:
+          oname += "-" + std::to_string(version);
+          rname += "-" + std::to_string(version);
           oexpr = new z3::expr(this->context->real_const(oname.c_str()));
           rexpr = new z3::expr(this->context->real_const(rname.c_str()));
           break;
         case FLOAT:
-          assert(0);
-          oexpr = make_float(oname);
-          rexpr = make_float(rname);
+          // assert(0);
+          // std::cout << "doing well6\n";
+          oexpr = make_float(oname, version, 2);
+          // std::cout << "doing well7\n";
+          rexpr = make_float(rname, version, 2);
           break;
         case BOOL:
+          oname += "-" + std::to_string(version);
+          rname += "-" + std::to_string(version);
           oexpr = new z3::expr(this->context->bool_const(oname.c_str()));
           rexpr = new z3::expr(this->context->bool_const(rname.c_str()));
           break;
@@ -908,7 +989,9 @@ namespace lang {
 
       assert(old_o);
       assert(old_r);
-    } else {
+    } 
+
+    else {
       bool is_light_mat = light_mats.count(name);
       if (is_light_mat || !contains_var(oname)) {
         // Working with undereferenced array, do backchannel return
@@ -966,8 +1049,9 @@ namespace lang {
     z3pair lhs = node.lhs->accept(*this);
     type_t lhs_type = expr_type;
     z3pair rhs = node.rhs->accept(*this);
-    assert (lhs_type == REAL || lhs_type == INT || lhs_type == UINT);
-    assert (expr_type == REAL || expr_type == INT || expr_type == UINT);
+    // std::cout << lhs_type << " " << expr_type << " " << lhs.original << " " << lhs.relaxed << "\n";
+    assert (lhs_type == REAL || lhs_type == INT || lhs_type == UINT || lhs_type == FLOAT);
+    assert (expr_type == REAL || expr_type == INT || expr_type == UINT || expr_type == FLOAT);
     // TODO: can't mix ints and reals in division (Z3 sometimes casts things to
     // ints and messes it all up)
     assert ((node.op != RDIV && node.op != ODIV) || expr_type == lhs_type);
@@ -982,9 +1066,11 @@ namespace lang {
     assert(rhs.relaxed);
 
     // Build relational pairs
+    // assert(0);
     z3::expr *ores = binop(context, node.op, expr_type, lhs.original, rhs.original);
+    // assert(0);
     z3::expr *rres = binop(context, node.op, expr_type, lhs.relaxed, rhs.relaxed);
-
+    // assert(0);c
     assert(ores);
     assert(rres);
     return {ores, rres};

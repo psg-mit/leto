@@ -48,6 +48,7 @@ namespace model {
       virtual z3::expr* visit(const Real &node);
 
       void prep_op(operator_t op, z3::expr* arg1_, z3::expr* arg2_);
+      void set_pointer_map();
       bool prepped();
       void unprep();
       op_sub replace_op(type_t type, z3::expr* res);

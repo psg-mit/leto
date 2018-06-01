@@ -1,5 +1,6 @@
 #include "OperatorVisitor.h"
 #include "Z3Visitor.h"
+#include "../lang/CHLVisitor.h"
 
 namespace model {
   void Z3Visitor::BuildOp(operator_t op_type,
@@ -50,7 +51,8 @@ namespace model {
     Declare arg1_decl(REAL, op_arg1);
     Declare arg2_decl(REAL, op_arg2);
     Declare result_decl(REAL, result);
-    arg1_decl.accept(*this);
+    // std::cout << arg1_decl << "\n";
+    arg1_decl.accept(*this);    // there is where it starts
     arg2_decl.accept(*this);
     result_decl.accept(*this);
   }
@@ -86,6 +88,7 @@ namespace model {
   }
 
   z3::expr* Z3Visitor::add_var(std::string name) {
+    std::cout << name;
     type_t type = types.at(name);
 
     unsigned version = 0;
@@ -94,19 +97,28 @@ namespace model {
     var_version[name] = version;
     name += "-" + std::to_string(version);
     z3::expr *expr = nullptr;
+    // std::cout << type << std::endl;
+    // assert(0);
     switch (type) {
       case INT:
       case UINT:
         expr = new z3::expr(this->context->int_const(name.c_str()));
         break;
-      case REAL:
-        expr = new z3::expr(this->context->real_const(name.c_str()));
-        break;
+      case REAL:    // the code should be added in float block, but I do not know why I got real node here
+        {
+          // std::cout << name << "\n";
+          expr = new z3::expr(this->context->real_const(name.c_str()));
+          // std::string upper = name + "_tmp";
+          // z3::expr *n2 = new z3::expr(this->context->real_const(upper.c_str()));
+          // lang::CHLVisitor::float_pairs[expr] = n2;    // store the z3 expr pairs for the original and delta version, this should be done for all versions
+          // lang::CHLVisitor::float_error_range[expr] = 1;
+          break;
+        }
       case BOOL:
         expr = new z3::expr(this->context->bool_const(name.c_str()));
         break;
       case FLOAT:
-        assert(false);
+        assert(0);
     }
 
     assert(expr);
@@ -124,6 +136,7 @@ namespace model {
 
     // Declare var
     types[node.var->name] = node.type;
+    // std::cout << "  " << node.type << "\n";   
     add_var(node.var->name);
 
     assert(vars.size() == start_size + 1);
@@ -136,7 +149,8 @@ namespace model {
     // Get both pairs
     z3::expr* lhs = node.lhs->accept(*this);
     z3::expr* rhs = node.rhs ->accept(*this);
-
+    // std::cout << *lhs << "\n";
+    // assert(0);
     assert(lhs);
     assert(rhs);
 
@@ -213,14 +227,15 @@ namespace model {
 
   z3::expr* Z3Visitor::visit(const BinOp &node) {
     // Get both pairs
+    // assert(0);
     z3::expr* lhs = node.lhs->accept(*this);
     z3::expr* rhs = node.rhs->accept(*this);
     assert(lhs);
     assert(rhs);
-
+    // std::cout << *lhs << "\n";
     // Build relational pairs
+    // std::cout << lang::CHLVisitor::float_pairs.at(lhs);
     z3::expr *res = binop(context, node.op, expr_type, lhs, rhs);
-
     assert(res);
     return res;
   }

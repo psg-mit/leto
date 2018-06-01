@@ -92,7 +92,7 @@ namespace lang {
       virtual z3pair visit(RelationalProperty& node) override;
       virtual z3pair visit(RelationalPropertyApplication& node) override;
       virtual z3pair visit(SpecPropertyApplication& node) override;
-
+      static void add_constraint(const z3::expr& constraint, bool invert=false);    // static so that it is same across files and removed from private so that common.cpp can also access it
       z3::check_result check(bool exit_on_sat=true);
       int get_errors() { return errors; }
 
@@ -105,14 +105,20 @@ namespace lang {
 
       bool unsat_context;
       bool unknown_context;
-      size_t constraints_generated;
+      static size_t constraints_generated;
       size_t num_inferred;
       size_t total_paths;
       size_t pruned_paths;
+
+      static std::unordered_map<z3::expr*, z3::expr*> float_pairs;   // this is for the x:(oexpr, oexpr_1) pairs
+      static std::unordered_map<z3::expr*, int> float_error_range;
+      static std::unordered_map<z3::expr*, std::string> float_clones;
+
     private:
       z3::context* context;
-      z3::solver* solver;
+      static z3::solver* solver;
       std::unordered_map<std::string, z3::expr*> vars;
+      
       version_map var_version;
       version_map* h_var_version;
       model::Z3Visitor* model_visitor;
@@ -134,7 +140,7 @@ namespace lang {
       unsigned ignore_relaxed;
       z3::expr* old_o;
       z3::expr* old_r;
-      std::vector<z3::expr*> prefixes;
+      static std::vector<z3::expr*> prefixes;
       std::ofstream& z3_log;
       std::ofstream& smt2_log;
       const std::string* last_base_name;
@@ -172,11 +178,11 @@ namespace lang {
                           const std::string& oname,
                           const std::string& rname,
                           const dim_vec& dimensions);
-      void add_constraint(const z3::expr& constraint, bool invert=false);
+      // void add_constraint(const z3::expr& constraint, bool invert=false);
       void assume_prefixes();
       z3::expr* get_current_var(std::string name);
       z3::func_decl* get_current_vec(std::string name);
-      z3::expr* make_float(const std::string& name);
+      z3::expr* make_float(std::string& name, unsigned version, int which_func);
       bool contains_var(std::string name);
       void add_frame(const std::string& name);
       void set_frame(const std::string& new_frame);
@@ -197,7 +203,7 @@ namespace lang {
                    Statement* obody,
                    Statement* rbody);
       void add_checked_constraint(const z3::expr& constraint);
-      z3::expr get_constraint(const z3::expr& constraint, bool invert);
+      static z3::expr get_constraint(const z3::expr& constraint, bool invert);
       z3::expr* light_mat_elem_eq(Var& lhs_elem_v,
                                   Var& rhs_elem_v,
                                   RelationalVar& lhs_rv,
