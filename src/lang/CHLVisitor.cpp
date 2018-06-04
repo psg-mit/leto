@@ -78,6 +78,7 @@ namespace lang {
   size_t CHLVisitor::constraints_generated;
   z3::solver* CHLVisitor::solver;
   std::vector<z3::expr*> CHLVisitor::prefixes;
+  
 
   static void debug_print(const std::string &str) {
 #ifndef NDEBUG

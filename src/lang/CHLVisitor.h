@@ -113,6 +113,8 @@ namespace lang {
       static std::unordered_map<z3::expr*, z3::expr*> float_pairs;   // this is for the x:(oexpr, oexpr_1) pairs
       static std::unordered_map<z3::expr*, int> float_error_range;
       static std::unordered_map<z3::expr*, std::string> float_clones;
+      // static z3::expr* eps;
+
 
     private:
       z3::context* context;

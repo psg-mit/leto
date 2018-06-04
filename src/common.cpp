@@ -37,6 +37,7 @@ z3::expr* binop(z3::context* context,
             // // c.lang::CHLVisitor::add_constraint(*lhs <= 5 )
             // // add_constraint(*lhs + (float_error_range[lhs] * epsilon) >= x )
             // std::cout << lang::CHLVisitor::float_pairs.at(lhs) << "\n";
+            z3::expr* eps = new z3::expr(context->real_val(5, 1000));
             std::string upper_lhs;
             if (lang::CHLVisitor::float_clones.find(lhs) == lang::CHLVisitor::float_clones.end() ) {
                 upper_lhs = "tmp" + std::to_string(temporary_float_counter);
@@ -47,8 +48,10 @@ z3::expr* binop(z3::context* context,
               upper_lhs = lang::CHLVisitor::float_clones.at(lhs);
             }
             z3::expr* n1 = new z3::expr(context->real_const(upper_lhs.c_str()));
-            lang::CHLVisitor::add_constraint(z3::operator<=(z3::operator-(*lhs, (lang::CHLVisitor::float_error_range[lhs] * epsilon)), *n1));   // this adds the constraint
-            lang::CHLVisitor::add_constraint(z3::operator>=(z3::operator+(*lhs, (lang::CHLVisitor::float_error_range[lhs] * epsilon)), *n1));   // this adds the constraint
+            std::cout << lang::CHLVisitor::float_error_range[lhs] << std::endl;
+            assert(0);
+            lang::CHLVisitor::add_constraint(z3::operator<=(z3::operator-(*lhs, (lang::CHLVisitor::float_error_range[lhs] * (*eps))), *n1));   // this adds the constraint
+            lang::CHLVisitor::add_constraint(z3::operator>=(z3::operator+(*lhs, (lang::CHLVisitor::float_error_range[lhs] * (*eps))), *n1));   // this adds the constraint
             
             std::string upper_rhs;
             if (lang::CHLVisitor::float_clones.find(rhs) == lang::CHLVisitor::float_clones.end() ) {
@@ -60,8 +63,8 @@ z3::expr* binop(z3::context* context,
               upper_rhs = lang::CHLVisitor::float_clones.at(rhs);
             }
             z3::expr* n2 = new z3::expr(context->real_const(upper_rhs.c_str()));
-            lang::CHLVisitor::add_constraint(z3::operator<=(z3::operator-(*lhs, (lang::CHLVisitor::float_error_range[lhs] * epsilon)), *n2));   // this adds the constraint
-            lang::CHLVisitor::add_constraint(z3::operator>=(z3::operator+(*lhs, (lang::CHLVisitor::float_error_range[lhs] * epsilon)), *n2));   // this adds the constraint
+            lang::CHLVisitor::add_constraint(z3::operator<=(z3::operator-(*lhs, (lang::CHLVisitor::float_error_range[lhs] * (*eps))), *n2));   // this adds the constraint
+            lang::CHLVisitor::add_constraint(z3::operator>=(z3::operator+(*lhs, (lang::CHLVisitor::float_error_range[lhs] * (*eps))), *n2));   // this adds the constraint
 
             res = new z3::expr(*n1 + *n2);
             // assert(0);

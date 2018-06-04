@@ -31,7 +31,9 @@ z3::expr* binop(z3::context* context,
 
 z3::expr* float_val(z3::context* context, float val);
 
+static z3::context* cnt;
 static double epsilon = 0.005;
+// z3::expr* eps = new z3::expr(z3::context::real_val(5, 8));
 static int temporary_float_counter = 0;             // this maintains the counter for floating numbers
 // static std::unordered_map<z3::expr*, z3::expr*> float_pairs;   // this is for the x:(oexpr, oexpr_1) pairs
 // static std::unordered_map<z3::expr*, int> float_error_range;
