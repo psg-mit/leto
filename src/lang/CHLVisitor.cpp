@@ -73,7 +73,7 @@ namespace lang {
   }
 
   static void debug_print(const std::string &str) {
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
     std::cout << str << std::endl;
 #endif
   }
@@ -707,12 +707,12 @@ namespace lang {
 
     if (!in_houdini) {
       if (sub.trivially_not_stuck) {
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
         std::cout << "Model is trivially not stuck" << std::endl;
 #endif
       } else {
         // Check that the model is not stuck
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
         std::cout << "Checking whether model is stuck" << std::endl;
 #endif
         solver->push();
@@ -1576,14 +1576,14 @@ namespace lang {
 
   z3::check_result CHLVisitor::check(bool exit_on_sat) {
     // Log constraints
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
     std::cout << *solver << std::endl;
     z3_log << *solver << std::endl << std::endl;
     smt2_log << solver->to_smt2() << std::endl << std::endl;
 #endif
 
     z3::check_result res = in_weak_houdini ? z3::unknown : solver->check();
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
     std::cout << res << std::endl;
 #endif
 
@@ -1596,7 +1596,7 @@ namespace lang {
         break;
       case z3::sat:
         z3_model = new z3::model(solver->get_model());
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
         std::cout << *z3_model << std::endl;
 #endif
         if(exit_on_sat) {
@@ -1607,7 +1607,7 @@ namespace lang {
         break;
       case z3::unknown:
         {
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
           std::cout << "reason: ";
           if (in_weak_houdini) std::cout << "in weak houdini";
           else std::cout << solver->reason_unknown();
@@ -1617,14 +1617,14 @@ namespace lang {
           if (in_houdini && !in_weak_houdini) return z3::unknown;
 
           // Try again with *solver output
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
           std::cout << "Trying again with *solver output...";
           std::cout.flush();
 #endif
           std::ostringstream constraints;
           constraints << *solver;
           res = z3_bin(constraints.str(), true);
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
           std::cout << res << std::endl;
 #endif
           switch (res) {
@@ -1638,12 +1638,12 @@ namespace lang {
               break;
             case z3::unknown:
               // Try again with smt2 output
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
               std::cout << "Trying again with smt2 output...";
               std::cout.flush();
 #endif
               res = z3_bin(solver->to_smt2(), false);
-#ifndef NDEBUG
+#ifndef NDEBUGPRINT
               std::cout << res << std::endl;
 #endif
               switch (res) {

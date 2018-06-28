@@ -1,7 +1,6 @@
 %filenames parser
 %scanner ../lexer/scanner.h
 %class-name ModelParser
-%debug
 
 
 %token NUMBER

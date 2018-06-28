@@ -21,7 +21,6 @@ extern lang::LangNode *lang_ast;
 extern model::ModelNode *model_ast;
 
 int main() {
-  const clock_t start_time = clock();
   // Construct z3 components
   z3::context context;
   z3::solver solver(context);
@@ -68,23 +67,6 @@ int main() {
               << std::endl;
   }
 
-  if (chl.unsat_context) {
-    std::cerr << "WARNING: Some contexts were unsatisfiable" << std::endl;
-  }
-
-  if (chl.unknown_context) {
-    std::cerr << "WARNING: Some contexts were unknown" << std::endl;
-  }
-
-#ifdef NO_CHECK_CONTEXT
-  std::cerr << "WARNING: Context checks disabled" << std::endl;
-#endif
-
-  std::cout << "Time: "
-            << static_cast<double>(clock() - start_time) /  CLOCKS_PER_SEC
-            << " seconds"
-            << std::endl;
-
   std::cout << "Constraints generated: "
             << chl.constraints_generated
             << std::endl;
@@ -92,9 +74,6 @@ int main() {
   std::cout << "Houdini invariants found: "
             << chl.num_inferred
             << std::endl;
-
-  std::cout << "Total paths: " << chl.total_paths << std::endl;
-  std::cout << "Pruned paths: " << chl.pruned_paths << std::endl;
 
   return chl.get_errors();
 }

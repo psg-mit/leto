@@ -74,5 +74,6 @@ namespace lang {
       template<typename T> void print_property(T& node, std::string type);
       template<typename T>
       void print_property_application(T& node, std::string type);
+      void print_type(type_t type);
   };
 }

@@ -1,27 +1,27 @@
 #include "ConjunctionBreaker.h"
 #include "PrintVisitor.h"
 
-static void print_type(type_t type) {
-  switch (type) {
-    case BOOL:
-      printf("bool\n");
-      break;
-    case INT:
-      printf("int\n");
-      break;
-    case UINT:
-      printf("uint\n");
-      break;
-    case REAL:
-      printf("real\n");
-      break;
-    case FLOAT:
-      printf("float\n");
-      break;
-  }
-}
-
 namespace lang {
+  void PrintVisitor::print_type(type_t type) {
+    switch (type) {
+      case BOOL:
+        printf("bool\n");
+        break;
+      case INT:
+        printf("int\n");
+        break;
+      case UINT:
+        if (!compress) printf("uint\n");
+        break;
+      case REAL:
+        printf("real\n");
+        break;
+      case FLOAT:
+        printf("float\n");
+        break;
+    }
+  }
+
   template<typename T>
   void PrintVisitor::print_binop(T& node, std::string type) {
     if (compress) output += "(";
