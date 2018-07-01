@@ -10,7 +10,7 @@
 
 static const int EXIT_RUNTIME_ERROR = 2;
 // timeout in milliseconds
-static const int TIMEOUT = 10000;
+static const int TIMEOUT = 20000;
 // Unstoppable timeout in seconds
 static const int SUPER_TIMEOUT = (TIMEOUT / 1000) * 2;
 
@@ -26,7 +26,8 @@ static const std::string Z3_BIN = "timeout -s 9 " +
                                   std::to_string(SUPER_TIMEOUT) +
                                   "s z3 -t:" +
                                   std::to_string(TIMEOUT) +
-                                  " -smt2 " + Z3_TMP;
+                                  " -smt2 " + Z3_TMP +
+                                  " 2>/dev/null";
 #pragma clang diagnostic pop
 
 
@@ -722,6 +723,7 @@ namespace lang {
 
         if (check_res != z3::unsat) {
           std::cerr << "ERROR: Model may be stuck" << std::endl;
+          std::cerr << "Verification failed" << std::endl;
           exit(1);
         }
       }
@@ -1601,7 +1603,10 @@ namespace lang {
 #endif
         if(exit_on_sat) {
           ++errors;
-          // TODO: Remove this
+#ifdef NDEBUGPRINT
+          std::cerr << *z3_model << std::endl;
+#endif
+          std::cerr << std::endl << "Verification failed" << std::endl;
           exit(1);
         }
         break;
@@ -1633,6 +1638,7 @@ namespace lang {
             case z3::sat:
                 if (exit_on_sat) {
                   ++errors;
+                  std::cerr << "Verification failed" << std::endl;
                   exit(1);
                 }
               break;
@@ -1652,12 +1658,14 @@ namespace lang {
                 case z3::sat:
                   if (exit_on_sat) {
                     ++errors;
+                    std::cerr << "Verification failed" << std::endl;
                     exit(1);
                   }
                   break;
                 case z3::unknown:
                   if (exit_on_sat) {
                     ++errors;
+                    std::cerr << "Verification failed" << std::endl;
                     exit(1);
                   }
               }

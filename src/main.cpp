@@ -52,6 +52,8 @@ int main() {
   lang::CHLVisitor chl(&context, &solver, &model_visitor, z3_log, smt2_log);
   lang_ast->accept(chl);
 
+  std::cout << "Verification successful!" << std::endl;
+
   // Close log files
   z3_log.close();
   smt2_log.close();
