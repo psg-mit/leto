@@ -73,11 +73,18 @@ namespace lang {
     frame = "";
   }
 
+#ifdef NDEBUGPRINT
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
   static void debug_print(const std::string &str) {
 #ifndef NDEBUGPRINT
     std::cout << str << std::endl;
 #endif
   }
+#ifdef NDEBUGPRINT
+#pragma clang diagnostic pop
+#endif
 
 
   static z3::check_result z3_bin(const std::string& constraints,

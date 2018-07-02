@@ -135,8 +135,15 @@ namespace lang {
       z3::expr* old_o;
       z3::expr* old_r;
       std::vector<z3::expr*> prefixes;
+#ifdef NDEBUGPRINT
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-private-field"
+#endif
       std::ofstream& z3_log;
       std::ofstream& smt2_log;
+#ifdef NDEBUGPRINT
+#pragma clang diagnostic pop
+#endif
       const std::string* last_base_name;
       z3::expr* forall_i;
       z3::expr* forall_j;
