@@ -1,16 +1,16 @@
-#define MAX_N 10000
+#define MAX_N 5
 
 property_r vec_bound(matrix<uint> V, uint to) :
   forall(uint fi)(fi < to<o> -> (V<o>[fi] <= fi));
 
 property_r large_error_r(matrix<uint> x, uint v) :
-  forall(uint fi)(fi < v<r> -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
+  forall(uint fi)(fi < v<r> -> (x<r>[fi] == x<o>[fi] || model.min_error  < x<r>[fi]));
 
 property_r large_error_r_inclusive(matrix<uint> x, uint from, uint v) :
-  forall(uint fi)((from<r> <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
+  forall(uint fi)((from<r> <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || model.min_error < x<r>[fi]));
 
 property_r large_error_r_exclusive(matrix<uint> x, uint from, uint v) :
-  forall(uint fi)((from<r> < fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
+  forall(uint fi)((from<r> < fi < v<r>) -> (x<r>[fi] == x<o>[fi] || model.min_error < x<r>[fi]));
 
 property_r outer_spec(uint to,
                       uint N,
@@ -40,6 +40,10 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
   // Helpers
   matrix<uint> CC(N);
   @region(unreliable) matrix<uint> next_CC(N);
+ 
+  model.min_error = 10;
+ 
+  assert (MAX_N < model.min_error);
 
   // Line 1: for each v in V do
   @label(init) for (uint v = 0; v < N; ++v) (1 == 1) (vec_bound(CC, v)) {
@@ -56,7 +60,7 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
   //while (0 < N_s) (1 == 1) (1 == 1) {
   @noinf @label(outer_while) while (0 < N_s)
         (N < MAX_N)
-        (eq(N) && eq(adj) && eq(N_s) && eq(CC) && vec_bound(CC, N)) {
+        (eq(N) && eq(adj) && eq(N_s) && eq(CC) && vec_bound(CC, N) && MAX_N < model.min_error) {
     // Line 6: MemCpy(CC^i, CC^{i-1}, |V|)
     next_CC = CC;
 
@@ -67,8 +71,8 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
     // Line 7: for each v in V do
     @label(outer_faulty)
     for (uint v = 0; v < N; ++v)
-        (1 == 1)
-        (vec_bound(next_CC, N) &&
+        (N < MAX_N)
+        (vec_bound(next_CC, N) && MAX_N < model.min_error &&
          forall(uint fi)((v<o> <= fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
          outer_spec(v<o>, N<o>, next_CC<o>, CC<o>, adj<o>) &&
          large_error_r(next_CC, N)) {

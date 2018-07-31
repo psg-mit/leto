@@ -1,5 +1,4 @@
-#define MIN_ERR 10000
-
+uint min_error = 10;
 bool reliable = true;
 
 // Reliable
@@ -10,4 +9,4 @@ bool reliable = true;
 fwrite(x1, x2)
 when (reliable == false)
 modifies ()
-ensures (x2 + MIN_ERR < x1);
+ensures (min_error < x1);
