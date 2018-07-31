@@ -4,13 +4,13 @@ property_r vec_bound(matrix<uint> V, uint to) :
   forall(uint fi)(fi < to<o> -> (V<o>[fi] <= fi));
 
 property_r large_error_r(matrix<uint> x, uint v) :
-  forall(uint fi)(fi < v<r> -> (x<r>[fi] == x<o>[fi] || model.min_error  < x<r>[fi]));
+  forall(uint fi)(fi < v<r> -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
 
 property_r large_error_r_inclusive(matrix<uint> x, uint from, uint v) :
-  forall(uint fi)((from<r> <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || model.min_error < x<r>[fi]));
+  forall(uint fi)((from<r> <= fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
 
 property_r large_error_r_exclusive(matrix<uint> x, uint from, uint v) :
-  forall(uint fi)((from<r> < fi < v<r>) -> (x<r>[fi] == x<o>[fi] || model.min_error < x<r>[fi]));
+  forall(uint fi)((from<r> < fi < v<r>) -> (x<r>[fi] == x<o>[fi] || fi < x<r>[fi]));
 
 property_r outer_spec(uint to,
                       uint N,
@@ -34,7 +34,7 @@ property_r inner_spec(uint to,
   (exists(uint ei)(next_CC[v] == CC[ei] && ei < N && adj[v][ei] == 1) ||
    next_CC[v] == CC[v]);
 
-requires N < MAX_N
+requires N < MAX_N && MAX_N < model.min_error
 r_requires eq(adj)
 matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
   // Helpers
@@ -82,7 +82,8 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
       for (uint j = 0; j < N; ++j)
           (v < N && N < MAX_N)
           (forall(uint fi)((v<o> < fi < N<o>) -> next_CC<o>[fi] == CC<o>[fi]) &&
-           inner_spec(j<o>, v<o>, N<o>, next_CC<o>, CC<o>, adj<o>)) {
+           inner_spec(j<o>, v<o>, N<o>, next_CC<o>, CC<o>, adj<o>) &&
+           MAX_N < model.min_error) {
 
         // Line 9: if CC^{i-1}[u] < CC^{i}[v] then
         // At this point next_CC[v] == CC[v], so we use CC[v] for the
