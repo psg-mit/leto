@@ -40,10 +40,6 @@ matrix<uint> cc(uint N, matrix<uint> adj(N, N)) {
   // Helpers
   matrix<uint> CC(N);
   @region(unreliable) matrix<uint> next_CC(N);
- 
-  model.min_error = 10;
- 
-  assert (MAX_N < model.min_error);
 
   // Line 1: for each v in V do
   @label(init) for (uint v = 0; v < N; ++v) (1 == 1) (vec_bound(CC, v)) {
