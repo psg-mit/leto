@@ -10,7 +10,7 @@
 
 static const int EXIT_RUNTIME_ERROR = 2;
 // timeout in milliseconds
-static const int TIMEOUT = 20000;
+static const int TIMEOUT = 10000;
 // Unstoppable timeout in seconds
 static const int SUPER_TIMEOUT = (TIMEOUT / 1000) * 2;
 
