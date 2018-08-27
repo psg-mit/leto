@@ -19,5 +19,5 @@ read -p "SD"
 ./pp.py models/pseudo-seu-range.c programs/conj-grad/conj-grad.c | src/leto
 read -p "CG"
 
-./pp.py models/switchable-rowhammer.c programs/cc/switchable-cc.c | src/leto
+./pp.py models/switchable-multicycle-rowhammer.c programs/cc/switchable-cc.c | src/leto
 read -p "rowhammer"
