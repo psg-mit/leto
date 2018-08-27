@@ -15,4 +15,4 @@ ensures (x1 == x2);
 fwrite(x1, x2)
 when (reliable == false && 0 < length)
 modifies (stuck, length)
-ensures (min_error < x1 && stuck == true && length == old(length) - 1);
+ensures (x2 + min_error < x1 && stuck == true && length == old(length) - 1);
