@@ -36,6 +36,7 @@ int main() {
   model::Z3Visitor model_visitor(&context, &solver);
   model_ast->accept(model_visitor);
   model_visitor.init_vars();
+  model_visitor.remove_refined();
 
   // Read lang
   lang::LangParser lang_parser;

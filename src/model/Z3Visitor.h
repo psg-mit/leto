@@ -55,6 +55,7 @@ namespace model {
       z3::expr* get_previous_var(const std::string& name);
       type_t get_var_type(const std::string& name);
       z3::expr* add_var(std::string name);
+      void remove_refined();
 
       void check();
 
@@ -87,6 +88,7 @@ namespace model {
       std::map<operator_t, std::vector<const Operator*>> ops;
       std::map<operator_t, std::unordered_set<std::string>*> op_mods;
       std::map<std::string, version_map> frames;
+      std::unordered_set<size_t> refined;
       z3::expr* get_var_at(const std::string& name, unsigned version);
 
       operator_t op;

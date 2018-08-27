@@ -323,6 +323,8 @@ namespace model {
         std::cout << "Passed" << std::endl;
       }
 
+      refined.insert(node.refines);
+
     }
 
     return nullptr;
@@ -445,5 +447,21 @@ namespace model {
 
   void Z3Visitor::add_frame(const std::string& name) {
     frames[name] = var_version;
+  }
+
+  void Z3Visitor::remove_refined() {
+    for (auto& op_impl : ops) {
+
+      auto it = op_impl.second.begin();
+      size_t i = 0;
+      while (it != op_impl.second.end()) {
+        if (refined.count(i)) it = op_impl.second.erase(it);
+        else ++it;
+
+        ++i;
+      }
+    }
+
+    refined.clear();
   }
 }
