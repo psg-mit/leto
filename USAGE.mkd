@@ -1,0 +1,145 @@
+# Leto Artifact #
+
+## Step by Step Instructions ##
+
+To reproduce the results from the paper, run the `test-all.bash` script.
+This script runs the Leto verifier on the 4 examples from Section 2 as well
+as the 4 benchmarks from our evaluation section (Section 7).
+The script runs the benchmarks in this order:
+
+1. Vector product (Figure 3) under SEU (Figure 1)
+2. Vector product (Figure 7) with relative error (Figure 6)
+3. Jacobi under multiplicative SEU
+4. SS-CG under additive SEU
+5. SS-SD under unbounded SEU
+6. SS-SD under additive SEU
+7. SS-SD under multiplicative SEU
+8. SC-CC under switchable rowhammer
+9. SC-CC under multicycle
+
+
+For each benchmark you will see the following output:
+
+    Running benchmark: Vector product (Figure 3) under addtive SEU (Figure 1)
+
+    [Constraint output]
+
+    Verification successful!
+    Constraints generated: 763
+    Houdini invariants found: 6
+            Command being timed: "src/leto"
+            User time (seconds): 0.90
+            System time (seconds): 0.17
+            Percent of CPU this job got: 79%
+            Elapsed (wall clock) time (h:mm:ss or m:ss): 0:01.36
+            Average shared text size (kbytes): 0
+            Average unshared data size (kbytes): 0
+            Average stack size (kbytes): 0
+            Average total size (kbytes): 0
+            Maximum resident set size (kbytes): 21016
+            Average resident set size (kbytes): 0
+            Major (requiring I/O) page faults: 0
+            Minor (reclaiming a frame) page faults: 91179
+            Voluntary context switches: 717
+            Involuntary context switches: 325
+            Swaps: 0
+            File system inputs: 0
+            File system outputs: 536
+            Socket messages sent: 0
+            Socket messages received: 0
+            Signals delivered: 0
+            Page size (bytes): 4096
+            Exit status: 0
+
+### Claims supported by the artifact ###
+
+* **Verification.**  The most important claim that this artifact supports is
+  that Leto does in fact verify all of its benchmarks.
+  You can validate this claim by checking that each benchmark outputs
+  "Verification successful!"
+* **Invariants Inferred.**  The number of invariants inferred in Column 5 of
+  Figure 15 should match the number of "Houdini invariants found" in the
+  benchmark output.
+* **Constraints Generated.** The number of constraints generated in Column 4 of
+  Figure 16 should match the number of "Constraints generated" in the benchmark
+  output.
+* **Memory Usage.**  Memory usage will fluctuate a little from the numbers we
+  report in the paper, but the "Maximum resident set size (kbytes)" for each
+  benchmark should be close to the memory usage we report in Column 3 of
+  Figure 16.
+
+### Claims not supported by the artifact ###
+
+* **Runtime.**  In an effort to ensure that our artifact runs on many machines
+  rather than just our test machine we have increased the timeout per SMT query
+  from 10 seconds to 60 seconds.  This has the unfortunate side effect of
+  increasing the runtime of our system.  As such, runtime numbers will not
+  always line up with the numbers we report in the paper.  This is most
+  pronounced in the SC-CC benchmark, where the runtime with the longer timeout
+  comes out to 481.53 seconds on our machine, or 3x slower.
+
+  Note that by default Leto builds in debug mode, which is significantly
+  slower.  To build without debug features (constraint output, assertions,
+  etc), build with `NDEBUG` defined.
+
+### Manually running individual benchmarks ###
+
+To run individual benchmarks from the paper, use the `test-one.bash` script.
+This script takes two arguments: the first is the execution model to verify
+the program under, and the second is the program to verify.
+
+We provide the model / program mapping from the `test-all.bash` script below.
+
+Execution Model                             | Program                              | Description
+--------------------------------------------|--------------------------------------|------------------------------------------------------------------
+`models/pseudo-seu-chaos.c`                 | `programs/vecprod/seu-dmr.c`         | `Vector product (Figure 3) under SEU (Figure 1)`
+`models/pseudo-seu-range-mult.c`            | `programs/vecprod/seu-mult.c`        | `Vector product (Figure 7) with relative error`
+`models/pseudo-seu-range-mult.c`            | `programs/jacobi/jacobi-mult-weak.c` | `Jacobi under multiplicative SEU`
+`models/pseudo-seu-range.c`                 | `programs/conj-grad/conj-grad.c`     | `SS-CG under additive SEU`
+`models/pseudo-seu-chaos.c`                 | `programs/sd/sd-freq-errs.c`         | `SS-SD under unbounded SEU`
+`models/pseudo-seu-range.c`                 | `programs/sd/sd-freq-errs.c`         | `SS-SD under additive SEU`
+`models/pseudo-seu-range-mult.c`            | `programs/sd/sd-freq-errs.c`         | `SS-SD under multiplicative SEU`
+`models/switchable-rowhammer.c`             | `programs/cc/switchable-cc.c`        | `SC-CC under switchable rowhammer`
+`models/switchable-multicycle-rowhammer.c`  | `programs/cc/switchable-cc.c`        | `SC-CC under multicycle`
+
+#### Causing a verification failure ####
+
+In addition to checking our ability to verify programs, you may wish to
+validate Leto's ability to reject programs.
+We recommend modifying an existing benchmark to accomplish this.
+
+As an example, we walk through the process of causing a verification failure in
+the vector product under additive SEU example:
+
+1. Open `programs/vecprod/seu.c` in a text editor.
+2. Modify Line 19 to be `relational_assert(eq(result))`, thereby asserting that
+   `result<o> == result<r>`, and save the file.
+3. Run `./test-one.bash models/pseudo-seu-range.c programs/vecprod/seu.c`.
+4. Observe that Leto has detected a verification failure and has presented you
+   with a (admittedly hard to read) counterexample.
+
+
+#### Syntactic differences between the paper and the implementation ####
+
+Note that the paper and the implementation have minor syntactic differences.
+We list some of these below:
+
+* Rather than using the keywords `invariant` and `invariant_r`, the
+  implementation expects loops of the form:
+
+      while (<condition>) (<loop invariant>) (<reltaional invariant>) {
+        <body>
+      }
+
+* All loops in the implementation must have `@label(<unique name>)`
+  annotations.
+* `const` variables use C-style `#define` macros instead.
+* `assert_r` is `relational_assert` in the implementation.
+* `abs()` does not exist in our implementation.  We use inequalities instead
+  where appropriate.
+
+
+### Building Leto from source ###
+
+To build Leto from source, navigate to the `src` directory, then run
+`make clean && make`.

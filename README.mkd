@@ -64,6 +64,5 @@ You may have to build z3 from source to get these (the Debian package omits
 these headers, for example).
 
 ## Running Leto ##
-To run Leto, use the included preprocessor `pp.py`:
 
-    ./pp.py <model file> <program file> | ./leto
+See `USAGE.mkd` for information on running Leto.
